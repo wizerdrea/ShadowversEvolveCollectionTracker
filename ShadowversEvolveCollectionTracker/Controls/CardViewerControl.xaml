@@ -43,8 +43,17 @@
                 </Image>
             </Border>
 
+            <TextBlock Grid.Row="1"
+                       Text="{Binding CardName}"
+                       FontWeight="SemiBold"
+                       FontSize="18"
+                       TextWrapping="Wrap"
+                       HorizontalAlignment="Center"
+                       Margin="0,8,0,0"
+                       Foreground="{DynamicResource GoldBrush}" />
+
             <!-- Navigation buttons - shown only when there are multiple images -->
-            <StackPanel Grid.Row="1" 
+            <StackPanel Grid.Row="2" 
                         Orientation="Horizontal" 
                         HorizontalAlignment="Center" 
                         Margin="0,8,0,0"
@@ -70,20 +79,17 @@
                         Command="{Binding NextImageCommand}" />
             </StackPanel>
 
-            <!-- Info and Reset button -->
-            <StackPanel Grid.Row="2" 
+            <!-- Reset button (kept below navigation) -->
+            <StackPanel Grid.Row="0" 
                         Orientation="Horizontal" 
-                        VerticalAlignment="Center"
+                        VerticalAlignment="Bottom"
                         Margin="0,8,0,0"
-                        Background="{DynamicResource SurfaceBrush}">
-                <TextBlock Text="{Binding CardName}" 
-                           FontWeight="SemiBold" 
-                           TextWrapping="Wrap"
-                           VerticalAlignment="Center"
-                           Foreground="{DynamicResource GoldBrush}"/>
+                        Background="Transparent"
+                        HorizontalAlignment="Right">
                 <Button Content="Reset" 
                         Padding="6,3" 
                         Margin="12,0,0,0" 
+                        Background="Transparent"
                         Click="Reset_Click" />
             </StackPanel>
         </Grid>

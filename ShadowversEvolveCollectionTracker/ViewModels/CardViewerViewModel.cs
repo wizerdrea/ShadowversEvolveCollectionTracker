@@ -11,7 +11,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
 {
     public class CardViewerViewModel : INotifyPropertyChanged
     {
-        private List<string> _images = new List<string>();
+        private List<CardData> _cards = new();
         private int _currentIndex;
         private string? _cardName;
 
@@ -46,6 +46,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
             {
                 if (SetProperty(ref _currentIndex, value))
                 {
+                    OnPropertyChanged(nameof(CurrentCard));
                     OnPropertyChanged(nameof(CurrentImage));
                     OnPropertyChanged(nameof(CurrentIndexDisplay));
                     ((RelayCommand)PrevImageCommand).RaiseCanExecuteChanged();
@@ -54,23 +55,20 @@ namespace ShadowversEvolveCardTracker.ViewModels
             }
         }
 
-        public string? CurrentImage
+        public CardData? CurrentCard
         {
             get
             {
-                if (_images == null || _images.Count == 0)
-                    return null;
-
-                if (_currentIndex < 0)
-                    _currentIndex = 0;
-                if (_currentIndex >= _images.Count)
-                    _currentIndex = _images.Count - 1;
-
-                return _images.ElementAtOrDefault(_currentIndex);
+                if (_cards == null || _cards.Count == 0) return null;
+                if (_currentIndex < 0) _currentIndex = 0;
+                if (_currentIndex >= _cards.Count) _currentIndex = _cards.Count - 1;
+                return _cards.ElementAtOrDefault(_currentIndex);
             }
         }
 
-        public int ImageCount => _images?.Count ?? 0;
+        public string? CurrentImage => CurrentCard?.ImageFile;
+
+        public int ImageCount => _cards?.Count ?? 0;
 
         public int CurrentIndexDisplay => ImageCount == 0 ? 0 : CurrentIndex + 1;
 
@@ -87,47 +85,56 @@ namespace ShadowversEvolveCardTracker.ViewModels
         {
             if (card == null)
             {
-                _images = new List<string>();
+                _cards = new List<CardData>();
                 CardName = null;
             }
             else
             {
-                _images = new List<string> { card.ImageFile };
+                _cards = new List<CardData> { card };
                 CardName = card.Name;
             }
 
-            // Ensure UI shows 1-based index correctly even when CurrentIndex was already 0
             CurrentIndex = 0;
             OnPropertyChanged(nameof(ImageCount));
             OnPropertyChanged(nameof(ShowNavigation));
+            OnPropertyChanged(nameof(CurrentCard));
             OnPropertyChanged(nameof(CurrentImage));
             OnPropertyChanged(nameof(CurrentIndexDisplay));
             ((RelayCommand)PrevImageCommand).RaiseCanExecuteChanged();
             ((RelayCommand)NextImageCommand).RaiseCanExecuteChanged();
         }
 
-        // Set multiple images from a CombinedCardCount
-        public void SetCombinedCard(CombinedCardCount? combined)
+        // Set multiple cards from an enumerable of CardData
+        public void SetCards(IEnumerable<CardData>? cards)
         {
-            if (combined == null)
+            if (cards == null)
             {
-                _images = new List<string>();
+                _cards = new List<CardData>();
                 CardName = null;
             }
             else
             {
-                _images = combined.Images ?? new List<string>();
-                CardName = combined.Name;
+                _cards = cards.ToList();
+                // show name of the currently displayed card if available, otherwise first card name
+                CardName = CurrentCard?.Name ?? _cards.FirstOrDefault()?.Name;
             }
 
-            // Ensure UI shows 1-based index correctly even when CurrentIndex was already 0
             CurrentIndex = 0;
             OnPropertyChanged(nameof(ImageCount));
             OnPropertyChanged(nameof(ShowNavigation));
+            OnPropertyChanged(nameof(CurrentCard));
             OnPropertyChanged(nameof(CurrentImage));
             OnPropertyChanged(nameof(CurrentIndexDisplay));
             ((RelayCommand)PrevImageCommand).RaiseCanExecuteChanged();
             ((RelayCommand)NextImageCommand).RaiseCanExecuteChanged();
+        }
+
+        // Convenience: keep existing name used by other code
+        public void SetCombinedCard(CombinedCardCount? combined)
+        {
+            SetCards(combined?.Cards);
+            if (combined != null)
+                CardName = combined.Name;
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
