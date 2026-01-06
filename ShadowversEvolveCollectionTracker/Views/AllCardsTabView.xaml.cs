@@ -4,22 +4,22 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 
-namespace ShadowversEvolveCardTracker
+namespace ShadowversEvolveCardTracker.Views
 {
-    public partial class MainWindow
+    public partial class AllCardsTabView : UserControl
     {
         private bool _isPanning;
         private Point _panStartPoint;
         private double _startTranslateX;
         private double _startTranslateY;
 
-        // Add this field to your MainWindow class (if not already present)
-        private Viewbox? ChecklistPreviewViewbox;
+        public AllCardsTabView()
+        {
+            InitializeComponent();
+        }
 
-        // Mouse wheel zoom handler (works for Border viewport or Viewbox sender)
         private void PreviewImage_MouseWheel(object sender, MouseWheelEventArgs e)
         {
-            // Border-based viewport (AllCards or Checklist)
             if (sender is Border viewport && viewport.Tag is Image img && img.RenderTransform is TransformGroup tg)
             {
                 var scale = (ScaleTransform)tg.Children[0];
@@ -33,9 +33,7 @@ namespace ShadowversEvolveCardTracker
                 if (Math.Abs(newScale - oldScale) < 0.0001)
                     return;
 
-                // Use image coordinates (not the Border) so calculations refer to the image layout slot
                 var pos = e.GetPosition(img);
-
                 double relativeX = (pos.X - translate.X) / oldScale;
                 double relativeY = (pos.Y - translate.Y) / oldScale;
 
@@ -45,24 +43,7 @@ namespace ShadowversEvolveCardTracker
                 translate.X = pos.X - relativeX * newScale;
                 translate.Y = pos.Y - relativeY * newScale;
 
-                // Keep image within viewport bounds after zoom
                 KeepImageInBounds(viewport, img, scale, translate);
-
-                e.Handled = true;
-                return;
-            }
-
-            // Viewbox-based preview (legacy; still support if present)
-            if (sender is Viewbox vb && vb.RenderTransform is ScaleTransform st)
-            {
-                const double zoomUp = 1.1;
-                const double zoomDown = 1.0 / zoomUp;
-                var factor = e.Delta > 0 ? zoomUp : zoomDown;
-
-                double newScale = Math.Clamp(st.ScaleX * factor, 0.25, 8.0);
-                st.ScaleX = newScale;
-                st.ScaleY = newScale;
-
                 e.Handled = true;
             }
         }
@@ -73,8 +54,6 @@ namespace ShadowversEvolveCardTracker
             if (!(viewport.Tag is Image img)) return;
 
             _isPanning = true;
-
-            // Use image coordinates so panning delta is in the same coordinate space as translate transforms
             _panStartPoint = e.GetPosition(img);
             var tg = (TransformGroup)img.RenderTransform;
             var translate = (TranslateTransform)tg.Children[1];
@@ -92,7 +71,6 @@ namespace ShadowversEvolveCardTracker
             if (sender is not Border viewport) return;
             if (!(viewport.Tag is Image img)) return;
 
-            // Use image coordinates so delta corresponds to translate units
             var current = e.GetPosition(img);
             var delta = current - _panStartPoint;
 
@@ -103,9 +81,7 @@ namespace ShadowversEvolveCardTracker
             translate.X = _startTranslateX + delta.X;
             translate.Y = _startTranslateY + delta.Y;
 
-            // Keep image within viewport bounds while panning
             KeepImageInBounds(viewport, img, scale, translate);
-
             e.Handled = true;
         }
 
@@ -120,10 +96,8 @@ namespace ShadowversEvolveCardTracker
             e.Handled = true;
         }
 
-        // Right-click resets zoom/position
         private void PreviewImage_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
-            // Border-based reset
             if (sender is Border viewport && viewport.Tag is Image img && img.RenderTransform is TransformGroup tg)
             {
                 var scale = (ScaleTransform)tg.Children[0];
@@ -133,18 +107,9 @@ namespace ShadowversEvolveCardTracker
                 translate.X = translate.Y = 0.0;
 
                 e.Handled = true;
-                return;
-            }
-
-            // Viewbox-based reset (if right-clicked directly on viewbox)
-            if (sender is Viewbox vb && vb.RenderTransform is ScaleTransform st)
-            {
-                st.ScaleX = st.ScaleY = 1.0;
-                e.Handled = true;
             }
         }
 
-        // Reset button for All Cards preview
         private void AllCardsReset_Click(object? sender, RoutedEventArgs e)
         {
             try
@@ -164,41 +129,11 @@ namespace ShadowversEvolveCardTracker
             }
         }
 
-        // Reset button for Checklist preview
-        private void ChecklistReset_Click(object? sender, RoutedEventArgs e)
-        {
-            try
-            {
-                // Reset Checklist Border/Image transforms if present
-                if (ChecklistPreviewViewport?.Tag is Image img && img.RenderTransform is TransformGroup tg)
-                {
-                    var scale = (ScaleTransform)tg.Children[0];
-                    var translate = (TranslateTransform)tg.Children[1];
-
-                    scale.ScaleX = scale.ScaleY = 1.0;
-                    translate.X = translate.Y = 0.0;
-                }
-
-                // Also reset viewbox-based fallback
-                if (ChecklistPreviewViewbox?.RenderTransform is ScaleTransform st)
-                {
-                    st.ScaleX = st.ScaleY = 1.0;
-                }
-            }
-            catch
-            {
-                // ignore UI reset failures
-            }
-        }
-
-        // Ensure image remains visible inside viewport bounds (centers if smaller than viewport)
         private void KeepImageInBounds(Border viewport, Image img, ScaleTransform scale, TranslateTransform translate)
         {
             if (viewport == null || img == null || scale == null || translate == null)
                 return;
 
-            // Use the Image control's layout size as the available area for translation.
-            // The RenderTransform operates inside the Image control, so centering/clamping should use img.ActualWidth/Height.
             double vpW = Math.Max(1.0, img.ActualWidth);
             double vpH = Math.Max(1.0, img.ActualHeight);
 
@@ -211,15 +146,14 @@ namespace ShadowversEvolveCardTracker
             double contentW = imgWidth * scale.ScaleX;
             double contentH = imgHeight * scale.ScaleY;
 
-            // If content smaller than available area, center it
             if (contentW <= vpW)
             {
                 translate.X = (vpW - contentW) / 2.0;
             }
             else
             {
-                double minX = vpW - contentW; // most negative allowed
-                double maxX = 0;              // most positive allowed
+                double minX = vpW - contentW;
+                double maxX = 0;
                 translate.X = Math.Clamp(translate.X, minX, maxX);
             }
 
