@@ -56,6 +56,21 @@ namespace ShadowversEvolveCardTracker.Models
             }
         }
 
+        // Favorite flag, default false. Editable from UI (Card viewer).
+        private bool _isFavorite = false;
+        public bool IsFavorite
+        {
+            get => _isFavorite;
+            set
+            {
+                if (_isFavorite != value)
+                {
+                    _isFavorite = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
         public string ImageFile => Path.Join(_saveFolder, $"{CardNumber}.png");
 
         public event PropertyChangedEventHandler? PropertyChanged;

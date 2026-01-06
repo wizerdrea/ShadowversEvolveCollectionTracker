@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -40,6 +41,17 @@ namespace ShadowversEvolveCardTracker.ViewModels
             }
         }
 
+        private bool _favoritesOnly;
+        public bool FavoritesOnly
+        {
+            get => _favoritesOnly;
+            set
+            {
+                if (SetProperty(ref _favoritesOnly, value))
+                    _checklistView.Refresh();
+            }
+        }
+
         private CombinedCardCount? _selectedCombinedCard;
         public CombinedCardCount? SelectedCombinedCard
         {
@@ -72,12 +84,67 @@ namespace ShadowversEvolveCardTracker.ViewModels
             _combinedCardCounts = combinedCardCounts ?? throw new ArgumentNullException(nameof(combinedCardCounts));
             _checklistView = CollectionViewSource.GetDefaultView(_combinedCardCounts);
             _checklistView.Filter = ChecklistFilter;
+
+            // subscribe to collection changes and nested card property changes
+            if (_combinedCardCounts is INotifyCollectionChanged incc)
+                incc.CollectionChanged += CombinedGroups_CollectionChanged;
+
+            foreach (var g in _combinedCardCounts)
+                SubscribeToGroup(g);
+        }
+
+        private void CombinedGroups_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e?.OldItems != null)
+            {
+                foreach (var old in e.OldItems.OfType<CombinedCardCount>())
+                    UnsubscribeFromGroup(old);
+            }
+
+            if (e?.NewItems != null)
+            {
+                foreach (var nw in e.NewItems.OfType<CombinedCardCount>())
+                    SubscribeToGroup(nw);
+            }
+        }
+
+        private void SubscribeToGroup(CombinedCardCount group)
+        {
+            foreach (var card in group.AllCards)
+            {
+                if (card is INotifyPropertyChanged inpc)
+                    inpc.PropertyChanged += Card_PropertyChanged;
+            }
+        }
+
+        private void UnsubscribeFromGroup(CombinedCardCount group)
+        {
+            foreach (var card in group.AllCards)
+            {
+                if (card is INotifyPropertyChanged inpc)
+                    inpc.PropertyChanged -= Card_PropertyChanged;
+            }
+        }
+
+        private void Card_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            // If favorites or quantity change, the checklist visibility may need refresh
+            if (e.PropertyName == nameof(CardData.IsFavorite) ||
+                e.PropertyName == nameof(CardData.QuantityOwned) ||
+                e.PropertyName == nameof(CardData.Name) ||
+                e.PropertyName == nameof(CardData.Type))
+            {
+                _checklistView.Refresh();
+            }
         }
 
         private bool ChecklistFilter(object? obj)
         {
             if (obj is not CombinedCardCount group) return false;
             var name = group.Name ?? string.Empty;
+
+            if (FavoritesOnly && !group.HasFavorite)
+                return false;
 
             if (!string.IsNullOrWhiteSpace(ChecklistNameFilter))
             {

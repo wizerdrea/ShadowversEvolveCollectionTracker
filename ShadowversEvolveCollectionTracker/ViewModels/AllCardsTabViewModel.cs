@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -128,6 +129,17 @@ namespace ShadowversEvolveCardTracker.ViewModels
             }
         }
 
+        private bool _favoritesOnly;
+        public bool FavoritesOnly
+        {
+            get => _favoritesOnly;
+            set
+            {
+                if (SetProperty(ref _favoritesOnly, value))
+                    _filteredCards.Refresh();
+            }
+        }
+
         private CardData? _selectedCard;
         public CardData? SelectedCard
         {
@@ -146,11 +158,67 @@ namespace ShadowversEvolveCardTracker.ViewModels
             _allCards = allCards ?? throw new ArgumentNullException(nameof(allCards));
             _filteredCards = CollectionViewSource.GetDefaultView(_allCards);
             _filteredCards.Filter = FilterCard;
+
+            // subscribe to collection changes and card property changes so filter updates when card properties change
+            if (_allCards is INotifyCollectionChanged incc)
+                incc.CollectionChanged += AllCards_CollectionChanged;
+
+            foreach (var c in _allCards)
+                SubscribeToCard(c);
+        }
+
+        private void AllCards_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e?.OldItems != null)
+            {
+                foreach (var old in e.OldItems.OfType<CardData>())
+                    UnsubscribeFromCard(old);
+            }
+
+            if (e?.NewItems != null)
+            {
+                foreach (var nw in e.NewItems.OfType<CardData>())
+                    SubscribeToCard(nw);
+            }
+        }
+
+        private void SubscribeToCard(CardData card)
+        {
+            if (card is INotifyPropertyChanged inpc)
+                inpc.PropertyChanged += Card_PropertyChanged;
+        }
+
+        private void UnsubscribeFromCard(CardData card)
+        {
+            if (card is INotifyPropertyChanged inpc)
+                inpc.PropertyChanged -= Card_PropertyChanged;
+        }
+
+        private void Card_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            // changes that may affect filtering should refresh the view
+            if (e.PropertyName == nameof(CardData.QuantityOwned) ||
+                e.PropertyName == nameof(CardData.Name) ||
+                e.PropertyName == nameof(CardData.Rarity) ||
+                e.PropertyName == nameof(CardData.Set) ||
+                e.PropertyName == nameof(CardData.Format) ||
+                e.PropertyName == nameof(CardData.Class) ||
+                e.PropertyName == nameof(CardData.Type) ||
+                e.PropertyName == nameof(CardData.Traits) ||
+                e.PropertyName == nameof(CardData.Text) ||
+                e.PropertyName == nameof(CardData.CardNumber) ||
+                e.PropertyName == nameof(CardData.IsFavorite))
+            {
+                _filteredCards.Refresh();
+            }
         }
 
         private bool FilterCard(object? obj)
         {
             if (obj is not CardData card) return false;
+
+            if (FavoritesOnly && !card.IsFavorite)
+                return false;
 
             if (!string.IsNullOrWhiteSpace(NameFilter))
             {

@@ -7,6 +7,8 @@
     
     <UserControl.Resources>
         <conv:StringToImageSourceConverter x:Key="StringToImageConverter" />
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
+        <conv:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisConverter" />
     </UserControl.Resources>
     
     <Grid Margin="8">
@@ -18,169 +20,260 @@
 
         <!-- DataGrid with "no data" message -->
         <Grid Grid.Column="0">
-            <DataGrid x:Name="AllCardsDataGrid"
-                      ItemsSource="{Binding FilteredCards}"
-                      AutoGenerateColumns="False"
-                      IsReadOnly="False"
-                      CanUserAddRows="False"
-                      SelectedItem="{Binding SelectedCard, Mode=TwoWay}"
-                      Background="{DynamicResource PrimaryBrush}">
-                <DataGrid.RowStyle>
-                    <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
-                        <Setter Property="ToolTip">
-                            <Setter.Value>
-                                <ToolTip Placement="Mouse">
-                                    <Border Background="{DynamicResource ElevatedBrush}" 
-                                            Padding="4" 
-                                            CornerRadius="4" 
-                                            BorderBrush="{DynamicResource AccentBrush}" 
-                                            BorderThickness="1">
-                                        <Image Source="{Binding ImageFile, Converter={StaticResource StringToImageConverter}}"
-                                               Width="240" Height="320" Stretch="Uniform"/>
-                                    </Border>
-                                </ToolTip>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </DataGrid.RowStyle>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-                <DataGrid.Columns>
-                    <DataGridTextColumn Binding="{Binding Name}" IsReadOnly="True" Width="2*">
-                        <DataGridTextColumn.HeaderTemplate>
-                            <DataTemplate>
-                                <StackPanel>
-                                    <TextBlock Text="Name"/>
-                                    <TextBox Text="{Binding DataContext.NameFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
-                                </StackPanel>
-                            </DataTemplate>
-                        </DataGridTextColumn.HeaderTemplate>
-                    </DataGridTextColumn>
+            <!-- removed top checkbox (Favorites filter moved to star column header) -->
 
-                    <DataGridTextColumn Binding="{Binding CardNumber}" IsReadOnly="True" Width="*">
-                        <DataGridTextColumn.HeaderTemplate>
-                            <DataTemplate>
-                                <StackPanel>
-                                    <TextBlock Text="Card #"/>
-                                    <TextBox Text="{Binding DataContext.CardNumberFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" Width="80"/>
-                                </StackPanel>
-                            </DataTemplate>
-                        </DataGridTextColumn.HeaderTemplate>
-                    </DataGridTextColumn>
+            <Grid Grid.Row="1">
+                <DataGrid x:Name="AllCardsDataGrid"
+                          ItemsSource="{Binding FilteredCards}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="False"
+                          CanUserAddRows="False"
+                          SelectedItem="{Binding SelectedCard, Mode=TwoWay}"
+                          Background="{DynamicResource PrimaryBrush}">
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                            <Setter Property="ToolTip">
+                                <Setter.Value>
+                                    <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                        <Border Background="transparent" 
+                                                Padding="0" 
+                                                CornerRadius="4" 
+                                                BorderBrush="Transparent" 
+                                                BorderThickness="0">
+                                            <Image Source="{Binding ImageFile, Converter={StaticResource StringToImageConverter}}"
+                                                   Width="240" Height="320" Stretch="Uniform"/>
+                                        </Border>
+                                    </ToolTip>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </DataGrid.RowStyle>
 
-                    <DataGridTextColumn Header="Qty Owned" Binding="{Binding QuantityOwned, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="80">
-                        <DataGridTextColumn.HeaderTemplate>
-                            <DataTemplate>
-                                <StackPanel>
-                                    <TextBlock Text="Qty Owned"/>
-                                    <ComboBox Width="120"
-                                              SelectedValuePath="Content"
-                                              SelectedValue="{Binding DataContext.QtyOwnedFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
-                                        <ComboBoxItem Content="Both" />
-                                        <ComboBoxItem Content="Owned" />
-                                        <ComboBoxItem Content="Unowned" />
-                                    </ComboBox>
-                                </StackPanel>
-                            </DataTemplate>
-                        </DataGridTextColumn.HeaderTemplate>
-                    </DataGridTextColumn>
+                    <DataGrid.Columns>
+                        <!-- Favorite star column (far left) with header toggle -->
+                        <DataGridTemplateColumn Width="40" IsReadOnly="False">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ToggleButton IsChecked="{Binding IsFavorite, Mode=TwoWay}"
+                                                  ToolTip="Toggle favorite"
+                                                  Cursor="Hand"
+                                                  Background="Transparent"
+                                                  BorderThickness="0"
+                                                  Focusable="False"
+                                                  OverridesDefaultStyle="True"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center">
+                                        <ToggleButton.Template>
+                                            <ControlTemplate TargetType="ToggleButton">
+                                                <Border Background="{TemplateBinding Background}"
+                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                        BorderThickness="{TemplateBinding BorderThickness}">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </ToggleButton.Template>
 
-                    <DataGridTextColumn Binding="{Binding Rarity}" IsReadOnly="True" Width="*">
-                        <DataGridTextColumn.HeaderTemplate>
-                            <DataTemplate>
-                                <StackPanel>
-                                    <TextBlock Text="Rarity"/>
-                                    <TextBox Text="{Binding DataContext.RarityFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
-                                </StackPanel>
-                            </DataTemplate>
-                        </DataGridTextColumn.HeaderTemplate>
-                    </DataGridTextColumn>
+                                        <Viewbox Width="18" Height="18">
+                                            <Canvas Width="24" Height="24">
+                                                <!-- Filled star when checked -->
+                                                <Path Fill="{DynamicResource GoldBrush}"
+                                                      Data="M12,17.27 L18.18,21 L16.54,13.97 L22,9.24 L14.81,8.63 L12,2 L9.19,8.63 L2,9.24 L7.46,13.97 L5.82,21 z"
+                                                      Visibility="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=ToggleButton}, Converter={StaticResource BoolToVisConverter}}"/>
+                                                <!-- Outline star when unchecked -->
+                                                <Path Stroke="{DynamicResource GoldBrush}"
+                                                      Fill="Transparent"
+                                                      StrokeThickness="1.6"
+                                                      Data="M12,17.27 L18.18,21 L16.54,13.97 L22,9.24 L14.81,8.63 L12,2 L9.19,8.63 L2,9.24 L7.46,13.97 L5.82,21 z"
+                                                      Visibility="Visible"/>
+                                            </Canvas>
+                                        </Viewbox>
+                                    </ToggleButton>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
 
-                    <DataGridTextColumn Binding="{Binding Set}" IsReadOnly="True" Width="2*">
-                        <DataGridTextColumn.HeaderTemplate>
-                            <DataTemplate>
-                                <StackPanel>
-                                    <TextBlock Text="Set"/>
-                                    <TextBox Text="{Binding DataContext.SetFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
-                                </StackPanel>
-                            </DataTemplate>
-                        </DataGridTextColumn.HeaderTemplate>
-                    </DataGridTextColumn>
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <!-- Header toggle: binds to outer DataContext.FavoritesOnly -->
+                                    <ToggleButton ToolTip="Show favorites only"
+                                                  Cursor="Hand"
+                                                  Background="Transparent"
+                                                  BorderThickness="0"
+                                                  Focusable="False"
+                                                  OverridesDefaultStyle="True"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"
+                                                  IsChecked="{Binding DataContext.FavoritesOnly, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                        <ToggleButton.Template>
+                                            <ControlTemplate TargetType="ToggleButton">
+                                                <Border Background="{TemplateBinding Background}"
+                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                        BorderThickness="{TemplateBinding BorderThickness}">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </ToggleButton.Template>
 
-                    <DataGridTextColumn Binding="{Binding Format}" IsReadOnly="True" Width="*">
-                        <DataGridTextColumn.HeaderTemplate>
-                            <DataTemplate>
-                                <StackPanel>
-                                    <TextBlock Text="Format"/>
-                                    <TextBox Text="{Binding DataContext.FormatFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
-                                </StackPanel>
-                            </DataTemplate>
-                        </DataGridTextColumn.HeaderTemplate>
-                    </DataGridTextColumn>
+                                        <Viewbox Width="18" Height="18">
+                                            <Canvas Width="24" Height="24">
+                                                <!-- Filled star when header is checked -->
+                                                <Path Fill="{DynamicResource GoldBrush}"
+                                                      Data="M12,17.27 L18.18,21 L16.54,13.97 L22,9.24 L14.81,8.63 L12,2 L9.19,8.63 L2,9.24 L7.46,13.97 L5.82,21 z"
+                                                      Visibility="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=ToggleButton}, Converter={StaticResource BoolToVisConverter}}"/>
+                                                <!-- Outline star when header is unchecked -->
+                                                <Path Stroke="{DynamicResource GoldBrush}"
+                                                      Fill="Transparent"
+                                                      StrokeThickness="1.6"
+                                                      Data="M12,17.27 L18.18,21 L16.54,13.97 L22,9.24 L14.81,8.63 L12,2 L9.19,8.63 L2,9.24 L7.46,13.97 L5.82,21 z"
+                                                      Visibility="Visible"/>
+                                            </Canvas>
+                                        </Viewbox>
+                                    </ToggleButton>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+                        </DataGridTemplateColumn>
 
-                    <DataGridTextColumn Binding="{Binding Class}" IsReadOnly="True" Width="*">
-                        <DataGridTextColumn.HeaderTemplate>
-                            <DataTemplate>
-                                <StackPanel>
-                                    <TextBlock Text="Class"/>
-                                    <TextBox Text="{Binding DataContext.ClassFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
-                                </StackPanel>
-                            </DataTemplate>
-                        </DataGridTextColumn.HeaderTemplate>
-                    </DataGridTextColumn>
+                        <DataGridTextColumn Binding="{Binding Name}" IsReadOnly="True" Width="2*">
+                            <DataGridTextColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="Name"/>
+                                        <TextBox Text="{Binding DataContext.NameFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTextColumn.HeaderTemplate>
+                        </DataGridTextColumn>
 
-                    <DataGridTextColumn Binding="{Binding Type}" IsReadOnly="True" Width="*">
-                        <DataGridTextColumn.HeaderTemplate>
-                            <DataTemplate>
-                                <StackPanel>
-                                    <TextBlock Text="Type"/>
-                                    <TextBox Text="{Binding DataContext.TypeFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
-                                </StackPanel>
-                            </DataTemplate>
-                        </DataGridTextColumn.HeaderTemplate>
-                    </DataGridTextColumn>
+                        <DataGridTextColumn Binding="{Binding CardNumber}" IsReadOnly="True" Width="*">
+                            <DataGridTextColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="Card #"/>
+                                        <TextBox Text="{Binding DataContext.CardNumberFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" Width="80"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTextColumn.HeaderTemplate>
+                        </DataGridTextColumn>
 
-                    <DataGridTextColumn Binding="{Binding Traits}" IsReadOnly="True" Width="2*">
-                        <DataGridTextColumn.HeaderTemplate>
-                            <DataTemplate>
-                                <StackPanel>
-                                    <TextBlock Text="Traits"/>
-                                    <TextBox Text="{Binding DataContext.TraitsFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
-                                </StackPanel>
-                            </DataTemplate>
-                        </DataGridTextColumn.HeaderTemplate>
-                    </DataGridTextColumn>
+                        <DataGridTextColumn Header="Qty Owned" Binding="{Binding QuantityOwned, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="80">
+                            <DataGridTextColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="Qty Owned"/>
+                                        <ComboBox Width="120"
+                                                  SelectedValuePath="Content"
+                                                  SelectedValue="{Binding DataContext.QtyOwnedFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
+                                            <ComboBoxItem Content="Both" />
+                                            <ComboBoxItem Content="Owned" />
+                                            <ComboBoxItem Content="Unowned" />
+                                        </ComboBox>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTextColumn.HeaderTemplate>
+                        </DataGridTextColumn>
 
-                    <DataGridTextColumn Binding="{Binding Text}" IsReadOnly="True" Width="2*">
-                        <DataGridTextColumn.HeaderTemplate>
-                            <DataTemplate>
-                                <StackPanel>
-                                    <TextBlock Text="Text"/>
-                                    <TextBox Text="{Binding DataContext.TextFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
-                                </StackPanel>
-                            </DataTemplate>
-                        </DataGridTextColumn.HeaderTemplate>
-                    </DataGridTextColumn>
-                </DataGrid.Columns>
-            </DataGrid>
+                        <DataGridTextColumn Binding="{Binding Rarity}" IsReadOnly="True" Width="*">
+                            <DataGridTextColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="Rarity"/>
+                                        <TextBox Text="{Binding DataContext.RarityFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTextColumn.HeaderTemplate>
+                        </DataGridTextColumn>
 
-            <TextBlock Text="No card data loaded. Use File → Select Folder and Load to load CSV files."
-                       Foreground="{DynamicResource TextSecondaryBrush}"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center"
-                       TextWrapping="Wrap"
-                       TextAlignment="Center"
-                       Width="380">
-                <TextBlock.Style>
-                    <Style TargetType="TextBlock">
-                        <Setter Property="Visibility" Value="Collapsed"/>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding HasItems, ElementName=AllCardsDataGrid}" Value="False">
-                                <Setter Property="Visibility" Value="Visible"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBlock.Style>
-            </TextBlock>
+                        <DataGridTextColumn Binding="{Binding Set}" IsReadOnly="True" Width="2*">
+                            <DataGridTextColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="Set"/>
+                                        <TextBox Text="{Binding DataContext.SetFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTextColumn.HeaderTemplate>
+                        </DataGridTextColumn>
+
+                        <DataGridTextColumn Binding="{Binding Format}" IsReadOnly="True" Width="*">
+                            <DataGridTextColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="Format"/>
+                                        <TextBox Text="{Binding DataContext.FormatFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTextColumn.HeaderTemplate>
+                        </DataGridTextColumn>
+
+                        <DataGridTextColumn Binding="{Binding Class}" IsReadOnly="True" Width="*">
+                            <DataGridTextColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="Class"/>
+                                        <TextBox Text="{Binding DataContext.ClassFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTextColumn.HeaderTemplate>
+                        </DataGridTextColumn>
+
+                        <DataGridTextColumn Binding="{Binding Type}" IsReadOnly="True" Width="*">
+                            <DataGridTextColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="Type"/>
+                                        <TextBox Text="{Binding DataContext.TypeFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTextColumn.HeaderTemplate>
+                        </DataGridTextColumn>
+
+                        <DataGridTextColumn Binding="{Binding Traits}" IsReadOnly="True" Width="2*">
+                            <DataGridTextColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="Traits"/>
+                                        <TextBox Text="{Binding DataContext.TraitsFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTextColumn.HeaderTemplate>
+                        </DataGridTextColumn>
+
+                        <DataGridTextColumn Binding="{Binding Text}" IsReadOnly="True" Width="2*">
+                            <DataGridTextColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="Text"/>
+                                        <TextBox Text="{Binding DataContext.TextFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTextColumn.HeaderTemplate>
+                        </DataGridTextColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <TextBlock Text="No card data loaded. Use File → Select Folder and Load to load CSV files."
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           TextWrapping="Wrap"
+                           TextAlignment="Center"
+                           Width="380">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasItems, ElementName=AllCardsDataGrid}" Value="False">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Grid>
         </Grid>
 
         <GridSplitter Grid.Column="1"

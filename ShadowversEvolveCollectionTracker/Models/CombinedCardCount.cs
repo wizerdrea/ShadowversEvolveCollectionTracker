@@ -40,5 +40,11 @@ namespace ShadowversEvolveCardTracker.Models
                     : new List<CardData>();
 
         public int TotalQuantityOwned => _cards.Sum(c => c.QuantityOwned);
+
+        // Expose underlying cards so viewmodels can subscribe to property changes
+        public IEnumerable<CardData> AllCards => _cards;
+
+        // Convenience helper for favorites filtering
+        public bool HasFavorite => _cards.Any(c => c.IsFavorite);
     }
 }

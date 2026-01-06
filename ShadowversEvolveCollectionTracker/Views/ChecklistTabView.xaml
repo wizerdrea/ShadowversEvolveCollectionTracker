@@ -4,12 +4,14 @@
              xmlns:conv="clr-namespace:ShadowversEvolveCardTracker.Converters"
              xmlns:controls="clr-namespace:ShadowversEvolveCardTracker.Controls"
              Background="{DynamicResource PrimaryBrush}">
-    
+
     <UserControl.Resources>
         <conv:StringToImageSourceConverter x:Key="StringToImageConverter" />
         <conv:TotalQuantityToCategoryConverter x:Key="TotalQuantityToCategoryConverter" />
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
+        <conv:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisConverter" />
     </UserControl.Resources>
-    
+
     <Grid Margin="8">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
@@ -19,82 +21,174 @@
 
         <!-- Wrap the DataGrid in a Grid so we can overlay a "calculating" message -->
         <Grid Grid.Column="0">
-            <DataGrid ItemsSource="{Binding ChecklistView}"
-                      AutoGenerateColumns="False"
-                      IsReadOnly="True"
-                      CanUserAddRows="False"
-                      SelectedItem="{Binding SelectedCombinedCard, Mode=TwoWay}"
-                      Background="{DynamicResource PrimaryBrush}">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Binding="{Binding Name}" Width="3*">
-                        <DataGridTextColumn.HeaderTemplate>
-                            <DataTemplate>
-                                <StackPanel>
-                                    <TextBlock Text="Card Name"/>
-                                    <TextBox Text="{Binding DataContext.ChecklistNameFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" Width="200" ToolTip="Enter a regular expression to filter card names"/>
-                                </StackPanel>
-                            </DataTemplate>
-                        </DataGridTextColumn.HeaderTemplate>
-                    </DataGridTextColumn>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-                    <DataGridTextColumn Binding="{Binding TotalQuantityOwned}" Width="*">
-                        <DataGridTextColumn.HeaderTemplate>
-                            <DataTemplate>
-                                <StackPanel>
-                                    <TextBlock Text="Total Qty"/>
-                                    <ComboBox Width="120"
-                                              SelectedValuePath="Content"
-                                              SelectedValue="{Binding DataContext.ChecklistQtyFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
-                                        <ComboBoxItem Content="Both" />
-                                        <ComboBoxItem Content="Owned" />
-                                        <ComboBoxItem Content="Unowned" />
-                                    </ComboBox>
-                                </StackPanel>
-                            </DataTemplate>
-                        </DataGridTextColumn.HeaderTemplate>
+            <!-- removed top checkbox (Favorites filter moved to star column header) -->
 
-                        <DataGridTextColumn.CellStyle>
-                            <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}">
-                                <Setter Property="Background" Value="Transparent"/>
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding TotalQuantityOwned, Converter={StaticResource TotalQuantityToCategoryConverter}}" Value="Low">
-                                        <Setter Property="Background" Value="{DynamicResource ChecklistLowBrush}"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding TotalQuantityOwned, Converter={StaticResource TotalQuantityToCategoryConverter}}" Value="High">
-                                        <Setter Property="Background" Value="{DynamicResource ChecklistHighBrush}"/>
-                                        <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/>
-                                        <Setter Property="FontWeight" Value="SemiBold"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </DataGridTextColumn.CellStyle>
-                    </DataGridTextColumn>
-                </DataGrid.Columns>
-            </DataGrid>
+            <Grid Grid.Row="1">
+                <DataGrid ItemsSource="{Binding ChecklistView}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          CanUserAddRows="False"
+                          SelectedItem="{Binding SelectedCombinedCard, Mode=TwoWay}"
+                          Background="{DynamicResource PrimaryBrush}">
+                    <DataGrid.Columns>
+                        <!-- Favorite star column for combined groups with header toggle -->
+                        <DataGridTemplateColumn Width="40" IsReadOnly="False">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ToggleButton ToolTip="Toggle favorites for this group"
+                                                  Cursor="Hand"
+                                                  Background="Transparent"
+                                                  BorderThickness="0"
+                                                  Focusable="False"
+                                                  OverridesDefaultStyle="True"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"
+                                                  Click="GroupFavoriteToggle_Click"
+                                                  IsChecked="{Binding HasFavorite, Mode=OneWay}">
+                                        <ToggleButton.Template>
+                                            <ControlTemplate TargetType="ToggleButton">
+                                                <Border Background="{TemplateBinding Background}"
+                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                        BorderThickness="{TemplateBinding BorderThickness}">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </ToggleButton.Template>
 
-            <!-- Overlay message shown while calculating -->
-            <TextBlock Text="{Binding DataContext.CalculatingMessage, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                       FontSize="16"
-                       FontWeight="SemiBold"
-                       Foreground="{DynamicResource GoldBrush}"
-                       Background="{DynamicResource SurfaceBrush}"
-                       Padding="12"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center"
-                       TextAlignment="Center"
-                       TextWrapping="Wrap"
-                       MaxWidth="400">
-                <TextBlock.Style>
-                    <Style TargetType="TextBlock">
-                        <Setter Property="Visibility" Value="Collapsed" />
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding DataContext.IsCalculating, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
-                                <Setter Property="Visibility" Value="Visible"/>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </TextBlock.Style>
-            </TextBlock>
+                                        <Viewbox Width="18" Height="18">
+                                            <Canvas Width="24" Height="24">
+                                                <!-- Filled star when the group has any favorite -->
+                                                <Path Fill="{DynamicResource GoldBrush}"
+                                                      Data="M12,17.27 L18.18,21 L16.54,13.97 L22,9.24 L14.81,8.63 L12,2 L9.19,8.63 L2,9.24 L7.46,13.97 L5.82,21 z"
+                                                      Visibility="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=ToggleButton}, Converter={StaticResource BoolToVisConverter}}"/>
+                                                <!-- Outline star when group has no favorites -->
+                                                <Path Stroke="{DynamicResource GoldBrush}"
+                                                      Fill="Transparent"
+                                                      StrokeThickness="1.6"
+                                                      Data="M12,17.27 L18.18,21 L16.54,13.97 L22,9.24 L14.81,8.63 L12,2 L9.19,8.63 L2,9.24 L7.46,13.97 L5.82,21 z"
+                                                      Visibility="Visible"/>
+                                            </Canvas>
+                                        </Viewbox>
+                                    </ToggleButton>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <!-- Header toggle: binds to outer DataContext.FavoritesOnly -->
+                                    <ToggleButton ToolTip="Show favorites only"
+                                                  Cursor="Hand"
+                                                  Background="Transparent"
+                                                  BorderThickness="0"
+                                                  Focusable="False"
+                                                  OverridesDefaultStyle="True"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center"
+                                                  IsChecked="{Binding DataContext.FavoritesOnly, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                        <ToggleButton.Template>
+                                            <ControlTemplate TargetType="ToggleButton">
+                                                <Border Background="{TemplateBinding Background}"
+                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                        BorderThickness="{TemplateBinding BorderThickness}">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </ToggleButton.Template>
+
+                                        <Viewbox Width="18" Height="18">
+                                            <Canvas Width="24" Height="24">
+                                                <!-- Filled star when header is checked -->
+                                                <Path Fill="{DynamicResource GoldBrush}"
+                                                      Data="M12,17.27 L18.18,21 L16.54,13.97 L22,9.24 L14.81,8.63 L12,2 L9.19,8.63 L2,9.24 L7.46,13.97 L5.82,21 z"
+                                                      Visibility="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=ToggleButton}, Converter={StaticResource BoolToVisConverter}}"/>
+                                                <!-- Outline star when header is unchecked -->
+                                                <Path Stroke="{DynamicResource GoldBrush}"
+                                                      Fill="Transparent"
+                                                      StrokeThickness="1.6"
+                                                      Data="M12,17.27 L18.18,21 L16.54,13.97 L22,9.24 L14.81,8.63 L12,2 L9.19,8.63 L2,9.24 L7.46,13.97 L5.82,21 z"
+                                                      Visibility="Visible"/>
+                                            </Canvas>
+                                        </Viewbox>
+                                    </ToggleButton>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTextColumn Binding="{Binding Name}" Width="3*">
+                            <DataGridTextColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="Card Name"/>
+                                        <TextBox Text="{Binding DataContext.ChecklistNameFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" Width="200" ToolTip="Enter a regular expression to filter card names"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTextColumn.HeaderTemplate>
+                        </DataGridTextColumn>
+
+                        <DataGridTextColumn Binding="{Binding TotalQuantityOwned}" Width="*">
+                            <DataGridTextColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="Total Qty"/>
+                                        <ComboBox Width="120"
+                                                  SelectedValuePath="Content"
+                                                  SelectedValue="{Binding DataContext.ChecklistQtyFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
+                                            <ComboBoxItem Content="Both" />
+                                            <ComboBoxItem Content="Owned" />
+                                            <ComboBoxItem Content="Unowned" />
+                                        </ComboBox>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTextColumn.HeaderTemplate>
+
+                            <DataGridTextColumn.CellStyle>
+                                <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding TotalQuantityOwned, Converter={StaticResource TotalQuantityToCategoryConverter}}" Value="Low">
+                                            <Setter Property="Background" Value="{DynamicResource ChecklistLowBrush}"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding TotalQuantityOwned, Converter={StaticResource TotalQuantityToCategoryConverter}}" Value="High">
+                                            <Setter Property="Background" Value="{DynamicResource ChecklistHighBrush}"/>
+                                            <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGridTextColumn.CellStyle>
+                        </DataGridTextColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- Overlay message shown while calculating -->
+                <TextBlock Text="{Binding DataContext.CalculatingMessage, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource GoldBrush}"
+                           Background="{DynamicResource SurfaceBrush}"
+                           Padding="12"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap"
+                           MaxWidth="400">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding DataContext.IsCalculating, RelativeSource={RelativeSource AncestorType=UserControl}}" Value="True">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Grid>
         </Grid>
 
         <GridSplitter Grid.Column="1"

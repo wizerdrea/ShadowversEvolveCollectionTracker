@@ -17,10 +17,14 @@ namespace ShadowversEvolveCardTracker.Controls
         public CardViewerControl()
         {
             InitializeComponent();
-            DataContext = new CardViewerViewModel();
+            // Do NOT set DataContext here. The parent view binds this control's DataContext
+            // to its CardViewer view model (see AllCardsTabView / ChecklistTabView).
+            // Setting DataContext here prevented that binding and caused the favorite star
+            // to reflect the wrong (internal) view model.
         }
 
-        public CardViewerViewModel ViewModel => (CardViewerViewModel)DataContext;
+        // Expose the view model if callers need it; it may be null until the parent binds DataContext.
+        public CardViewerViewModel? ViewModel => DataContext as CardViewerViewModel;
 
         private void ViewerImage_MouseWheel(object sender, MouseWheelEventArgs e)
         {
