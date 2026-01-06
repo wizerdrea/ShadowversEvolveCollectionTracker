@@ -35,6 +35,26 @@
                           CanUserAddRows="False"
                           SelectedItem="{Binding SelectedCombinedCard, Mode=TwoWay}"
                           Background="{DynamicResource PrimaryBrush}">
+                    <!-- Image tooltip for combined-group rows (shows first card image) -->
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                            <Setter Property="ToolTip">
+                                <Setter.Value>
+                                    <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                        <Border Background="Transparent"
+                                                Padding="0"
+                                                CornerRadius="4"
+                                                BorderBrush="Transparent"
+                                                BorderThickness="0">
+                                            <Image Source="{Binding Cards[0].ImageFile, Converter={StaticResource StringToImageConverter}}"
+                                                   Width="240" Height="320" Stretch="Uniform"/>
+                                        </Border>
+                                    </ToolTip>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </DataGrid.RowStyle>
+
                     <DataGrid.Columns>
                         <!-- Favorite star column for combined groups with header toggle -->
                         <DataGridTemplateColumn Width="40" IsReadOnly="False">
@@ -66,7 +86,7 @@
                                                 <Path Fill="{DynamicResource GoldBrush}"
                                                       Data="M12,17.27 L18.18,21 L16.54,13.97 L22,9.24 L14.81,8.63 L12,2 L9.19,8.63 L2,9.24 L7.46,13.97 L5.82,21 z"
                                                       Visibility="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=ToggleButton}, Converter={StaticResource BoolToVisConverter}}"/>
-                                                <!-- Outline star when group has no favorites -->
+                                                <!-- Outline star Always Visible -->
                                                 <Path Stroke="{DynamicResource GoldBrush}"
                                                       Fill="Transparent"
                                                       StrokeThickness="1.6"

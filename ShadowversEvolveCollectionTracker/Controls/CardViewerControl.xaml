@@ -31,17 +31,74 @@
                     MouseLeftButtonUp="ViewerImage_MouseLeftButtonUp"
                     MouseMove="ViewerImage_MouseMove"
                     MouseRightButtonDown="ViewerImage_MouseRightButtonDown">
-                <Image x:Name="ViewerImage"
-                       Stretch="Uniform"
-                       Source="{Binding CurrentImage, Converter={StaticResource StringToImageConverter}}"
-                       RenderTransformOrigin="0,0">
-                    <Image.RenderTransform>
-                        <TransformGroup>
-                            <ScaleTransform ScaleX="1" ScaleY="1"/>
-                            <TranslateTransform X="0" Y="0"/>
-                        </TransformGroup>
-                    </Image.RenderTransform>
-                </Image>
+                <!-- Use a Grid inside the viewport so we can overlay the favorite toggle in the top-right -->
+                <Grid>
+                    <Image x:Name="ViewerImage"
+                           Stretch="Uniform"
+                           Source="{Binding CurrentImage, Converter={StaticResource StringToImageConverter}}"
+                           RenderTransformOrigin="0,0">
+                        <Image.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                <TranslateTransform X="0" Y="0"/>
+                            </TransformGroup>
+                        </Image.RenderTransform>
+                    </Image>
+
+                    <!-- Favorite Toggle positioned at the top-right of the image viewport -->
+                    <ToggleButton Padding="0"
+                                  Margin="0,0,0,0"
+                                  Width="34"
+                                  Height="34"
+                                  Background="Transparent"
+                                  IsChecked="{Binding CurrentCard.IsFavorite, Mode=TwoWay}"
+                                  Cursor="Hand"
+                                  Focusable="False"
+                                  OverridesDefaultStyle="True"
+                                  HorizontalAlignment="Right"
+                                  VerticalAlignment="Top">
+                        <!-- themed tooltip - transparent ToolTip chrome -->
+                        <ToggleButton.ToolTip>
+                            <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                <Border Background="{DynamicResource ElevatedBrush}"
+                                        Padding="6"
+                                        CornerRadius="4"
+                                        BorderBrush="{DynamicResource AccentBrush}"
+                                        BorderThickness="1">
+                                    <TextBlock Text="Toggle favorite"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                </Border>
+                            </ToolTip>
+                        </ToggleButton.ToolTip>
+
+                        <!-- Minimal template: no chrome, no focus visuals -->
+                        <ToggleButton.Template>
+                            <ControlTemplate TargetType="ToggleButton">
+                                <Border Background="{TemplateBinding Background}"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </ControlTemplate>
+                        </ToggleButton.Template>
+
+                        <Viewbox Width="25" Height="25">
+                            <Canvas Width="24" Height="24">
+                                <!-- Filled star, visible when ToggleButton.IsChecked == true -->
+                                <Path Fill="{DynamicResource GoldBrush}"
+                                      Data="M12,17.27 L18.18,21 L16.54,13.97 L22,9.24 L14.81,8.63 L12,2 L9.19,8.63 L2,9.24 L7.46,13.97 L5.82,21 z"
+                                      Visibility="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=ToggleButton}, Converter={StaticResource BoolToVisConverter}}"/>
+
+                                <!-- Outline star, always visable -->
+                                <Path Stroke="{DynamicResource GoldBrush}"
+                                      Fill="Transparent"
+                                      StrokeThickness="1.6"
+                                      Data="M12,17.27 L18.18,21 L16.54,13.97 L22,9.24 L14.81,8.63 L12,2 L9.19,8.63 L2,9.24 L7.46,13.97 L5.82,21 z"
+                                      Visibility="Visible"/>
+                            </Canvas>
+                        </Viewbox>
+                    </ToggleButton>
+                </Grid>
             </Border>
 
             <TextBlock x:Name="CardNameTextBlock"
@@ -82,64 +139,13 @@
                         Command="{Binding NextImageCommand}" />
             </StackPanel>
 
-            <!-- Reset & Favorite controls (filled vs outline star) -->
+            <!-- Reset control remains at bottom-right of the control -->
             <StackPanel Grid.Row="0" 
                         Orientation="Horizontal" 
                         VerticalAlignment="Bottom"
                         Margin="0,8,0,0"
                         Background="Transparent"
                         HorizontalAlignment="Right">
-                <ToggleButton Padding="0"
-                              Margin="0,0,6,0"
-                              Width="34"
-                              Height="34"
-                              Background="Transparent"
-                              IsChecked="{Binding CurrentCard.IsFavorite, Mode=TwoWay}"
-                              Cursor="Hand"
-                              Focusable="False"
-                              OverridesDefaultStyle="True">
-                    <!-- themed tooltip - remove default chrome by making ToolTip transparent -->
-                    <ToggleButton.ToolTip>
-                        <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
-                            <Border Background="{DynamicResource ElevatedBrush}"
-                                    Padding="6"
-                                    CornerRadius="4"
-                                    BorderBrush="{DynamicResource AccentBrush}"
-                                    BorderThickness="1">
-                                <TextBlock Text="Toggle favorite"
-                                           Foreground="{DynamicResource TextSecondaryBrush}"/>
-                            </Border>
-                        </ToolTip>
-                    </ToggleButton.ToolTip>
-
-                    <!-- Minimal template: no chrome, no focus visuals -->
-                    <ToggleButton.Template>
-                        <ControlTemplate TargetType="ToggleButton">
-                            <Border Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}">
-                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                            </Border>
-                        </ControlTemplate>
-                    </ToggleButton.Template>
-
-                    <Viewbox Width="25" Height="25">
-                        <Canvas Width="24" Height="24">
-                            <!-- Filled star, visible when ToggleButton.IsChecked == true -->
-                            <Path Fill="{DynamicResource GoldBrush}"
-                                  Data="M12,17.27 L18.18,21 L16.54,13.97 L22,9.24 L14.81,8.63 L12,2 L9.19,8.63 L2,9.24 L7.46,13.97 L5.82,21 z"
-                                  Visibility="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=ToggleButton}, Converter={StaticResource BoolToVisConverter}}"/>
-
-                            <!-- Outline star, visible when ToggleButton.IsChecked == false -->
-                            <Path Stroke="{DynamicResource GoldBrush}"
-                                  Fill="Transparent"
-                                  StrokeThickness="1.6"
-                                  Data="M12,17.27 L18.18,21 L16.54,13.97 L22,9.24 L14.81,8.63 L12,2 L9.19,8.63 L2,9.24 L7.46,13.97 L5.82,21 z"
-                                  Visibility="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=ToggleButton}, Converter={StaticResource InverseBoolToVisConverter}}"/>
-                        </Canvas>
-                    </Viewbox>
-                </ToggleButton>
-
                 <Button Padding="6" 
                         Margin="12,0,0,0" 
                         Background="Transparent"
