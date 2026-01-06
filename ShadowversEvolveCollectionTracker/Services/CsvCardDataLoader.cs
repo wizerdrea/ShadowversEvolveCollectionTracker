@@ -1,10 +1,5 @@
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using ShadowversEvolveCardTracker.Models;
 
 namespace ShadowversEvolveCardTracker.Services
@@ -64,8 +59,7 @@ namespace ShadowversEvolveCardTracker.Services
                     cancellationToken.ThrowIfCancellationRequested();
 
                     var row = records[r];
-                    var card = MapRowToCardData(row, header);
-                    // Because CardData is a class with init properties, create new instance with values:
+                    // CreateCardData performs mapping
                     result.Add(CreateCardData(row, header, file));
                 }
             }
@@ -212,13 +206,6 @@ namespace ShadowversEvolveCardTracker.Services
                 fields.Add(sb.ToString());
                 yield return fields.ToArray();
             }
-        }
-
-        // Unused earlier helper (left intentionally small) - placeholder if further mapping logic required
-        private static CardData MapRowToCardData(string[] row, string[] header)
-        {
-            // Not used; CreateCardData performs mapping. Keep for future expansion.
-            return CreateCardData(row, header, string.Empty);
         }
     }
 }

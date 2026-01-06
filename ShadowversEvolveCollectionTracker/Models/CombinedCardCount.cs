@@ -32,7 +32,12 @@ namespace ShadowversEvolveCardTracker.Models
             .Select(c => c.ImageFile)
             .ToList();
 
-        public List<CardData> Cards => TotalQuantityOwned > 0 ? _cards.Where(c => c.QuantityOwned > 0).ToList() : new List<CardData>() { _cards.FirstOrDefault() };
+        public List<CardData> Cards =>
+            TotalQuantityOwned > 0
+                ? _cards.Where(c => c.QuantityOwned > 0).ToList()
+                : _cards.FirstOrDefault() is not null
+                    ? new List<CardData> { _cards.First() }
+                    : new List<CardData>();
 
         public int TotalQuantityOwned => _cards.Sum(c => c.QuantityOwned);
     }

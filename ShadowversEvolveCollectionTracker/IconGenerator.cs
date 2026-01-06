@@ -1,4 +1,3 @@
-using System;
 using System.IO;
 using System.Windows;
 using System.Windows.Media;
@@ -14,7 +13,6 @@ namespace ShadowversEvolveCardTracker
     {
         public static void GenerateAppIcon()
         {
-            var sizes = new[] { 16, 32, 48, 64, 128, 256 };
             var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app_icon.ico");
 
             try
