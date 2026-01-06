@@ -7,18 +7,30 @@
         <ResourceDictionary>
 
             <!-- Shadowverse Evolve Color Palette -->
-            <Color x:Key="ColorPrimary">#0A1628</Color>           <!-- deep navy background -->
-            <Color x:Key="ColorSurface">#0D1F35</Color>           <!-- slightly lighter navy -->
-            <Color x:Key="ColorElevated">#132A45</Color>          <!-- elevated surface -->
-            <Color x:Key="ColorBorder">#1E3A5F</Color>            <!-- subtle blue border -->
-            <Color x:Key="ColorAccent">#2DD4BF</Color>            <!-- cyan/teal accent -->
-            <Color x:Key="ColorAccentLight">#5EEAD4</Color>       <!-- lighter cyan -->
-            <Color x:Key="ColorGold">#D4AF37</Color>              <!-- gold accent from logo -->
-            <Color x:Key="ColorGoldLight">#F4D03F</Color>         <!-- lighter gold -->
-            <Color x:Key="ColorTextPrimary">#E8F4F8</Color>       <!-- light blue-white -->
-            <Color x:Key="ColorTextSecondary">#94A3B8</Color>     <!-- muted blue-gray -->
-            <Color x:Key="ColorHover">#0F2438</Color>             <!-- hover state -->
-            <Color x:Key="ColorSelected">#1A4D6D</Color>          <!-- selection state -->
+            <Color x:Key="ColorPrimary">#0A1628</Color>
+            <!-- deep navy background -->
+            <Color x:Key="ColorSurface">#0D1F35</Color>
+            <!-- slightly lighter navy -->
+            <Color x:Key="ColorElevated">#132A45</Color>
+            <!-- elevated surface -->
+            <Color x:Key="ColorBorder">#1E3A5F</Color>
+            <!-- subtle blue border -->
+            <Color x:Key="ColorAccent">#2DD4BF</Color>
+            <!-- cyan/teal accent -->
+            <Color x:Key="ColorAccentLight">#5EEAD4</Color>
+            <!-- lighter cyan -->
+            <Color x:Key="ColorGold">#D4AF37</Color>
+            <!-- gold accent from logo -->
+            <Color x:Key="ColorGoldLight">#F4D03F</Color>
+            <!-- lighter gold -->
+            <Color x:Key="ColorTextPrimary">#E8F4F8</Color>
+            <!-- light blue-white -->
+            <Color x:Key="ColorTextSecondary">#94A3B8</Color>
+            <!-- muted blue-gray -->
+            <Color x:Key="ColorHover">#0F2438</Color>
+            <!-- hover state -->
+            <Color x:Key="ColorSelected">#1A4D6D</Color>
+            <!-- selection state -->
             <Color x:Key="ColorAccent40">#402DD4BF</Color>
             <Color x:Key="ColorAccent00">#002DD4BF</Color>
             <Color x:Key="ColorAccentLight60">#605EEAD4</Color>
@@ -497,8 +509,96 @@
             </Style>
 
             <!-- Brushes for checklist cell color triggers -->
-            <SolidColorBrush x:Key="ChecklistLowBrush" Color="#1A4D4D"/>     <!-- dark teal for low qty -->
-            <SolidColorBrush x:Key="ChecklistHighBrush" Color="#2DD4BF"/>    <!-- cyan accent for high qty -->
+            <SolidColorBrush x:Key="ChecklistLowBrush" Color="#1A4D4D"/>
+            <!-- dark teal for low qty -->
+            <SolidColorBrush x:Key="ChecklistHighBrush" Color="#2DD4BF"/>
+            <!-- cyan accent for high qty -->
+
+            <!-- Styles to theme Menu, ContextMenu and MenuItem dropdowns -->
+            <Style TargetType="Menu">
+                <Setter Property="Background" Value="{StaticResource ElevatedBrush}"/>
+                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            </Style>
+
+            <Style TargetType="ContextMenu">
+                <Setter Property="Background" Value="{StaticResource ElevatedBrush}"/>
+                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="Padding" Value="4"/>
+                <Setter Property="HasDropShadow" Value="True"/>
+            </Style>
+
+            <!-- Replace the existing MenuItem style with this improved MenuItem template -->
+            <Style TargetType="MenuItem">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                <Setter Property="Padding" Value="8,4"/>
+                <Setter Property="Margin" Value="0"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="MenuItem">
+                            <Grid>
+                                <Border x:Name="Bd"
+                  Background="{TemplateBinding Background}"
+                  BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}"
+                  Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter ContentSource="Header" RecognizesAccessKey="True" VerticalAlignment="Center"/>
+                                </Border>
+
+                                <!-- Popup for sub-items: PlacementTarget binds to the MenuItem so the dropdown appears correctly -->
+                                <Popup x:Name="SubMenuPopup"
+                 Placement="Bottom"
+                 PlacementTarget="{Binding RelativeSource={RelativeSource TemplatedParent}}"
+                 AllowsTransparency="True"
+                 Focusable="True"
+                 IsOpen="{Binding IsSubmenuOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                 StaysOpen="False"
+                 PopupAnimation="Fade">
+                                    <Border Background="{StaticResource ElevatedBrush}"
+                    BorderBrush="{StaticResource AccentBrush}"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Padding="4"
+                    SnapsToDevicePixels="True">
+                                        <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                    </Border>
+                                </Popup>
+                            </Grid>
+
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsHighlighted" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="{StaticResource HoverBrush}"/>
+                                    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                                </Trigger>
+
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                                </Trigger>
+
+                                <Trigger Property="Role" Value="TopLevelHeader">
+                                    <Setter TargetName="Bd" Property="Background" Value="Transparent"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <!-- Simple separator style used inside menus -->
+            <Style TargetType="Separator" BasedOn="{StaticResource {x:Type Separator}}">
+                <Setter Property="SnapsToDevicePixels" Value="True"/>
+                <Setter Property="Margin" Value="4,4"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Separator">
+                            <Border Background="{StaticResource BorderBrush}" Height="1" Margin="0,4"/>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
 
         </ResourceDictionary>
     </Application.Resources>
