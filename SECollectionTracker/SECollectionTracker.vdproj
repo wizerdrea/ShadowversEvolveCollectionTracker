@@ -44,6 +44,14 @@
             "PrerequisitesLocation" = "2:1"
             "Url" = "8:"
             "ComponentsUrl" = "8:"
+                "Items"
+                {
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:.NETFramework,Version=v4.7.2"
+                    {
+                    "Name" = "8:Microsoft .NET Framework 4.7.2 (x86 and x64)"
+                    "ProductCode" = "8:.NETFramework,Version=v4.7.2"
+                    }
+                }
             }
         }
         "Release"
@@ -165,7 +173,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:SECollectionTracker"
         "ProductCode" = "8:{45AFFC60-282E-4B1F-A31B-FC55607395F0}"
-        "PackageCode" = "8:{53E7DA64-5CF5-4A3F-8977-5DE2B34A1B1E}"
+        "PackageCode" = "8:{C999DA3D-CA97-4971-9A56-1B636AD4B31F}"
         "UpgradeCode" = "8:{2E45AA7C-9090-4F8C-90D9-C69476E3E06F}"
         "AspNetVersion" = "8:2.0.50727.0"
         "RestartWWWService" = "11:FALSE"
@@ -291,12 +299,12 @@
             "Arguments" = "8:"
             "Description" = "8:"
             "ShowCmd" = "3:1"
-            "IconIndex" = "3:0"
+            "IconIndex" = "3:32512"
             "Transitive" = "11:FALSE"
             "Target" = "8:_4399D61ABE2B4577B5118C2C6F372F20"
             "Folder" = "8:_361AF3390E1F4CBFBCF57C7B7165CA77"
             "WorkingFolder" = "8:_16074206E5F84B46BAB7CA475A10FF4E"
-            "Icon" = "8:"
+            "Icon" = "8:_4399D61ABE2B4577B5118C2C6F372F20"
             "Feature" = "8:"
             }
             "{970C0BB2-C7D0-45D7-ABFA-7EC378858BC0}:_FA62F47D55F744BA9F3A6BC84304A953"
@@ -305,12 +313,12 @@
             "Arguments" = "8:"
             "Description" = "8:"
             "ShowCmd" = "3:1"
-            "IconIndex" = "3:0"
+            "IconIndex" = "3:32512"
             "Transitive" = "11:FALSE"
             "Target" = "8:_4399D61ABE2B4577B5118C2C6F372F20"
             "Folder" = "8:_50D86A51C8B74FA9A03BAE64C7E0873C"
             "WorkingFolder" = "8:_16074206E5F84B46BAB7CA475A10FF4E"
-            "Icon" = "8:"
+            "Icon" = "8:_4399D61ABE2B4577B5118C2C6F372F20"
             "Feature" = "8:"
             }
         }
@@ -714,7 +722,7 @@
         {
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_4399D61ABE2B4577B5118C2C6F372F20"
             {
-            "SourcePath" = "8:..\\ShadowversEvolveCollectionTracker\\obj\\Release\\net8.0-windows\\win-x86\\apphost.exe"
+            "SourcePath" = "8:..\\ShadowversEvolveCollectionTracker\\obj\\Debug\\net8.0-windows\\win-x86\\apphost.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_16074206E5F84B46BAB7CA475A10FF4E"

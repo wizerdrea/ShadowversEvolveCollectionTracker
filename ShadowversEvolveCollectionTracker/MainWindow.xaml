@@ -3,371 +3,586 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:conv="clr-namespace:ShadowversEvolveCardTracker.Converters"
-        Title="Shadowvers Evolve Card Tracker" Height="800" Width="1400">
+        Title="Shadowverse Evolve Card Tracker" 
+        Height="800" Width="1400"
+        Background="{DynamicResource PrimaryBrush}"
+        WindowStyle="None"
+        AllowsTransparency="False"
+        ResizeMode="CanResize">
+    
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="32"
+                      ResizeBorderThickness="5"
+                      CornerRadius="0"
+                      GlassFrameThickness="0"
+                      UseAeroCaptionButtons="False"/>
+    </WindowChrome.WindowChrome>
+    
     <Window.Resources>
         <conv:StringToImageSourceConverter x:Key="StringToImageConverter" />
         <conv:GroupToTotalQuantityConverter x:Key="GroupToTotalConverter" />
         <conv:TotalQuantityToCategoryConverter x:Key="TotalQuantityToCategoryConverter" />
     </Window.Resources>
 
-    <DockPanel Margin="8">
-        <TextBlock Text="{Binding Status}" DockPanel.Dock="Bottom" Margin="0,8,0,0" x:Name="StatusTextBlock" />
-        <TabControl>
-            <TabItem Header="All Cards">
-                <Grid Margin="8">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
+    <Border BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="32"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                        <Button Content="Select Folder and Load"
-                                Command="{Binding LoadFolderCommand}"
-                                Padding="8,4" Margin="0,0,8,0"/>
-                        <Button Content="Load Images"
-                                Command="{Binding LoadImagesCommand}"
-                                Padding="8,4" Margin="0,0,8,0"/>
-                        <Button Content="Save" Command="{Binding SaveCommand}" Padding="8,4" Margin="0,0,8,0"/>
-                        <TextBlock VerticalAlignment="Center" Text="Select a directory containing CSV files to load."/>
-                    </StackPanel>
-
-                    <!-- Resizable two-column layout: DataGrid left, resizer, preview panel right -->
-                    <Grid Grid.Row="1">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="300" MinWidth="150"/>
-                        </Grid.ColumnDefinitions>
-
-                        <DataGrid Grid.Column="0"
-                                  ItemsSource="{Binding FilteredCards}"
-                                  AutoGenerateColumns="False"
-                                  IsReadOnly="False"
-                                  CanUserAddRows="False"
-                                  SelectedItem="{Binding SelectedCard, Mode=TwoWay}">
-                            <!-- Show a small image in a tooltip for the row under the mouse -->
-                            <DataGrid.RowStyle>
-                                <Style TargetType="DataGridRow">
-                                    <Setter Property="ToolTip">
-                                        <Setter.Value>
-                                            <ToolTip Placement="Mouse">
-                                                <Border Background="White" Padding="4" CornerRadius="2" BorderBrush="LightGray" BorderThickness="1">
-                                                    <Image Source="{Binding ImageFile, Converter={StaticResource StringToImageConverter}}"
-                                                           Width="240" Height="320" Stretch="Uniform"/>
-                                                </Border>
-                                            </ToolTip>
-                                        </Setter.Value>
-                                    </Setter>
-                                </Style>
-                            </DataGrid.RowStyle>
-
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Binding="{Binding Name}" IsReadOnly="True" Width="2*">
-                                    <DataGridTextColumn.HeaderTemplate>
-                                        <DataTemplate>
-                                            <StackPanel>
-                                                <TextBlock Text="Name"/>
-                                                <TextBox Text="{Binding DataContext.NameFilter, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </DataGridTextColumn.HeaderTemplate>
-                                </DataGridTextColumn>
-
-                                <DataGridTextColumn Binding="{Binding CardNumber}" IsReadOnly="True" Width="*">
-                                    <DataGridTextColumn.HeaderTemplate>
-                                        <DataTemplate>
-                                            <StackPanel>
-                                                <TextBlock Text="Card #"/>
-                                                <TextBox Text="{Binding DataContext.CardNumberFilter, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged}" Width="80"/>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </DataGridTextColumn.HeaderTemplate>
-                                </DataGridTextColumn>
-
-                                <!-- Editable Quantity Owned column -->
-                                <DataGridTextColumn Header="Qty Owned" Binding="{Binding QuantityOwned, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="80">
-                                    <DataGridTextColumn.HeaderTemplate>
-                                        <DataTemplate>
-                                            <StackPanel>
-                                                <TextBlock Text="Qty Owned"/>
-                                                <ComboBox Width="120"
-                                                          SelectedValuePath="Content"
-                                                          SelectedValue="{Binding DataContext.QtyOwnedFilter, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
-                                                    <ComboBoxItem Content="Both" />
-                                                    <ComboBoxItem Content="Owned" />
-                                                    <ComboBoxItem Content="Unowned" />
-                                                </ComboBox>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </DataGridTextColumn.HeaderTemplate>
-                                </DataGridTextColumn>
-
-                                <DataGridTextColumn Binding="{Binding Rarity}" IsReadOnly="True" Width="*">
-                                    <DataGridTextColumn.HeaderTemplate>
-                                        <DataTemplate>
-                                            <StackPanel>
-                                                <TextBlock Text="Rarity"/>
-                                                <TextBox Text="{Binding DataContext.RarityFilter, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </DataGridTextColumn.HeaderTemplate>
-                                </DataGridTextColumn>
-
-                                <DataGridTextColumn Binding="{Binding Set}" IsReadOnly="True" Width="2*">
-                                    <DataGridTextColumn.HeaderTemplate>
-                                        <DataTemplate>
-                                            <StackPanel>
-                                                <TextBlock Text="Set"/>
-                                                <TextBox Text="{Binding DataContext.SetFilter, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </DataGridTextColumn.HeaderTemplate>
-                                </DataGridTextColumn>
-
-                                <DataGridTextColumn Binding="{Binding Format}" IsReadOnly="True" Width="*">
-                                    <DataGridTextColumn.HeaderTemplate>
-                                        <DataTemplate>
-                                            <StackPanel>
-                                                <TextBlock Text="Format"/>
-                                                <TextBox Text="{Binding DataContext.FormatFilter, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </DataGridTextColumn.HeaderTemplate>
-                                </DataGridTextColumn>
-
-                                <DataGridTextColumn Binding="{Binding Class}" IsReadOnly="True" Width="*">
-                                    <DataGridTextColumn.HeaderTemplate>
-                                        <DataTemplate>
-                                            <StackPanel>
-                                                <TextBlock Text="Class"/>
-                                                <TextBox Text="{Binding DataContext.ClassFilter, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </DataGridTextColumn.HeaderTemplate>
-                                </DataGridTextColumn>
-
-                                <DataGridTextColumn Binding="{Binding Type}" IsReadOnly="True" Width="*">
-                                    <DataGridTextColumn.HeaderTemplate>
-                                        <DataTemplate>
-                                            <StackPanel>
-                                                <TextBlock Text="Type"/>
-                                                <TextBox Text="{Binding DataContext.TypeFilter, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </DataGridTextColumn.HeaderTemplate>
-                                </DataGridTextColumn>
-
-                                <DataGridTextColumn Binding="{Binding Traits}" IsReadOnly="True" Width="2*">
-                                    <DataGridTextColumn.HeaderTemplate>
-                                        <DataTemplate>
-                                            <StackPanel>
-                                                <TextBlock Text="Traits"/>
-                                                <TextBox Text="{Binding DataContext.TraitsFilter, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </DataGridTextColumn.HeaderTemplate>
-                                </DataGridTextColumn>
-
-                                <DataGridTextColumn Binding="{Binding Text}" IsReadOnly="True" Width="2*">
-                                    <DataGridTextColumn.HeaderTemplate>
-                                        <DataTemplate>
-                                            <StackPanel>
-                                                <TextBlock Text="Text"/>
-                                                <TextBox Text="{Binding DataContext.TextFilter, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
-                                            </StackPanel>
-                                        </DataTemplate>
-                                    </DataGridTextColumn.HeaderTemplate>
-                                </DataGridTextColumn>
-                                
-                            </DataGrid.Columns>
-                        </DataGrid>
-
-                        <!-- Vertical GridSplitter to allow user to resize preview panel -->
-                        <GridSplitter Grid.Column="1"
-                                      Width="6"
-                                      HorizontalAlignment="Center"
-                                      VerticalAlignment="Stretch"
-                                      Background="LightGray"
-                                      ShowsPreview="True"
-                                      ResizeDirection="Columns"
-                                      Cursor="SizeWE"/>
-
-                        <!-- All Cards preview Border: replace CardNumber TextBlock with CardNumber + Reset button -->
-                        <Border Grid.Column="2"
-                                x:Name="AllCardsPreviewViewport"
-                                BorderThickness="1" BorderBrush="LightGray"
-                                Padding="8" Margin="8,0,0,0"
-                                ClipToBounds="True"
-                                Background="Transparent"
-                                Tag="{Binding ElementName=AllCardsPreviewImage}"
-                                MouseWheel="PreviewImage_MouseWheel"
-                                MouseLeftButtonDown="PreviewImage_MouseLeftButtonDown"
-                                MouseLeftButtonUp="PreviewImage_MouseLeftButtonUp"
-                                MouseMove="PreviewImage_MouseMove"
-                                MouseRightButtonDown="PreviewImage_MouseRightButtonDown">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="*"/>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-
-                                <Image x:Name="AllCardsPreviewImage"
-                                       Grid.Row="0"
-                                       Stretch="Uniform"
-                                       Source="{Binding SelectedCard.ImageFile, Converter={StaticResource StringToImageConverter}}"
-                                       RenderTransformOrigin="0,0">
-                                    <Image.RenderTransform>
-                                        <TransformGroup>
-                                            <ScaleTransform ScaleX="1" ScaleY="1"/>
-                                            <TranslateTransform X="0" Y="0"/>
-                                        </TransformGroup>
-                                    </Image.RenderTransform>
-                                </Image>
-
-                                <TextBlock Grid.Row="1" Text="{Binding SelectedCard.Name}" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"/>
-
-                                <!-- row 2: card number + reset button -->
-                                <StackPanel Grid.Row="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding SelectedCard.CardNumber}" Foreground="Gray" VerticalAlignment="Center"/>
-                                    <Button Content="Reset" Padding="6,2" Margin="12,0,0,0" Click="AllCardsReset_Click" />
-                                </StackPanel>
-                            </Grid>
-                        </Border>
-                    </Grid>
-                </Grid>
-            </TabItem>
-
-            <TabItem Header="Checklist">
-                <TabItem.Resources>
-                    <!-- CollectionViewSource lives here so it inherits the TabItem's DataContext -->
-                    <CollectionViewSource x:Key="ChecklistGroups" Source="{Binding AllCards}">
-                        <CollectionViewSource.GroupDescriptions>
-                            <PropertyGroupDescription PropertyName="Name" />
-                        </CollectionViewSource.GroupDescriptions>
-                    </CollectionViewSource>
-                </TabItem.Resources>
-
-                <Grid Margin="8">
+            <!-- Custom Title Bar -->
+            <Border Grid.Row="0" 
+                    Background="{DynamicResource ElevatedBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,0,0,1"
+                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="6" />
-                        <ColumnDefinition Width="320" MinWidth="200" />
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <DataGrid Grid.Column="0"
-                              ItemsSource="{Binding ChecklistView}"
-                              AutoGenerateColumns="False"
-                              IsReadOnly="True"
-                              CanUserAddRows="False"
-                              SelectedItem="{Binding SelectedCombinedCard, Mode=TwoWay}">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Binding="{Binding Name}" Width="3*">
-                                <DataGridTextColumn.HeaderTemplate>
-                                    <DataTemplate>
-                                        <StackPanel>
-                                            <TextBlock Text="Card Name"/>
-                                            <TextBox Text="{Binding DataContext.ChecklistNameFilter, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged}" Width="200" ToolTip="Enter a regular expression to filter card names"/>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </DataGridTextColumn.HeaderTemplate>
-                            </DataGridTextColumn>
+                    <!-- App Title with Custom Icon -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="8,0,0,0">
+                        <!-- Custom Card-to-Smoke Icon -->
+                        <Viewbox Width="20" Height="20" Margin="0,0,8,0">
+                            <Canvas Width="24" Height="24">
+                                <!-- Card base -->
+                                <Rectangle Width="14" Height="20" Canvas.Left="5" Canvas.Top="2"
+                                           RadiusX="1" RadiusY="1">
+                                    <Rectangle.Fill>
+                                        <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                                            <GradientStop Color="{StaticResource ColorAccent}" Offset="0"/>
+                                            <GradientStop Color="{StaticResource ColorAccentLight}" Offset="0.3"/>
+                                            <GradientStop Color="{StaticResource ColorAccent40}" Offset="0.7"/>
+                                            <GradientStop Color="{StaticResource ColorAccent00}" Offset="1"/>
+                                        </LinearGradientBrush>
+                                    </Rectangle.Fill>
+                                </Rectangle>
+                                
+                                <!-- Smoke particles at bottom -->
+                                <Ellipse Width="3" Height="3" Canvas.Left="6" Canvas.Top="19" 
+                                         Fill="{StaticResource AccentLight60Brush}" Opacity="0.6"/>
+                                <Ellipse Width="4" Height="4" Canvas.Left="10" Canvas.Top="20" 
+                                         Fill="{StaticResource AccentLight40Brush}" Opacity="0.5"/>
+                                <Ellipse Width="3" Height="3" Canvas.Left="15" Canvas.Top="19" 
+                                         Fill="{StaticResource AccentLight60Brush}" Opacity="0.6"/>
+                                <Ellipse Width="2" Height="2" Canvas.Left="8" Canvas.Top="21" 
+                                         Fill="{StaticResource AccentLight30Brush}" Opacity="0.4"/>
+                                <Ellipse Width="2" Height="2" Canvas.Left="16" Canvas.Top="21" 
+                                         Fill="{StaticResource AccentLight30Brush}" Opacity="0.4"/>
+                                
+                                <!-- Smoke particles at top -->
+                                <Ellipse Width="2" Height="2" Canvas.Left="7" Canvas.Top="1" 
+                                         Fill="{StaticResource Gold50Brush}" Opacity="0.5"/>
+                                <Ellipse Width="3" Height="3" Canvas.Left="11" Canvas.Top="0" 
+                                         Fill="{StaticResource Gold40Brush}" Opacity="0.4"/>
+                                <Ellipse Width="2" Height="2" Canvas.Left="15" Canvas.Top="1" 
+                                         Fill="{StaticResource Gold50Brush}" Opacity="0.5"/>
+                            </Canvas>
+                        </Viewbox>
+                        
+                        <TextBlock Text="Shadowverse Evolve Card Tracker" 
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource GoldBrush}"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
 
-                            <!-- Modified column: applies background color based on TotalQuantityOwned -->
-                            <DataGridTextColumn Binding="{Binding TotalQuantityOwned}" Width="*">
-                                <DataGridTextColumn.HeaderTemplate>
-                                    <DataTemplate>
-                                        <StackPanel>
-                                            <TextBlock Text="Total Qty"/>
-                                            <ComboBox Width="120"
-                                                      SelectedValuePath="Content"
-                                                      SelectedValue="{Binding DataContext.ChecklistQtyFilter, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
-                                                <ComboBoxItem Content="Both" />
-                                                <ComboBoxItem Content="Owned" />
-                                                <ComboBoxItem Content="Unowned" />
-                                            </ComboBox>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </DataGridTextColumn.HeaderTemplate>
+                    <!-- Window Control Buttons -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                        <!-- Minimize Button -->
+                        <Button Width="46" Height="32"
+                                Click="MinimizeButton_Click"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Padding="0"
+                                Margin="0"
+                                ToolTip="Minimize"
+                                WindowChrome.IsHitTestVisibleInChrome="True">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                                    <Setter Property="Cursor" Value="Hand"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}">
+                                                    <Path Data="M 0,0 H 10" 
+                                                          Stroke="{TemplateBinding Foreground}"
+                                                          StrokeThickness="1"
+                                                          HorizontalAlignment="Center"
+                                                          VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="{StaticResource HoverBrush}"/>
+                                            <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
 
-                                <DataGridTextColumn.CellStyle>
-                                    <Style TargetType="DataGridCell">
-                                        <Setter Property="Background" Value="Transparent"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding TotalQuantityOwned, Converter={StaticResource TotalQuantityToCategoryConverter}}" Value="Low">
-                                                <Setter Property="Background" Value="LightGreen"/>
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding TotalQuantityOwned, Converter={StaticResource TotalQuantityToCategoryConverter}}" Value="High">
-                                                <Setter Property="Background" Value="Green"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </DataGridTextColumn.CellStyle>
-                            </DataGridTextColumn>
-                        </DataGrid.Columns>
-                    </DataGrid>
+                        <!-- Maximize/Restore Button -->
+                        <Button x:Name="MaximizeRestoreButton"
+                                Width="46" Height="32"
+                                Click="MaximizeRestoreButton_Click"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Padding="0"
+                                Margin="0"
+                                ToolTip="Maximize"
+                                WindowChrome.IsHitTestVisibleInChrome="True">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                                    <Setter Property="Cursor" Value="Hand"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}">
+                                                    <Path x:Name="MaximizeRestorePath"
+                                                          Data="M 0,0 H 10 V 10 H 0 Z M 0,2 H 10" 
+                                                          Stroke="{TemplateBinding Foreground}"
+                                                          StrokeThickness="1"
+                                                          HorizontalAlignment="Center"
+                                                          VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="{StaticResource HoverBrush}"/>
+                                            <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
 
-                    <GridSplitter Grid.Column="1"
-                                  Width="6"
-                                  HorizontalAlignment="Center"
-                                  VerticalAlignment="Stretch"
-                                  Background="LightGray"
-                                  ShowsPreview="True"
-                                  ResizeDirection="Columns"
-                                  Cursor="SizeWE"/>
+                        <!-- Close Button -->
+                        <Button Width="46" Height="32"
+                                Click="CloseButton_Click"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Padding="0"
+                                Margin="0"
+                                ToolTip="Close"
+                                WindowChrome.IsHitTestVisibleInChrome="True">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                                    <Setter Property="Cursor" Value="Hand"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}">
+                                                    <Path Data="M 0,0 L 10,10 M 10,0 L 0,10" 
+                                                          Stroke="{TemplateBinding Foreground}"
+                                                          StrokeThickness="1"
+                                                          HorizontalAlignment="Center"
+                                                          VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#E81123"/>
+                                            <Setter Property="Foreground" Value="White"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
 
-                    <!-- Checklist preview: replace Viewbox with this Border-based viewport -->
-                    <Border Grid.Column="2"
-                            x:Name="ChecklistPreviewViewport"
-                            BorderThickness="1" BorderBrush="LightGray"
-                            Padding="8" Margin="8,0,0,0"
-                            ClipToBounds="True"
-                            Background="Transparent"
-                            Tag="{Binding ElementName=ChecklistPreviewImage}"
-                            MouseWheel="PreviewImage_MouseWheel"
-                            MouseLeftButtonDown="PreviewImage_MouseLeftButtonDown"
-                            MouseLeftButtonUp="PreviewImage_MouseLeftButtonUp"
-                            MouseMove="PreviewImage_MouseMove"
-                            MouseRightButtonDown="PreviewImage_MouseRightButtonDown">
-                        <Grid>
+            <!-- Main Content Area (rest remains the same) -->
+            <DockPanel Grid.Row="1" Margin="8" Background="{DynamicResource PrimaryBrush}">
+                <TextBlock Text="{Binding Status}" 
+                           DockPanel.Dock="Bottom" 
+                           Margin="0,8,0,0" 
+                           x:Name="StatusTextBlock"
+                           Foreground="{DynamicResource AccentBrush}"
+                           FontStyle="Italic" />
+                <TabControl Background="{DynamicResource PrimaryBrush}">
+                    <TabItem Header="All Cards">
+                        <Grid Margin="8" Background="{DynamicResource PrimaryBrush}">
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="*" />
-                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
 
-                            <Image x:Name="ChecklistPreviewImage"
-                                   Grid.Row="0"
-                                   Stretch="Uniform"
-                                   Source="{Binding SelectedCombinedImage, Converter={StaticResource StringToImageConverter}}"
-                                   RenderTransformOrigin="0,0">
-                                <Image.RenderTransform>
-                                    <TransformGroup>
-                                        <ScaleTransform ScaleX="1" ScaleY="1"/>
-                                        <TranslateTransform X="0" Y="0"/>
-                                    </TransformGroup>
-                                </Image.RenderTransform>
-                            </Image>
-
-                            <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0" >
-                                <Button Content="◀ Prev" Padding="6,2" Margin="4,0"
-                                        Command="{Binding PrevImageCommand}" />
-                                <TextBlock VerticalAlignment="Center" Margin="8,0">
-                                    <TextBlock.Text>
-                                        <MultiBinding StringFormat="{}{0} / {1}">
-                                            <Binding Path="SelectedImageIndexDisplay" />
-                                            <Binding Path="SelectedCombinedCard.Images.Count" />
-                                        </MultiBinding>
-                                    </TextBlock.Text>
-                                </TextBlock>
-                                <Button Content="Next ▶" Padding="6,2" Margin="4,0"
-                                        Command="{Binding NextImageCommand}" />
-                                <!-- Reset button for checklist preview -->
-                                <Button Content="Reset" Padding="6,2" Margin="12,0,0,0" Click="ChecklistReset_Click" />
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                <Button Content="Select Folder and Load"
+                                        Command="{Binding LoadFolderCommand}"
+                                        Padding="12,6" Margin="0,0,8,0"/>
+                                <Button Content="Load Images"
+                                        Command="{Binding LoadImagesCommand}"
+                                        Padding="12,6" Margin="0,0,8,0"/>
+                                <Button Content="Save" Command="{Binding SaveCommand}" Padding="12,6" Margin="0,0,8,0"/>
+                                <TextBlock VerticalAlignment="Center" 
+                                           Text="Select a directory containing CSV files to load."
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           Margin="12,0,0,0"/>
                             </StackPanel>
+
+                            <Grid Grid.Row="1" Background="{DynamicResource PrimaryBrush}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="300" MinWidth="150"/>
+                                </Grid.ColumnDefinitions>
+
+                                <DataGrid Grid.Column="0"
+                                          ItemsSource="{Binding FilteredCards}"
+                                          AutoGenerateColumns="False"
+                                          IsReadOnly="False"
+                                          CanUserAddRows="False"
+                                          SelectedItem="{Binding SelectedCard, Mode=TwoWay}"
+                                          Background="{DynamicResource PrimaryBrush}">
+                                    <DataGrid.RowStyle>
+                                        <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                            <Setter Property="ToolTip">
+                                                <Setter.Value>
+                                                    <ToolTip Placement="Mouse">
+                                                        <Border Background="{DynamicResource ElevatedBrush}" 
+                                                                Padding="4" 
+                                                                CornerRadius="4" 
+                                                                BorderBrush="{DynamicResource AccentBrush}" 
+                                                                BorderThickness="1">
+                                                            <Image Source="{Binding ImageFile, Converter={StaticResource StringToImageConverter}}"
+                                                                   Width="240" Height="320" Stretch="Uniform"/>
+                                                        </Border>
+                                                    </ToolTip>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </DataGrid.RowStyle>
+
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Binding="{Binding Name}" IsReadOnly="True" Width="2*">
+                                            <DataGridTextColumn.HeaderTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel>
+                                                        <TextBlock Text="Name"/>
+                                                        <TextBox Text="{Binding DataContext.NameFilter, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </DataGridTextColumn.HeaderTemplate>
+                                        </DataGridTextColumn>
+
+                                        <DataGridTextColumn Binding="{Binding CardNumber}" IsReadOnly="True" Width="*">
+                                            <DataGridTextColumn.HeaderTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel>
+                                                        <TextBlock Text="Card #"/>
+                                                        <TextBox Text="{Binding DataContext.CardNumberFilter, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged}" Width="80"/>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </DataGridTextColumn.HeaderTemplate>
+                                        </DataGridTextColumn>
+
+                                        <DataGridTextColumn Header="Qty Owned" Binding="{Binding QuantityOwned, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="80">
+                                            <DataGridTextColumn.HeaderTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel>
+                                                        <TextBlock Text="Qty Owned"/>
+                                                        <ComboBox Width="120"
+                                                                  SelectedValuePath="Content"
+                                                                  SelectedValue="{Binding DataContext.QtyOwnedFilter, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
+                                                            <ComboBoxItem Content="Both" />
+                                                            <ComboBoxItem Content="Owned" />
+                                                            <ComboBoxItem Content="Unowned" />
+                                                        </ComboBox>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </DataGridTextColumn.HeaderTemplate>
+                                        </DataGridTextColumn>
+
+                                        <DataGridTextColumn Binding="{Binding Rarity}" IsReadOnly="True" Width="*">
+                                            <DataGridTextColumn.HeaderTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel>
+                                                        <TextBlock Text="Rarity"/>
+                                                        <TextBox Text="{Binding DataContext.RarityFilter, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </DataGridTextColumn.HeaderTemplate>
+                                        </DataGridTextColumn>
+
+                                        <DataGridTextColumn Binding="{Binding Set}" IsReadOnly="True" Width="2*">
+                                            <DataGridTextColumn.HeaderTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel>
+                                                        <TextBlock Text="Set"/>
+                                                        <TextBox Text="{Binding DataContext.SetFilter, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </DataGridTextColumn.HeaderTemplate>
+                                        </DataGridTextColumn>
+
+                                        <DataGridTextColumn Binding="{Binding Format}" IsReadOnly="True" Width="*">
+                                            <DataGridTextColumn.HeaderTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel>
+                                                        <TextBlock Text="Format"/>
+                                                        <TextBox Text="{Binding DataContext.FormatFilter, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </DataGridTextColumn.HeaderTemplate>
+                                        </DataGridTextColumn>
+
+                                        <DataGridTextColumn Binding="{Binding Class}" IsReadOnly="True" Width="*">
+                                            <DataGridTextColumn.HeaderTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel>
+                                                        <TextBlock Text="Class"/>
+                                                        <TextBox Text="{Binding DataContext.ClassFilter, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </DataGridTextColumn.HeaderTemplate>
+                                        </DataGridTextColumn>
+
+                                        <DataGridTextColumn Binding="{Binding Type}" IsReadOnly="True" Width="*">
+                                            <DataGridTextColumn.HeaderTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel>
+                                                        <TextBlock Text="Type"/>
+                                                        <TextBox Text="{Binding DataContext.TypeFilter, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </DataGridTextColumn.HeaderTemplate>
+                                        </DataGridTextColumn>
+
+                                        <DataGridTextColumn Binding="{Binding Traits}" IsReadOnly="True" Width="2*">
+                                            <DataGridTextColumn.HeaderTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel>
+                                                        <TextBlock Text="Traits"/>
+                                                        <TextBox Text="{Binding DataContext.TraitsFilter, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </DataGridTextColumn.HeaderTemplate>
+                                        </DataGridTextColumn>
+
+                                        <DataGridTextColumn Binding="{Binding Text}" IsReadOnly="True" Width="2*">
+                                            <DataGridTextColumn.HeaderTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel>
+                                                        <TextBlock Text="Text"/>
+                                                        <TextBox Text="{Binding DataContext.TextFilter, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </DataGridTextColumn.HeaderTemplate>
+                                        </DataGridTextColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+
+                                <GridSplitter Grid.Column="1"
+                                              Width="6"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Stretch"
+                                              ShowsPreview="True"
+                                              ResizeDirection="Columns"
+                                              Cursor="SizeWE"/>
+
+                                <Border Grid.Column="2"
+                                        x:Name="AllCardsPreviewViewport"
+                                        BorderThickness="1" 
+                                        BorderBrush="{DynamicResource AccentBrush}"
+                                        Padding="8" Margin="8,0,0,0"
+                                        ClipToBounds="True"
+                                        Background="{DynamicResource SurfaceBrush}"
+                                        Tag="{Binding ElementName=AllCardsPreviewImage}"
+                                        MouseWheel="PreviewImage_MouseWheel"
+                                        MouseLeftButtonDown="PreviewImage_MouseLeftButtonDown"
+                                        MouseLeftButtonUp="PreviewImage_MouseLeftButtonUp"
+                                        MouseMove="PreviewImage_MouseMove"
+                                        MouseRightButtonDown="PreviewImage_MouseRightButtonDown">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <Image x:Name="AllCardsPreviewImage"
+                                               Grid.Row="0"
+                                               Stretch="Uniform"
+                                               Source="{Binding SelectedCard.ImageFile, Converter={StaticResource StringToImageConverter}}"
+                                               RenderTransformOrigin="0,0">
+                                            <Image.RenderTransform>
+                                                <TransformGroup>
+                                                    <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                                    <TranslateTransform X="0" Y="0"/>
+                                                </TransformGroup>
+                                            </Image.RenderTransform>
+                                        </Image>
+
+                                        <TextBlock Grid.Row="1" 
+                                                   Text="{Binding SelectedCard.Name}" 
+                                                   FontWeight="SemiBold" 
+                                                   Margin="0,8,0,0" 
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource GoldBrush}"/>
+
+                                        <StackPanel Grid.Row="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding SelectedCard.CardNumber}" 
+                                                       Foreground="{DynamicResource TextSecondaryBrush}" 
+                                                       VerticalAlignment="Center"/>
+                                            <Button Content="Reset" Padding="6,3" Margin="12,0,0,0" Click="AllCardsReset_Click" />
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </Grid>
                         </Grid>
-                    </Border>
-                </Grid>
-            </TabItem>
-        </TabControl>
-    </DockPanel>
+                    </TabItem>
+
+                    <TabItem Header="Checklist">
+                        <TabItem.Resources>
+                            <CollectionViewSource x:Key="ChecklistGroups" Source="{Binding AllCards}">
+                                <CollectionViewSource.GroupDescriptions>
+                                    <PropertyGroupDescription PropertyName="Name" />
+                                </CollectionViewSource.GroupDescriptions>
+                            </CollectionViewSource>
+                        </TabItem.Resources>
+
+                        <Grid Margin="8" Background="{DynamicResource PrimaryBrush}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="6" />
+                                <ColumnDefinition Width="320" MinWidth="200" />
+                            </Grid.ColumnDefinitions>
+
+                            <DataGrid Grid.Column="0"
+                                      ItemsSource="{Binding ChecklistView}"
+                                      AutoGenerateColumns="False"
+                                      IsReadOnly="True"
+                                      CanUserAddRows="False"
+                                      SelectedItem="{Binding SelectedCombinedCard, Mode=TwoWay}"
+                                      Background="{DynamicResource PrimaryBrush}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Binding="{Binding Name}" Width="3*">
+                                        <DataGridTextColumn.HeaderTemplate>
+                                            <DataTemplate>
+                                                <StackPanel>
+                                                    <TextBlock Text="Card Name"/>
+                                                    <TextBox Text="{Binding DataContext.ChecklistNameFilter, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged}" Width="200" ToolTip="Enter a regular expression to filter card names"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTextColumn.HeaderTemplate>
+                                    </DataGridTextColumn>
+
+                                    <DataGridTextColumn Binding="{Binding TotalQuantityOwned}" Width="*">
+                                        <DataGridTextColumn.HeaderTemplate>
+                                            <DataTemplate>
+                                                <StackPanel>
+                                                    <TextBlock Text="Total Qty"/>
+                                                    <ComboBox Width="120"
+                                                              SelectedValuePath="Content"
+                                                              SelectedValue="{Binding DataContext.ChecklistQtyFilter, RelativeSource={RelativeSource AncestorType=Window}, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
+                                                        <ComboBoxItem Content="Both" />
+                                                        <ComboBoxItem Content="Owned" />
+                                                        <ComboBoxItem Content="Unowned" />
+                                                    </ComboBox>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTextColumn.HeaderTemplate>
+
+                                        <DataGridTextColumn.CellStyle>
+                                            <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}">
+                                                <Setter Property="Background" Value="Transparent"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding TotalQuantityOwned, Converter={StaticResource TotalQuantityToCategoryConverter}}" Value="Low">
+                                                        <Setter Property="Background" Value="{DynamicResource ChecklistLowBrush}"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding TotalQuantityOwned, Converter={StaticResource TotalQuantityToCategoryConverter}}" Value="High">
+                                                        <Setter Property="Background" Value="{DynamicResource ChecklistHighBrush}"/>
+                                                        <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/>
+                                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </DataGridTextColumn.CellStyle>
+                                    </DataGridTextColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+
+                            <GridSplitter Grid.Column="1"
+                                          Width="6"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Stretch"
+                                          ShowsPreview="True"
+                                          ResizeDirection="Columns"
+                                          Cursor="SizeWE"/>
+
+                            <Border Grid.Column="2"
+                                    x:Name="ChecklistPreviewViewport"
+                                    BorderThickness="1" 
+                                    BorderBrush="{DynamicResource AccentBrush}"
+                                    Padding="8" Margin="8,0,0,0"
+                                    ClipToBounds="True"
+                                    Background="{DynamicResource SurfaceBrush}"
+                                    Tag="{Binding ElementName=ChecklistPreviewImage}"
+                                    MouseWheel="PreviewImage_MouseWheel"
+                                    MouseLeftButtonDown="PreviewImage_MouseLeftButtonDown"
+                                    MouseLeftButtonUp="PreviewImage_MouseLeftButtonUp"
+                                    MouseMove="PreviewImage_MouseMove"
+                                    MouseRightButtonDown="PreviewImage_MouseRightButtonDown">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <Image x:Name="ChecklistPreviewImage"
+                                           Grid.Row="0"
+                                           Stretch="Uniform"
+                                           Source="{Binding SelectedCombinedImage, Converter={StaticResource StringToImageConverter}}"
+                                           RenderTransformOrigin="0,0">
+                                        <Image.RenderTransform>
+                                            <TransformGroup>
+                                                <ScaleTransform ScaleX="1" ScaleY="1"/>
+                                                <TranslateTransform X="0" Y="0"/>
+                                            </TransformGroup>
+                                        </Image.RenderTransform>
+                                    </Image>
+
+                                    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0" >
+                                        <Button Content="◀ Prev" Padding="8,4" Margin="4,0"
+                                                Command="{Binding PrevImageCommand}" />
+                                        <TextBlock VerticalAlignment="Center" Margin="8,0"
+                                                   Foreground="{DynamicResource GoldBrush}">
+                                            <TextBlock.Text>
+                                                <MultiBinding StringFormat="{}{0} / {1}">
+                                                    <Binding Path="SelectedImageIndexDisplay" />
+                                                    <Binding Path="SelectedCombinedCard.Images.Count" />
+                                                </MultiBinding>
+                                            </TextBlock.Text>
+                                        </TextBlock>
+                                        <Button Content="Next ▶" Padding="8,4" Margin="4,0"
+                                                Command="{Binding NextImageCommand}" />
+                                        <Button Content="Reset" Padding="8,4" Margin="12,0,0,0" Click="ChecklistReset_Click" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </TabItem>
+                </TabControl>
+            </DockPanel>
+        </Grid>
+    </Border>
 </Window>
