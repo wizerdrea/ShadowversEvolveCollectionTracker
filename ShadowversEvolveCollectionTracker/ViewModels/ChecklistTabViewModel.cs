@@ -1,12 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows.Data;
-using System.Windows.Input;
 using ShadowversEvolveCardTracker.Models;
 
 namespace ShadowversEvolveCardTracker.ViewModels
@@ -17,6 +16,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
         private readonly ICollectionView _checklistView;
 
         public ICollectionView ChecklistView => _checklistView;
+        public CardViewerViewModel CardViewer { get; } = new CardViewerViewModel();
 
         private string? _checklistNameFilter;
         public string? ChecklistNameFilter
@@ -48,72 +48,30 @@ namespace ShadowversEvolveCardTracker.ViewModels
             {
                 if (SetProperty(ref _selectedCombinedCard, value))
                 {
-                    SelectedImageIndex = 0;
-                    OnPropertyChanged(nameof(SelectedCombinedImage));
-                    OnPropertyChanged(nameof(SelectedImageIndexDisplay));
+                    CardViewer.SetCombinedCard(value);
                 }
             }
         }
 
-        private int _selectedImageIndex;
-        public int SelectedImageIndex
+        private bool _isCalculating;
+        public bool IsCalculating
         {
-            get => _selectedImageIndex;
-            set
-            {
-                if (SetProperty(ref _selectedImageIndex, value))
-                {
-                    OnPropertyChanged(nameof(SelectedCombinedImage));
-                    OnPropertyChanged(nameof(SelectedImageIndexDisplay));
-                }
-            }
+            get => _isCalculating;
+            set => SetProperty(ref _isCalculating, value);
         }
 
-        public string? SelectedCombinedImage
+        private string _calculatingMessage = "Calculating combined counts...";
+        public string CalculatingMessage
         {
-            get
-            {
-                if (SelectedCombinedCard == null) return null;
-                var imgs = SelectedCombinedCard.Images;
-                if (imgs == null || imgs.Count == 0) return null;
-                if (SelectedImageIndex < 0) SelectedImageIndex = 0;
-                if (SelectedImageIndex >= imgs.Count) SelectedImageIndex = imgs.Count - 1;
-                return imgs.ElementAtOrDefault(SelectedImageIndex);
-            }
+            get => _calculatingMessage;
+            set => SetProperty(ref _calculatingMessage, value);
         }
-
-        public int SelectedImageIndexDisplay
-        {
-            get
-            {
-                var count = SelectedCombinedCard?.Images?.Count ?? 0;
-                return count == 0 ? 0 : SelectedImageIndex + 1;
-            }
-        }
-
-        public ICommand PrevImageCommand { get; }
-        public ICommand NextImageCommand { get; }
 
         public ChecklistTabViewModel(ObservableCollection<CombinedCardCount> combinedCardCounts)
         {
             _combinedCardCounts = combinedCardCounts ?? throw new ArgumentNullException(nameof(combinedCardCounts));
             _checklistView = CollectionViewSource.GetDefaultView(_combinedCardCounts);
             _checklistView.Filter = ChecklistFilter;
-
-            PrevImageCommand = new RelayCommand(() =>
-            {
-                if (SelectedCombinedCard == null) return Task.CompletedTask;
-                if (SelectedImageIndex > 0) SelectedImageIndex--;
-                return Task.CompletedTask;
-            }, () => true);
-
-            NextImageCommand = new RelayCommand(() =>
-            {
-                if (SelectedCombinedCard == null) return Task.CompletedTask;
-                var count = SelectedCombinedCard.Images?.Count ?? 0;
-                if (count > 0 && SelectedImageIndex < count - 1) SelectedImageIndex++;
-                return Task.CompletedTask;
-            }, () => true);
         }
 
         private bool ChecklistFilter(object? obj)
@@ -150,7 +108,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
 
         protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? name = null)
         {
-            if (!System.Collections.Generic.EqualityComparer<T>.Default.Equals(field, value))
+            if (!EqualityComparer<T>.Default.Equals(field, value))
             {
                 field = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
