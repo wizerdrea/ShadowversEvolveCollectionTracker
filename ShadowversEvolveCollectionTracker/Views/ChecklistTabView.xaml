@@ -8,6 +8,7 @@
     <UserControl.Resources>
         <conv:StringToImageSourceConverter x:Key="StringToImageConverter" />
         <conv:TotalQuantityToCategoryConverter x:Key="TotalQuantityToCategoryConverter" />
+        <conv:CombinedCountToCategoryConverter x:Key="CombinedCountToCategoryConverter" />
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
         <conv:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisConverter" />
     </UserControl.Resources>
@@ -170,10 +171,11 @@
                                 <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}">
                                     <Setter Property="Background" Value="Transparent"/>
                                     <Style.Triggers>
-                                        <DataTrigger Binding="{Binding TotalQuantityOwned, Converter={StaticResource TotalQuantityToCategoryConverter}}" Value="Low">
+                                        <!-- Use the combined-count aware converter that compares against CopiesNeededForPlayset -->
+                                        <DataTrigger Binding="{Binding Converter={StaticResource CombinedCountToCategoryConverter}}" Value="Low">
                                             <Setter Property="Background" Value="{DynamicResource ChecklistLowBrush}"/>
                                         </DataTrigger>
-                                        <DataTrigger Binding="{Binding TotalQuantityOwned, Converter={StaticResource TotalQuantityToCategoryConverter}}" Value="High">
+                                        <DataTrigger Binding="{Binding Converter={StaticResource CombinedCountToCategoryConverter}}" Value="High">
                                             <Setter Property="Background" Value="{DynamicResource ChecklistHighBrush}"/>
                                             <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}"/>
                                             <Setter Property="FontWeight" Value="SemiBold"/>

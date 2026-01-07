@@ -1,9 +1,6 @@
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Windows.Data;
@@ -26,7 +23,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
             set
             {
                 if (SetProperty(ref _checklistNameFilter, value))
-                    _checklistView.Refresh();
+                    SafeRefresh();
             }
         }
 
@@ -37,7 +34,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
             set
             {
                 if (SetProperty(ref _checklistQtyFilter, value))
-                    _checklistView.Refresh();
+                    SafeRefresh();
             }
         }
 
@@ -48,7 +45,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
             set
             {
                 if (SetProperty(ref _favoritesOnly, value))
-                    _checklistView.Refresh();
+                    SafeRefresh();
             }
         }
 
@@ -134,7 +131,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
                 e.PropertyName == nameof(CardData.Name) ||
                 e.PropertyName == nameof(CardData.Type))
             {
-                _checklistView.Refresh();
+                SafeRefresh();
             }
         }
 
@@ -187,6 +184,14 @@ namespace ShadowversEvolveCardTracker.ViewModels
         protected void OnPropertyChanged([CallerMemberName] string? name = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        }
+
+        private void SafeRefresh()
+        {
+            if (_checklistView is IEditableCollectionView iecv &&
+                (iecv.IsAddingNew || iecv.IsEditingItem))
+                return;
+            _checklistView.Refresh();
         }
     }
 }

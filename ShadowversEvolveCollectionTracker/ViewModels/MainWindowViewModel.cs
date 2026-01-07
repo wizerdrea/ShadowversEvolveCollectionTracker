@@ -27,6 +27,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
 
         public AllCardsTabViewModel AllCardsTab { get; }
         public ChecklistTabViewModel ChecklistTab { get; }
+        public SetCompletionTabViewModel SetCompletionTab { get; } // new
 
         public ICommand LoadFolderCommand { get; }
         public ICommand SaveCommand { get; }
@@ -53,6 +54,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
 
             AllCardsTab = new AllCardsTabViewModel(AllCards);
             ChecklistTab = new ChecklistTabViewModel(CombinedCardCounts);
+            SetCompletionTab = new SetCompletionTabViewModel(AllCards); // new
 
             LoadFolderCommand = new RelayCommand(async () => await LoadFolderAsync(), () => true);
             SaveCommand = new RelayCommand(() => { SaveAllCards(); return Task.CompletedTask; }, () => true);

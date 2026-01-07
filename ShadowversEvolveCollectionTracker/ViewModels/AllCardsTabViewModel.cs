@@ -26,7 +26,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
             set
             {
                 if (SetProperty(ref _nameFilter, value))
-                    _filteredCards.Refresh();
+                    SafeRefresh();
             }
         }
 
@@ -37,7 +37,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
             set
             {
                 if (SetProperty(ref _cardNumberFilter, value))
-                    _filteredCards.Refresh();
+                    SafeRefresh();
             }
         }
 
@@ -59,7 +59,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
             set
             {
                 if (SetProperty(ref _rarityFilter, value))
-                    _filteredCards.Refresh();
+                    SafeRefresh();
             }
         }
 
@@ -70,7 +70,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
             set
             {
                 if (SetProperty(ref _setFilter, value))
-                    _filteredCards.Refresh();
+                    SafeRefresh();
             }
         }
 
@@ -81,7 +81,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
             set
             {
                 if (SetProperty(ref _formatFilter, value))
-                    _filteredCards.Refresh();
+                    SafeRefresh();
             }
         }
 
@@ -92,7 +92,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
             set
             {
                 if (SetProperty(ref _classFilter, value))
-                    _filteredCards.Refresh();
+                    SafeRefresh();
             }
         }
 
@@ -103,7 +103,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
             set
             {
                 if (SetProperty(ref _typeFilter, value))
-                    _filteredCards.Refresh();
+                    SafeRefresh();
             }
         }
 
@@ -114,7 +114,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
             set
             {
                 if (SetProperty(ref _traitsFilter, value))
-                    _filteredCards.Refresh();
+                    SafeRefresh();
             }
         }
 
@@ -125,7 +125,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
             set
             {
                 if (SetProperty(ref _textFilter, value))
-                    _filteredCards.Refresh();
+                    SafeRefresh();
             }
         }
 
@@ -222,8 +222,16 @@ namespace ShadowversEvolveCardTracker.ViewModels
                 e.PropertyName == nameof(CardData.IsWishlisted) ||
                 e.PropertyName == nameof(CardData.WishlistDesiredQuantity))
             {
-                _filteredCards.Refresh();
+                SafeRefresh();
             }
+        }
+
+        private void SafeRefresh()
+        {
+            if (_filteredCards is IEditableCollectionView iecv &&
+                (iecv.IsAddingNew || iecv.IsEditingItem))
+                return;
+            _filteredCards.Refresh();
         }
 
         private bool FilterCard(object? obj)
