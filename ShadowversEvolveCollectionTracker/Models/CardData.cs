@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -52,6 +53,7 @@ namespace ShadowversEvolveCardTracker.Models
                 {
                     _quantityOwned = value;
                     OnPropertyChanged();
+                    OnPropertyChanged(nameof(MissingForPlayset));
                 }
             }
         }
@@ -93,13 +95,40 @@ namespace ShadowversEvolveCardTracker.Models
             get => WishlistDesiredQuantity > 0;
             set
             {
-                var desired = value ? 1 : 0;
+                var desired = value ? Math.Max(1, MissingForPlayset) : 0;
                 if (!(WishlistDesiredQuantity > 0 && value))
                 {
                     WishlistDesiredQuantity = desired; // existing setter raises OnPropertyChanged including IsWishlisted
                 }
             }
         }
+
+        /// <summary>
+        /// Number of copies required to have a full playset for this card.
+        /// Rules:
+        /// - If Type contains "leader" or "token" (case-insensitive) OR Format equals "gloryfinder" (case-insensitive), playset size is 1.
+        /// - Otherwise playset size is 3.
+        /// </summary>
+        public int CopiesNeededForPlayset
+        {
+            get
+            {
+                var type = Type ?? string.Empty;
+                if (type.IndexOf("leader", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    type.IndexOf("token", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    string.Equals(Format, "gloryfinder", StringComparison.OrdinalIgnoreCase))
+                {
+                    return 1;
+                }
+
+                return 3;
+            }
+        }
+
+        /// <summary>
+        /// How many more copies are needed to reach a full playset (never negative).
+        /// </summary>
+        public int MissingForPlayset => Math.Max(0, CopiesNeededForPlayset - QuantityOwned);
 
         public string ImageFile => Path.Join(_saveFolder, $"{CardNumber}.png");
 

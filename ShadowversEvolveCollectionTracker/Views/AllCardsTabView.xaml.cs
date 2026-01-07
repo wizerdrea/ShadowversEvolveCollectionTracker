@@ -38,7 +38,7 @@ namespace ShadowversEvolveCardTracker.Views
             bool currentlyWishlisted = card.IsWishlisted;
             bool newValue = !currentlyWishlisted;
 
-            card.WishlistDesiredQuantity = newValue ? 1 : 0;
+            card.IsWishlisted = newValue;
 
             if (tb != null)
                 tb.IsChecked = newValue;
