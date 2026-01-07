@@ -140,6 +140,17 @@ namespace ShadowversEvolveCardTracker.ViewModels
             }
         }
 
+        private bool _wishlistedOnly;
+        public bool WishlistedOnly
+        {
+            get => _wishlistedOnly;
+            set
+            {
+                if (SetProperty(ref _wishlistedOnly, value))
+                    _filteredCards.Refresh();
+            }
+        }
+
         private CardData? _selectedCard;
         public CardData? SelectedCard
         {
@@ -207,7 +218,9 @@ namespace ShadowversEvolveCardTracker.ViewModels
                 e.PropertyName == nameof(CardData.Traits) ||
                 e.PropertyName == nameof(CardData.Text) ||
                 e.PropertyName == nameof(CardData.CardNumber) ||
-                e.PropertyName == nameof(CardData.IsFavorite))
+                e.PropertyName == nameof(CardData.IsFavorite) ||
+                e.PropertyName == nameof(CardData.IsWishlisted) ||
+                e.PropertyName == nameof(CardData.WishlistDesiredQuantity))
             {
                 _filteredCards.Refresh();
             }
@@ -218,6 +231,9 @@ namespace ShadowversEvolveCardTracker.ViewModels
             if (obj is not CardData card) return false;
 
             if (FavoritesOnly && !card.IsFavorite)
+                return false;
+
+            if (WishlistedOnly && !card.IsWishlisted)
                 return false;
 
             if (!string.IsNullOrWhiteSpace(NameFilter))

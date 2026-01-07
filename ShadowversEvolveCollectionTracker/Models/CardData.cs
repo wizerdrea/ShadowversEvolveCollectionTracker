@@ -71,6 +71,36 @@ namespace ShadowversEvolveCardTracker.Models
             }
         }
 
+        // Wishlist desired quantity: default 0. If >=1 card is "on the wishlist".
+        private int _wishlistDesiredQuantity = 0;
+        public int WishlistDesiredQuantity
+        {
+            get => _wishlistDesiredQuantity;
+            set
+            {
+                var newValue = value < 0 ? 0 : value;
+                if (_wishlistDesiredQuantity != newValue)
+                {
+                    _wishlistDesiredQuantity = newValue;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(IsWishlisted));
+                }
+            }
+        }
+
+        public bool IsWishlisted
+        {
+            get => WishlistDesiredQuantity > 0;
+            set
+            {
+                var desired = value ? 1 : 0;
+                if (!(WishlistDesiredQuantity > 0 && value))
+                {
+                    WishlistDesiredQuantity = desired; // existing setter raises OnPropertyChanged including IsWishlisted
+                }
+            }
+        }
+
         public string ImageFile => Path.Join(_saveFolder, $"{CardNumber}.png");
 
         public event PropertyChangedEventHandler? PropertyChanged;

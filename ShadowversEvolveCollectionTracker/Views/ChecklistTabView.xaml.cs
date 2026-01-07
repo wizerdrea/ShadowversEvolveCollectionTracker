@@ -24,6 +24,9 @@ namespace ShadowversEvolveCardTracker.Views
             {
                 card.IsFavorite = newValue;
             }
+
+            // Immediately reflect the new state in the toggle's visual so the UI shows the change right away.
+            tb.IsChecked = newValue;
         }
     }
 }

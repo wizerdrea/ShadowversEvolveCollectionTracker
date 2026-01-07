@@ -18,6 +18,7 @@
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <!-- Image viewport with panning/zooming - constrained to Row 0 -->
@@ -112,8 +113,54 @@
                        Margin="0,8,0,0"
                        Foreground="{DynamicResource GoldBrush}" />
 
+            <!-- Wishlist controls placed under the name -->
+            <StackPanel Grid.Row="2"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        Margin="0,8,0,0"
+                        Background="Transparent">
+                <Border Background="{DynamicResource ElevatedBrush}"
+                        Padding="6"
+                        CornerRadius="4"
+                        BorderBrush="{DynamicResource AccentBrush}"
+                        BorderThickness="1">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+
+                        <Button Content="−"
+                                Width="26"
+                                Height="24"
+                                Padding="0"
+                                Margin="0,0,6,0"
+                                Command="{Binding DecreaseWishlistCommand}"
+                                ToolTip="Decrease wishlist quantity"/>
+
+                        <!-- Center column: label "Wishlist" above the numeric quantity -->
+                        <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,0">
+                            <TextBlock Text="Wishlist"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                       HorizontalAlignment="Center"/>
+                            <TextBlock VerticalAlignment="Center"
+                                       Foreground="{DynamicResource GoldBrush}"
+                                       FontWeight="SemiBold"
+                                       Text="{Binding WishlistQuantity}"
+                                       Width="26"
+                                       TextAlignment="Center"/>
+                        </StackPanel>
+
+                        <Button Content="+"
+                                Width="26"
+                                Height="24"
+                                Padding="0"
+                                Margin="6,0,0,0"
+                                Command="{Binding IncreaseWishlistCommand}"
+                                ToolTip="Increase wishlist quantity"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
             <!-- Navigation buttons - shown only when there are multiple images -->
-            <StackPanel Grid.Row="2" 
+            <StackPanel Grid.Row="3" 
                         Orientation="Horizontal" 
                         HorizontalAlignment="Center" 
                         Margin="0,8,0,0"

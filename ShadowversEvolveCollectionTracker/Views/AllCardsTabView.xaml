@@ -4,13 +4,51 @@
              xmlns:conv="clr-namespace:ShadowversEvolveCardTracker.Converters"
              xmlns:controls="clr-namespace:ShadowversEvolveCardTracker.Controls"
              Background="{DynamicResource PrimaryBrush}">
-    
+
     <UserControl.Resources>
         <conv:StringToImageSourceConverter x:Key="StringToImageConverter" />
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
         <conv:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisConverter" />
+
+        <!-- ToggleButton style aligned with app theme -->
+        <Style TargetType="ToggleButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="4"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="{StaticResource HoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter Property="Background" Value="{StaticResource SelectedBrush}"/>
+                                <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                <Setter Property="Foreground" Value="{StaticResource GoldBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                                <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
-    
+
     <Grid Margin="8">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
@@ -60,12 +98,9 @@
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <ToggleButton IsChecked="{Binding IsFavorite, Mode=TwoWay}"
-                                                  ToolTip="Toggle favorite"
+                                                  Click="CardFavoriteToggle_Click"
                                                   Cursor="Hand"
-                                                  Background="Transparent"
-                                                  BorderThickness="0"
                                                   Focusable="False"
-                                                  OverridesDefaultStyle="True"
                                                   HorizontalAlignment="Center"
                                                   VerticalAlignment="Center">
                                         <ToggleButton.Template>
@@ -77,6 +112,18 @@
                                                 </Border>
                                             </ControlTemplate>
                                         </ToggleButton.Template>
+                                        <ToggleButton.ToolTip>
+                                            <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                                <Border Background="{DynamicResource ElevatedBrush}"
+                                                        Padding="6"
+                                                        CornerRadius="4"
+                                                        BorderBrush="{DynamicResource AccentBrush}"
+                                                        BorderThickness="1">
+                                                    <TextBlock Text="Toggle favorite"
+                                                               Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                </Border>
+                                            </ToolTip>
+                                        </ToggleButton.ToolTip>
 
                                         <Viewbox Width="18" Height="18">
                                             <Canvas Width="24" Height="24">
@@ -99,12 +146,8 @@
                             <DataGridTemplateColumn.HeaderTemplate>
                                 <DataTemplate>
                                     <!-- Header toggle: binds to outer DataContext.FavoritesOnly -->
-                                    <ToggleButton ToolTip="Show favorites only"
-                                                  Cursor="Hand"
-                                                  Background="Transparent"
-                                                  BorderThickness="0"
+                                    <ToggleButton Cursor="Hand"
                                                   Focusable="False"
-                                                  OverridesDefaultStyle="True"
                                                   HorizontalAlignment="Center"
                                                   VerticalAlignment="Center"
                                                   IsChecked="{Binding DataContext.FavoritesOnly, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
@@ -118,13 +161,26 @@
                                             </ControlTemplate>
                                         </ToggleButton.Template>
 
+                                        <ToggleButton.ToolTip>
+                                            <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                                <Border Background="{DynamicResource ElevatedBrush}"
+                                                        Padding="6"
+                                                        CornerRadius="4"
+                                                        BorderBrush="{DynamicResource AccentBrush}"
+                                                        BorderThickness="1">
+                                                    <TextBlock Text="Show favorites only"
+                                                               Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                </Border>
+                                            </ToolTip>
+                                        </ToggleButton.ToolTip>
+
                                         <Viewbox Width="18" Height="18">
                                             <Canvas Width="24" Height="24">
                                                 <!-- Filled star when header is checked -->
                                                 <Path Fill="{DynamicResource GoldBrush}"
                                                       Data="M12,17.27 L18.18,21 L16.54,13.97 L22,9.24 L14.81,8.63 L12,2 L9.19,8.63 L2,9.24 L7.46,13.97 L5.82,21 z"
                                                       Visibility="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=ToggleButton}, Converter={StaticResource BoolToVisConverter}}"/>
-                                                <!-- Outline star when header is unchecked -->
+                                                <!-- Outline star when header isunchecked -->
                                                 <Path Stroke="{DynamicResource GoldBrush}"
                                                       Fill="Transparent"
                                                       StrokeThickness="1.6"
@@ -252,6 +308,107 @@
                                 </DataTemplate>
                             </DataGridTextColumn.HeaderTemplate>
                         </DataGridTextColumn>
+
+                        <DataGridTemplateColumn Width="SizeToHeader" IsReadOnly="False">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <!-- Use the same themed ToggleButton as favorites so wishlist matches app UI -->
+                                    <ToggleButton IsChecked="{Binding IsWishlisted, Mode=TwoWay}"
+                                                  Click="CardWishlistToggle_Click"
+                                                  Cursor="Hand"
+                                                  Focusable="False"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center">
+                                        <ToggleButton.Template>
+                                            <ControlTemplate TargetType="ToggleButton">
+                                                <Border Background="{TemplateBinding Background}"
+                                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                                        BorderThickness="{TemplateBinding BorderThickness}">
+                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </ToggleButton.Template>
+
+                                        <ToggleButton.ToolTip>
+                                            <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                                <Border Background="{DynamicResource ElevatedBrush}"
+                                                        Padding="6"
+                                                        CornerRadius="4"
+                                                        BorderBrush="{DynamicResource AccentBrush}"
+                                                        BorderThickness="1">
+                                                    <TextBlock Text="Toggle wishlist"
+                                                               Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                </Border>
+                                            </ToolTip>
+                                        </ToggleButton.ToolTip>
+
+                                        <Viewbox Width="18" Height="18">
+                                            <Canvas Width="24" Height="24">
+                                                <!-- Filled heart when checked -->
+                                                <Path Fill="{DynamicResource GoldBrush}"
+                                                      Data="M12,21 C12,21 4,14 4,9 C4,6.2386 6.2386,4 9,4 C10.6569,4 12,5.3431 12,5.3431 C12,5.3431 13.3431,4 15,4 C17.7614,4 20,6.2386 20,9 C20,14 12,21 12,21 z"
+                                                      Visibility="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=ToggleButton}, Converter={StaticResource BoolToVisConverter}}"/>
+                                                <!-- Outline heart when unchecked -->
+                                                <Path Stroke="{DynamicResource GoldBrush}"
+                                                      Fill="Transparent"
+                                                      StrokeThickness="1.6"
+                                                      Data="M12,21 C12,21 4,14 4,9 C4,6.2386 6.2386,4 9,4 C10.6569,4 12,5.3431 12,5.3431 C12,5.3431 13.3431,4 15,4 C17.7614,4 20,6.2386 20,9 C20,14 12,21 12,21 z"
+                                                      Visibility="Visible"/>
+                                            </Canvas>
+                                        </Viewbox>
+                                    </ToggleButton>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+
+                            <DataGridTemplateColumn.HeaderTemplate>
+                                <DataTemplate>
+                                    <StackPanel>
+                                        <TextBlock Text="Wishlisted" HorizontalAlignment="Center"/>
+                                        <ToggleButton Cursor="Hand"
+                                                      Focusable="False"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"
+                                                      IsChecked="{Binding DataContext.WishlistedOnly, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                            <ToggleButton.Template>
+                                                <ControlTemplate TargetType="ToggleButton">
+                                                    <Border Background="{TemplateBinding Background}"
+                                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                                            BorderThickness="{TemplateBinding BorderThickness}">
+                                                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </ToggleButton.Template>
+
+                                            <ToggleButton.ToolTip>
+                                                <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                                    <Border Background="{DynamicResource ElevatedBrush}"
+                                                            Padding="6"
+                                                            CornerRadius="4"
+                                                            BorderBrush="{DynamicResource AccentBrush}"
+                                                            BorderThickness="1">
+                                                        <TextBlock Text="Show wishlisted only"
+                                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                    </Border>
+                                                </ToolTip>
+                                            </ToggleButton.ToolTip>
+
+                                            <Viewbox Width="18" Height="18">
+                                                <Canvas Width="24" Height="24">
+                                                    <Path Fill="{DynamicResource GoldBrush}"
+                                                          Data="M12,21 C12,21 4,14 4,9 C4,6.2386 6.2386,4 9,4 C10.6569,4 12,5.3431 12,5.3431 C12,5.3431 13.3431,4 15,4 C17.7614,4 20,6.2386 20,9 C20,14 12,21 12,21 z"
+                                                          Visibility="{Binding IsChecked, RelativeSource={RelativeSource AncestorType=ToggleButton}, Converter={StaticResource BoolToVisConverter}}"/>
+                                                    <Path Stroke="{DynamicResource GoldBrush}"
+                                                          Fill="Transparent"
+                                                          StrokeThickness="1.6"
+                                                          Data="M12,21 C12,21 4,14 4,9 C4,6.2386 6.2386,4 9,4 C10.6569,4 12,5.3431 12,5.3431 C12,5.3431 13.3431,4 15,4 C17.7614,4 20,6.2386 20,9 C20,14 12,21 12,21 z"
+                                                          Visibility="Visible"/>
+                                                </Canvas>
+                                            </Viewbox>
+                                        </ToggleButton>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.HeaderTemplate>
+                        </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
 

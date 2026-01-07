@@ -14,9 +14,12 @@ namespace ShadowversEvolveCardTracker.ViewModels
         private List<CardData> _cards = new();
         private int _currentIndex;
         private string? _cardName;
+        private CardData? _subscribedCard;
 
         public ICommand PrevImageCommand { get; }
         public ICommand NextImageCommand { get; }
+        public ICommand IncreaseWishlistCommand { get; }
+        public ICommand DecreaseWishlistCommand { get; }
 
         public CardViewerViewModel()
         {
@@ -37,6 +40,24 @@ namespace ShadowversEvolveCardTracker.ViewModels
                     return Task.CompletedTask;
                 },
                 canExecute: () => CurrentIndex < ImageCount - 1 && ImageCount > 1);
+
+            IncreaseWishlistCommand = new RelayCommand(
+                execute: () =>
+                {
+                    if (CurrentCard != null)
+                        CurrentCard.WishlistDesiredQuantity++;
+                    return Task.CompletedTask;
+                },
+                canExecute: () => CurrentCard != null);
+
+            DecreaseWishlistCommand = new RelayCommand(
+                execute: () =>
+                {
+                    if (CurrentCard != null)
+                        CurrentCard.WishlistDesiredQuantity = Math.Max(0, CurrentCard.WishlistDesiredQuantity - 1);
+                    return Task.CompletedTask;
+                },
+                canExecute: () => CurrentCard != null && (CurrentCard?.WishlistDesiredQuantity ?? 0) > 0);
         }
 
         public int CurrentIndex
@@ -51,6 +72,9 @@ namespace ShadowversEvolveCardTracker.ViewModels
                     OnPropertyChanged(nameof(CurrentIndexDisplay));
                     ((RelayCommand)PrevImageCommand).RaiseCanExecuteChanged();
                     ((RelayCommand)NextImageCommand).RaiseCanExecuteChanged();
+                    UpdateCurrentCardSubscription(CurrentCard);
+                    ((RelayCommand)IncreaseWishlistCommand).RaiseCanExecuteChanged();
+                    ((RelayCommand)DecreaseWishlistCommand).RaiseCanExecuteChanged();
                 }
             }
         }
@@ -80,6 +104,10 @@ namespace ShadowversEvolveCardTracker.ViewModels
             private set => SetProperty(ref _cardName, value);
         }
 
+        // Wishlist view helpers
+        public int WishlistQuantity => CurrentCard?.WishlistDesiredQuantity ?? 0;
+        public bool IsWishlisted => WishlistQuantity > 0;
+
         // Set a single card
         public void SetCard(CardData? card)
         {
@@ -102,6 +130,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
             OnPropertyChanged(nameof(CurrentIndexDisplay));
             ((RelayCommand)PrevImageCommand).RaiseCanExecuteChanged();
             ((RelayCommand)NextImageCommand).RaiseCanExecuteChanged();
+            UpdateCurrentCardSubscription(CurrentCard);
         }
 
         // Set multiple cards from an enumerable of CardData
@@ -127,6 +156,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
             OnPropertyChanged(nameof(CurrentIndexDisplay));
             ((RelayCommand)PrevImageCommand).RaiseCanExecuteChanged();
             ((RelayCommand)NextImageCommand).RaiseCanExecuteChanged();
+            UpdateCurrentCardSubscription(CurrentCard);
         }
 
         // Convenience: keep existing name used by other code
@@ -135,6 +165,35 @@ namespace ShadowversEvolveCardTracker.ViewModels
             SetCards(combined?.Cards);
             if (combined != null)
                 CardName = combined.Name;
+        }
+
+        private void UpdateCurrentCardSubscription(CardData? newCard)
+        {
+            if (_subscribedCard == newCard) return;
+
+            if (_subscribedCard != null)
+                _subscribedCard.PropertyChanged -= SubscribedCard_PropertyChanged;
+
+            _subscribedCard = newCard;
+
+            if (_subscribedCard != null)
+                _subscribedCard.PropertyChanged += SubscribedCard_PropertyChanged;
+
+            OnPropertyChanged(nameof(WishlistQuantity));
+            OnPropertyChanged(nameof(IsWishlisted));
+            ((RelayCommand)IncreaseWishlistCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)DecreaseWishlistCommand).RaiseCanExecuteChanged();
+        }
+
+        private void SubscribedCard_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            // Bubble wishlist changes to the view
+            if (e.PropertyName == nameof(CardData.WishlistDesiredQuantity) || string.IsNullOrEmpty(e.PropertyName))
+            {
+                OnPropertyChanged(nameof(WishlistQuantity));
+                OnPropertyChanged(nameof(IsWishlisted));
+                ((RelayCommand)DecreaseWishlistCommand).RaiseCanExecuteChanged();
+            }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
