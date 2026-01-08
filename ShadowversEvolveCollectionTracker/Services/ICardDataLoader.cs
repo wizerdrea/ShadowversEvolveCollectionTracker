@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using ShadowversEvolveCardTracker.Models;
+using ShadowverseEvolveCardTracker.Models;
 
-namespace ShadowversEvolveCardTracker.Services
+namespace ShadowverseEvolveCardTracker.Services
 {
     public interface ICardDataLoader
     {

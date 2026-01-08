@@ -1,7 +1,7 @@
-<Application x:Class="ShadowversEvolveCardTracker.App"
+<Application x:Class="ShadowverseEvolveCardTracker.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:ShadowversEvolveCardTracker"
+             xmlns:local="clr-namespace:ShadowverseEvolveCardTracker"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>

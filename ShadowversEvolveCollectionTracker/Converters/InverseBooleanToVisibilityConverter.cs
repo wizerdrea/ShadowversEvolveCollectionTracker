@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 
-namespace ShadowversEvolveCardTracker.Converters
+namespace ShadowverseEvolveCardTracker.Converters
 {
     public class InverseBooleanToVisibilityConverter : IValueConverter
     {

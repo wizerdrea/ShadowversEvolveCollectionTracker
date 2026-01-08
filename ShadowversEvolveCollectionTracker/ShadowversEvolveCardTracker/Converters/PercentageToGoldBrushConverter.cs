@@ -4,7 +4,7 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace ShadowversEvolveCardTracker.Converters
+namespace ShadowverseEvolveCardTracker.Converters
 {
     /// <summary>
     /// Returns a left-to-right linear brush that is solid gold from 0..percentage and transparent for the remainder.

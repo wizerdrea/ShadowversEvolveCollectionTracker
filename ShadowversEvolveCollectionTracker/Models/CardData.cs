@@ -4,7 +4,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Runtime.CompilerServices;
 
-namespace ShadowversEvolveCardTracker.Models
+namespace ShadowverseEvolveCardTracker.Models
 {
     /// <summary>
     /// Strongly-typed representation of a row from the card CSV.
@@ -12,7 +12,7 @@ namespace ShadowversEvolveCardTracker.Models
     /// </summary>
     public sealed class CardData : INotifyPropertyChanged
     {
-        private static string _saveFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ShadowversEvolveCardTracker", "CardImages");
+        private static string _saveFolder = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ShadowverseEvolveCardTracker", "CardImages");
 
         static CardData()
         {

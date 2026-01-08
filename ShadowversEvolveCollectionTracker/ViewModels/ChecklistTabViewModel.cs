@@ -4,9 +4,9 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Windows.Data;
-using ShadowversEvolveCardTracker.Models;
+using ShadowverseEvolveCardTracker.Models;
 
-namespace ShadowversEvolveCardTracker.ViewModels
+namespace ShadowverseEvolveCardTracker.ViewModels
 {
     public class ChecklistTabViewModel : INotifyPropertyChanged
     {

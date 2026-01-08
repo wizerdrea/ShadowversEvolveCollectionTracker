@@ -2,9 +2,9 @@ using System.Windows.Controls;
 
 namespace ShadowverseEvolveCardTracker.Views
 {
-    public partial class SetCompletionTabView : UserControl
+    public partial class DeckBuilderTabView : UserControl
     {
-        public SetCompletionTabView()
+        public DeckBuilderTabView()
         {
             InitializeComponent();
         }

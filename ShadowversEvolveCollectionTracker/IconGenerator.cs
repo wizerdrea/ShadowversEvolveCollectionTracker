@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
-namespace ShadowversEvolveCardTracker
+namespace ShadowverseEvolveCardTracker
 {
     /// <summary>
     /// Utility to generate the app icon from vector graphics.

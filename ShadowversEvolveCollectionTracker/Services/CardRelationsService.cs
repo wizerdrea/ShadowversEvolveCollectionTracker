@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Threading;
-using ShadowversEvolveCardTracker.Models;
+using ShadowverseEvolveCardTracker.Models;
 
-namespace ShadowversEvolveCardTracker.Services
+namespace ShadowverseEvolveCardTracker.Services
 {
     /// <summary>
     /// Service to find and manage card relationships.

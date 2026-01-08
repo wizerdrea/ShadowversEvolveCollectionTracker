@@ -1,4 +1,4 @@
-namespace ShadowversEvolveCardTracker.Services
+namespace ShadowverseEvolveCardTracker.Services
 {
     public interface IFolderDialogService
     {

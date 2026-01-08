@@ -12,10 +12,10 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
-using ShadowversEvolveCardTracker.Models;
-using ShadowversEvolveCardTracker.Services;
+using ShadowverseEvolveCardTracker.Models;
+using ShadowverseEvolveCardTracker.Services;
 
-namespace ShadowversEvolveCardTracker.ViewModels
+namespace ShadowverseEvolveCardTracker.ViewModels
 {
     public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
@@ -25,10 +25,12 @@ namespace ShadowversEvolveCardTracker.ViewModels
 
         public ObservableCollection<CardData> AllCards { get; } = new ObservableCollection<CardData>();
         public ObservableCollection<CombinedCardCount> CombinedCardCounts { get; } = new ObservableCollection<CombinedCardCount>();
+        public ObservableCollection<Deck> Decks { get; } = new ObservableCollection<Deck>();
 
         public AllCardsTabViewModel AllCardsTab { get; }
         public ChecklistTabViewModel ChecklistTab { get; }
         public SetCompletionTabViewModel SetCompletionTab { get; }
+        public DeckBuilderViewModel DeckBuilderTab { get; }
 
         public ICommand LoadFolderCommand { get; }
         public ICommand SaveCommand { get; }
@@ -44,7 +46,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
 
         private static string GetSaveFilePath()
         {
-            var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ShadowversEvolveCardTracker");
+            var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ShadowverseEvolveCardTracker");
             Directory.CreateDirectory(dir);
             return Path.Combine(dir, "savedCards.json");
         }
@@ -58,6 +60,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
             AllCardsTab = new AllCardsTabViewModel(AllCards);
             ChecklistTab = new ChecklistTabViewModel(CombinedCardCounts);
             SetCompletionTab = new SetCompletionTabViewModel(AllCards);
+            DeckBuilderTab = new DeckBuilderViewModel(AllCards, Decks);
 
             LoadFolderCommand = new RelayCommand(async () => await LoadFolderAsync(), () => true);
             SaveCommand = new RelayCommand(() => { SaveAllCards(); return Task.CompletedTask; }, () => true);
@@ -108,13 +111,101 @@ namespace ShadowversEvolveCardTracker.ViewModels
                     {
                         AllCards.Add(c);
                     }
+
+                    Status = $"Loaded {list.Count} saved card(s).";
+                    ((RelayCommand)FindCardRelationsCommand).RaiseCanExecuteChanged();
                 });
-                Status = $"Loaded {list.Count} saved card(s).";
-                ((RelayCommand)FindCardRelationsCommand).RaiseCanExecuteChanged();
+                
+                
+                // Load decks
+                await LoadDecksAsync().ConfigureAwait(false);
             }
             catch (Exception ex)
             {
                 Status = $"Failed to load saved cards: {ex.Message}";
+            }
+        }
+
+        private async Task LoadDecksAsync()
+        {
+            try
+            {
+                var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ShadowverseEvolveCardTracker");
+                var decksPath = Path.Combine(dir, "savedDecks.json");
+                
+                if (!File.Exists(decksPath)) return;
+
+                string json = await File.ReadAllTextAsync(decksPath).ConfigureAwait(false);
+                var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var decksList = JsonSerializer.Deserialize<List<Deck>>(json, opts);
+                if (decksList == null) return;
+
+                var dispatcher = Application.Current?.Dispatcher ?? Dispatcher.CurrentDispatcher;
+                await dispatcher.InvokeAsync(() =>
+                {
+                    Decks.Clear();
+                    foreach (var deck in decksList)
+                    {
+                        // Rehydrate CardData references from AllCards
+                        RehydrateDeck(deck);
+                        Decks.Add(deck);
+                    }
+                });
+                
+                Status += $" Loaded {decksList.Count} deck(s).";
+            }
+            catch (Exception ex)
+            {
+                Status += $" Failed to load decks: {ex.Message}";
+            }
+        }
+
+        private void RehydrateDeck(Deck deck)
+        {
+            // Reconnect leader references
+            if (deck.Leader1 != null)
+            {
+                var leader1 = AllCards.FirstOrDefault(c => c.CardNumber == deck.Leader1.CardNumber);
+                deck.Leader1 = leader1;
+            }
+            
+            if (deck.Leader2 != null)
+            {
+                var leader2 = AllCards.FirstOrDefault(c => c.CardNumber == deck.Leader2.CardNumber);
+                deck.Leader2 = leader2;
+            }
+            
+            if (deck.GloryCard != null)
+            {
+                var gloryCard = AllCards.FirstOrDefault(c => c.CardNumber == deck.GloryCard.CardNumber);
+                deck.GloryCard = gloryCard;
+            }
+            
+            // Reconnect deck entry card references
+            foreach (var entry in deck.MainDeck.Concat(deck.EvolveDeck))
+            {
+                var card = AllCards.FirstOrDefault(c => c.CardNumber == entry.Card.CardNumber);
+                if (card != null)
+                {
+                    // Create a new DeckEntry with the correct Card reference and copy Quantity
+                    var newEntry = new DeckEntry
+                    {
+                        Card = card,
+                        Quantity = entry.Quantity
+                    };
+
+                    // Replace the entry in the deck
+                    if (deck.MainDeck.Contains(entry))
+                    {
+                        int idx = deck.MainDeck.IndexOf(entry);
+                        deck.MainDeck[idx] = newEntry;
+                    }
+                    else if (deck.EvolveDeck.Contains(entry))
+                    {
+                        int idx = deck.EvolveDeck.IndexOf(entry);
+                        deck.EvolveDeck[idx] = newEntry;
+                    }
+                }
             }
         }
 
@@ -127,11 +218,34 @@ namespace ShadowversEvolveCardTracker.ViewModels
                 var opts = new JsonSerializerOptions { WriteIndented = true };
                 string json = JsonSerializer.Serialize(list, opts);
                 File.WriteAllText(path, json, Encoding.UTF8);
-                Status = $"Saved {list.Count} card(s).";
+                
+                // Save decks
+                SaveDecks();
+                
+                Status = $"Saved {list.Count} card(s) and {Decks.Count} deck(s).";
             }
             catch (Exception ex)
             {
-                Status = $"Failed to save cards: {ex.Message}";
+                Status = $"Failed to save: {ex.Message}";
+            }
+        }
+
+        private void SaveDecks()
+        {
+            try
+            {
+                var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ShadowverseEvolveCardTracker");
+                Directory.CreateDirectory(dir);
+                var decksPath = Path.Combine(dir, "savedDecks.json");
+                
+                var list = new List<Deck>(Decks);
+                var opts = new JsonSerializerOptions { WriteIndented = true };
+                string json = JsonSerializer.Serialize(list, opts);
+                File.WriteAllText(decksPath, json, Encoding.UTF8);
+            }
+            catch
+            {
+                // Ignore deck save failures
             }
         }
 
@@ -183,7 +297,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
             try
             {
                 var extensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp", ".tif", ".tiff" };
-                var destDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ShadowversEvolveCardTracker", "CardImages");
+                var destDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ShadowverseEvolveCardTracker", "CardImages");
                 Directory.CreateDirectory(destDir);
 
                 var files = await Task.Run(() =>

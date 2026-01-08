@@ -3,9 +3,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using ShadowversEvolveCardTracker.ViewModels;
+using ShadowverseEvolveCardTracker.ViewModels;
 
-namespace ShadowversEvolveCardTracker.Controls
+namespace ShadowverseEvolveCardTracker.Controls
 {
     public partial class CardViewerControl : UserControl
     {

@@ -1,6 +1,6 @@
 using Microsoft.WindowsAPICodePack.Dialogs;
 
-namespace ShadowversEvolveCardTracker.Services
+namespace ShadowverseEvolveCardTracker.Services
 {
     public sealed class FolderDialogService : IFolderDialogService
     {

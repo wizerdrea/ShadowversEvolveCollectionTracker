@@ -1,9 +1,9 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using ShadowversEvolveCardTracker.Models;
+using ShadowverseEvolveCardTracker.Models;
 
-namespace ShadowversEvolveCardTracker.Views
+namespace ShadowverseEvolveCardTracker.Views
 {
     public partial class AllCardsTabView : UserControl
     {

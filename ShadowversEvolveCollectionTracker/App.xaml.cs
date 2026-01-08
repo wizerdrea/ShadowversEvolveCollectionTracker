@@ -2,7 +2,7 @@
 using System.Data;
 using System.Windows;
 
-namespace ShadowversEvolveCardTracker
+namespace ShadowverseEvolveCardTracker
 {
     /// <summary>
     /// Interaction logic for App.xaml

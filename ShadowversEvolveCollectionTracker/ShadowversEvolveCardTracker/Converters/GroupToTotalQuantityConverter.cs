@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Linq;
 using System.Windows.Data;
 
-namespace ShadowversEvolveCardTracker.Converters
+namespace ShadowverseEvolveCardTracker.Converters
 {
     // Converts a CollectionViewGroup (received when binding to CollectionViewSource.View.Groups)
     // into the total of the QuantityOwned property for the group's items.

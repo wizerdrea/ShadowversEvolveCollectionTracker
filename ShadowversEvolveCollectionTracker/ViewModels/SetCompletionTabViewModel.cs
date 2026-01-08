@@ -6,9 +6,9 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows.Data;
-using ShadowversEvolveCardTracker.Models;
+using ShadowverseEvolveCardTracker.Models;
 
-namespace ShadowversEvolveCardTracker.ViewModels
+namespace ShadowverseEvolveCardTracker.ViewModels
 {
     public class SetCompletionTabViewModel : INotifyPropertyChanged
     {

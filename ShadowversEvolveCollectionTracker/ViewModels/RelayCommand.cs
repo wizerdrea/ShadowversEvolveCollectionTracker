@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
-namespace ShadowversEvolveCardTracker.ViewModels
+namespace ShadowverseEvolveCardTracker.ViewModels
 {
     // Small async-capable RelayCommand for simple MVVM scenarios.
     public sealed class RelayCommand : ICommand

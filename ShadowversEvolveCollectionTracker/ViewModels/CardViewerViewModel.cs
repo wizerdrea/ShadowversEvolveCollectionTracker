@@ -5,9 +5,9 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using ShadowversEvolveCardTracker.Models;
+using ShadowverseEvolveCardTracker.Models;
 
-namespace ShadowversEvolveCardTracker.ViewModels
+namespace ShadowverseEvolveCardTracker.ViewModels
 {
     public class CardViewerViewModel : INotifyPropertyChanged
     {

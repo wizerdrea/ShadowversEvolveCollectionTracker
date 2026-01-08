@@ -1,8 +1,8 @@
 using System.IO;
 using System.Text;
-using ShadowversEvolveCardTracker.Models;
+using ShadowverseEvolveCardTracker.Models;
 
-namespace ShadowversEvolveCardTracker.Services
+namespace ShadowverseEvolveCardTracker.Services
 {
     /// <summary>
     /// Reads CSV files and returns strongly-typed CardData objects.

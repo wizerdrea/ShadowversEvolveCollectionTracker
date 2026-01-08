@@ -1,0 +1,356 @@
+﻿<UserControl x:Class="ShadowverseEvolveCardTracker.Views.DeckBuilderTabView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:ShadowverseEvolveCardTracker.Converters"
+             xmlns:local="clr-namespace:ShadowverseEvolveCardTracker.Views"
+             xmlns:controls="clr-namespace:ShadowverseEvolveCardTracker.Controls"
+             Background="{DynamicResource PrimaryBrush}">
+
+    <UserControl.Resources>
+        <conv:StringToImageSourceConverter x:Key="StringToImageConverter" />
+        <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
+        <conv:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisConverter" />
+    </UserControl.Resources>
+
+    <Grid>
+        <!-- Deck List View -->
+        <Grid Visibility="{Binding IsEditingDeck, Converter={StaticResource InverseBoolToVisConverter}}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" Margin="16,16,16,8">
+                <Button Content="Create New Deck" 
+                        Command="{Binding CreateDeckCommand}"
+                        HorizontalAlignment="Left"
+                        Padding="12,6"/>
+            </StackPanel>
+
+            <TabControl Grid.Row="1" Margin="16,8,16,16">
+                <!-- Standard Decks -->
+                <TabItem Header="Standard">
+                    <DataGrid ItemsSource="{Binding StandardDecks}"
+                              AutoGenerateColumns="False"
+                              SelectionMode="Single"
+                              IsReadOnly="True"
+                              CanUserSortColumns="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Deck Name" Binding="{Binding Name}" Width="*"/>
+                            <DataGridTextColumn Header="Class" Binding="{Binding Class1}" Width="100"/>
+                            <DataGridTemplateColumn Header="Leader" Width="80">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Image Source="{Binding Leader1.ImageFile, Converter={StaticResource StringToImageConverter}}"
+                                               Height="60" Stretch="Uniform"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Actions" Width="150">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="Edit" 
+                                                    Command="{Binding DataContext.EditDeckCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    Margin="0,0,4,0"/>
+                                            <Button Content="Delete" 
+                                                    Command="{Binding DataContext.DeleteDeckCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </TabItem>
+
+                <!-- Gloryfinder Decks -->
+                <TabItem Header="Gloryfinder">
+                    <DataGrid ItemsSource="{Binding GloryfinderDecks}"
+                              AutoGenerateColumns="False"
+                              SelectionMode="Single"
+                              IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Deck Name" Binding="{Binding Name}" Width="*"/>
+                            <DataGridTextColumn Header="Class" Binding="{Binding Class1}" Width="100"/>
+                            <DataGridTemplateColumn Header="Leader" Width="80">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Image Source="{Binding Leader1.ImageFile, Converter={StaticResource StringToImageConverter}}"
+                                               Height="60" Stretch="Uniform"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Actions" Width="150">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="Edit" 
+                                                    Command="{Binding DataContext.EditDeckCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    Margin="0,0,4,0"/>
+                                            <Button Content="Delete" 
+                                                    Command="{Binding DataContext.DeleteDeckCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </TabItem>
+
+                <!-- Cross Play Decks -->
+                <TabItem Header="Cross Play">
+                    <DataGrid ItemsSource="{Binding CrossPlayDecks}"
+                              AutoGenerateColumns="False"
+                              SelectionMode="Single"
+                              IsReadOnly="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Deck Name" Binding="{Binding Name}" Width="*"/>
+                            <DataGridTextColumn Header="Classes" Width="150">
+                                <DataGridTextColumn.Binding>
+                                    <MultiBinding StringFormat="{}{0} / {1}">
+                                        <Binding Path="Class1"/>
+                                        <Binding Path="Class2"/>
+                                    </MultiBinding>
+                                </DataGridTextColumn.Binding>
+                            </DataGridTextColumn>
+                            <DataGridTemplateColumn Header="Leaders" Width="120">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Image Source="{Binding Leader1.ImageFile, Converter={StaticResource StringToImageConverter}}"
+                                                   Height="60" Width="50" Stretch="Uniform" Margin="0,0,4,0"/>
+                                            <Image Source="{Binding Leader2.ImageFile, Converter={StaticResource StringToImageConverter}}"
+                                                   Height="60" Width="50" Stretch="Uniform"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTemplateColumn Header="Actions" Width="150">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="Edit" 
+                                                    Command="{Binding DataContext.EditDeckCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    Margin="0,0,4,0"/>
+                                            <Button Content="Delete" 
+                                                    Command="{Binding DataContext.DeleteDeckCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </TabItem>
+            </TabControl>
+        </Grid>
+
+        <!-- Deck Editor View -->
+        <Grid Visibility="{Binding IsEditingDeck, Converter={StaticResource BoolToVisConverter}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="300"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="250"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left: Available Cards -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Margin="8">
+                    <Button Content="← Back to Deck List" 
+                            Command="{Binding BackToDeckListCommand}"
+                            Margin="0,0,0,8"/>
+                    <TextBlock Text="Available Cards" 
+                               FontWeight="SemiBold" 
+                               FontSize="14"
+                               Foreground="{DynamicResource GoldBrush}"/>
+                </StackPanel>
+
+                <DataGrid Grid.Row="1" 
+                          ItemsSource="{Binding ValidCards}"
+                          SelectedItem="{Binding SelectedCard}"
+                          AutoGenerateColumns="False"
+                          SelectionMode="Single"
+                          IsReadOnly="True"
+                          Margin="8,0,8,8">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>
+                        <DataGridTextColumn Header="Cost" Binding="{Binding Cost}" Width="50"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+
+            <!-- Center: Card Viewer & Deck Info -->
+            <Grid Grid.Column="1" Margin="8">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Deck Header -->
+                <Border Grid.Row="0" 
+                        Background="{DynamicResource ElevatedBrush}"
+                        BorderBrush="{DynamicResource AccentBrush}"
+                        BorderThickness="1"
+                        Padding="12"
+                        Margin="0,0,0,8">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBox Grid.Row="0" 
+                                 Text="{Binding DeckName, UpdateSourceTrigger=PropertyChanged}"
+                                 FontSize="18"
+                                 FontWeight="SemiBold"
+                                 Margin="0,0,0,8"/>
+
+                        <StackPanel Grid.Row="1" Orientation="Horizontal">
+                            <TextBlock Text="Main Deck: " Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            <TextBlock Text="{Binding MainDeckCount}" Foreground="{DynamicResource GoldBrush}" FontWeight="SemiBold"/>
+                            <TextBlock Text=" / 50" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,16,0"/>
+
+                            <TextBlock Text="Evolve Deck: " Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            <TextBlock Text="{Binding EvolveDeckCount}" Foreground="{DynamicResource GoldBrush}" FontWeight="SemiBold"/>
+                            <TextBlock Text=" / " Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            <TextBlock Foreground="{DynamicResource TextSecondaryBrush}">
+                                <TextBlock.Text>
+                                    <Binding Path="IsGloryfinder">
+                                        <Binding.Converter>
+                                            <conv:BoolToStringConverter TrueValue="20" FalseValue="10"/>
+                                        </Binding.Converter>
+                                    </Binding>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Card Viewer -->
+                <ContentControl Grid.Row="1" Content="{Binding CardViewer}">
+                    <ContentControl.ContentTemplate>
+                        <DataTemplate>
+                            <controls:CardViewerControl DataContext="{Binding}"/>
+                        </DataTemplate>
+                    </ContentControl.ContentTemplate>
+                </ContentControl>
+
+                <!-- Add/Remove Buttons -->
+                <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0">
+                    <Button Content="Add to Main Deck" 
+                            Command="{Binding AddToMainDeckCommand}"
+                            Padding="8,4"
+                            Margin="0,0,8,0"/>
+                    <Button Content="Add to Evolve Deck" 
+                            Command="{Binding AddToEvolveDeckCommand}"
+                            Padding="8,4"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Right: Deck Lists -->
+            <Grid Grid.Column="2" Margin="8">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Leaders Section -->
+                <StackPanel Grid.Row="0" Margin="0,0,0,8">
+                    <TextBlock Text="Leaders" 
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource GoldBrush}"
+                               Margin="0,0,0,4"/>
+                    <Image Source="{Binding Leader1Image, Converter={StaticResource StringToImageConverter}}"
+                           Height="80" Stretch="Uniform" Margin="0,0,0,4"/>
+                    <Image Source="{Binding Leader2Image, Converter={StaticResource StringToImageConverter}}"
+                           Height="80" Stretch="Uniform"
+                           Visibility="{Binding ShowLeader2, Converter={StaticResource BoolToVisConverter}}"/>
+                </StackPanel>
+
+                <!-- Glory Card (Gloryfinder only) -->
+                <StackPanel Grid.Row="1" 
+                            Visibility="{Binding ShowGloryCard, Converter={StaticResource BoolToVisConverter}}"
+                            Margin="0,0,0,8">
+                    <TextBlock Text="Glory Card" 
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource GoldBrush}"
+                               Margin="0,0,0,4"/>
+                    <Image Source="{Binding GloryCardImage, Converter={StaticResource StringToImageConverter}}"
+                           Height="80" Stretch="Uniform"/>
+                </StackPanel>
+
+                <!-- Main Deck -->
+                <DockPanel Grid.Row="2">
+                    <TextBlock DockPanel.Dock="Top"
+                               Text="Main Deck" 
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource GoldBrush}"
+                               Margin="0,0,0,4"/>
+                    <ListBox ItemsSource="{Binding MainDeckList}"
+                             SelectedItem="{Binding SelectedMainDeckEntry}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Quantity}" 
+                                               Width="20"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource GoldBrush}"/>
+                                    <TextBlock Text="x " 
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               Margin="0,0,4,0"/>
+                                    <TextBlock Text="{Binding Card.Name}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+
+                <GridSplitter Grid.Row="3" 
+                              Height="4" 
+                              HorizontalAlignment="Stretch"
+                              Background="{DynamicResource AccentBrush}"
+                              Margin="0,4"/>
+
+                <!-- Evolve Deck -->
+                <DockPanel Grid.Row="4">
+                    <TextBlock DockPanel.Dock="Top"
+                               Text="Evolve Deck" 
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource GoldBrush}"
+                               Margin="0,4,0,4"/>
+                    <ListBox ItemsSource="{Binding EvolveDeckList}"
+                             SelectedItem="{Binding SelectedEvolveDeckEntry}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="{Binding Quantity}" 
+                                               Width="20"
+                                               FontWeight="SemiBold"
+                                               Foreground="{DynamicResource GoldBrush}"/>
+                                    <TextBlock Text="x " 
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               Margin="0,0,4,0"/>
+                                    <TextBlock Text="{Binding Card.Name}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>

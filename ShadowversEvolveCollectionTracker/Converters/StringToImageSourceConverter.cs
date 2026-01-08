@@ -4,7 +4,7 @@ using System.IO;
 using System.Windows.Data;
 using System.Windows.Media.Imaging;
 
-namespace ShadowversEvolveCardTracker.Converters
+namespace ShadowverseEvolveCardTracker.Converters
 {
     public class StringToImageSourceConverter : IValueConverter
     {

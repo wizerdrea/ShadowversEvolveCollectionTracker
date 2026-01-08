@@ -1,6 +1,6 @@
 using System;
 
-namespace ShadowversEvolveCardTracker.Models
+namespace ShadowverseEvolveCardTracker.Models
 {
     /// <summary>
     /// Serializable representation of a related card entry.

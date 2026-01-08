@@ -1,5 +1,5 @@
-using ShadowversEvolveCardTracker.Services;
-using ShadowversEvolveCardTracker.ViewModels;
+using ShadowverseEvolveCardTracker.Services;
+using ShadowverseEvolveCardTracker.ViewModels;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Input;

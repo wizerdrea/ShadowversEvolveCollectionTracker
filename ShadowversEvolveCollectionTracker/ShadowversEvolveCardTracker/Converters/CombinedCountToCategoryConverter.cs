@@ -1,9 +1,9 @@
 using System;
 using System.Globalization;
 using System.Windows.Data;
-using ShadowversEvolveCardTracker.Models;
+using ShadowverseEvolveCardTracker.Models;
 
-namespace ShadowversEvolveCardTracker.Converters
+namespace ShadowverseEvolveCardTracker.Converters
 {
     /// <summary>
     /// Determines category for a CombinedCardCount row:

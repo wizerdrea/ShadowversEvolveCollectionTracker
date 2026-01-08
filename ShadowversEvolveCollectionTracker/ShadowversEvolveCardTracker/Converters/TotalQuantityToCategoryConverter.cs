@@ -2,7 +2,7 @@ using System;
 using System.Globalization;
 using System.Windows.Data;
 
-namespace ShadowversEvolveCardTracker.Converters
+namespace ShadowverseEvolveCardTracker.Converters
 {
     // Returns "None", "Low" (1-2) or "High" (>=3)
     public class TotalQuantityToCategoryConverter : IValueConverter
