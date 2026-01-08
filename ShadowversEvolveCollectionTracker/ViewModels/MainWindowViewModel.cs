@@ -73,6 +73,18 @@ namespace ShadowversEvolveCardTracker.ViewModels
             AllCardsTab.CardViewer.RequestRelatedCards = ShowRelatedCards;
             ChecklistTab.CardViewer.RequestRelatedCards = ShowRelatedCards;
 
+            // Wire up "other versions" requests
+            AllCardsTab.CardViewer.RequestOtherVersions = ShowOtherVersions;
+            ChecklistTab.CardViewer.RequestOtherVersions = ShowOtherVersions;
+
+            // Provide function so viewer can know how many versions exist (same Name + Type)
+            Func<CardData, int> countVersions = card =>
+                AllCards.Count(c => string.Equals(c.Name, card.Name, StringComparison.OrdinalIgnoreCase)
+                                  && string.Equals(c.Type, card.Type, StringComparison.OrdinalIgnoreCase));
+
+            AllCardsTab.CardViewer.GetOtherVersionsCount = countVersions;
+            ChecklistTab.CardViewer.GetOtherVersionsCount = countVersions;
+
             _ = LoadSavedAsync();
         }
 
@@ -253,6 +265,38 @@ namespace ShadowversEvolveCardTracker.ViewModels
                 ChecklistTab.CardViewer.SetCards(relatedCards);
                 Status = $"Showing {relatedCards.Count} related card(s) for '{sourceCard.Name}'.";
             }
+        }
+
+        // New: show all versions (same Name and same Type)
+        private void ShowOtherVersions(CardData sourceCard)
+        {
+            if (sourceCard == null) return;
+
+            var versions = AllCards
+                .Where(c => string.Equals(c.Name, sourceCard.Name, StringComparison.OrdinalIgnoreCase)
+                         && string.Equals(c.Type, sourceCard.Type, StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(c => string.Equals(c.Set, sourceCard.Set, StringComparison.OrdinalIgnoreCase) &&
+                                       string.Equals(c.Rarity, sourceCard.Rarity, StringComparison.OrdinalIgnoreCase))
+                .ThenByDescending(c => string.Equals(c.Set, sourceCard.Set, StringComparison.OrdinalIgnoreCase))
+                .ThenByDescending(c => string.Equals(c.Rarity, sourceCard.Rarity, StringComparison.OrdinalIgnoreCase))
+                .ThenBy(c => c.CardNumber, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (versions.Count == 0) return;
+
+            // Show in both viewers
+            AllCardsTab.CardViewer.SetCards(versions);
+            ChecklistTab.CardViewer.SetCards(versions);
+
+            // Set current index to the version matching the source card (by card number)
+            int idx = versions.FindIndex(c => string.Equals(c.CardNumber, sourceCard.CardNumber, StringComparison.OrdinalIgnoreCase));
+            if (idx >= 0)
+            {
+                AllCardsTab.CardViewer.CurrentIndex = idx;
+                ChecklistTab.CardViewer.CurrentIndex = idx;
+            }
+
+            Status = $"Showing {versions.Count} version(s) of '{sourceCard.Name}' ({sourceCard.Type}).";
         }
 
         private void AllCards_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)

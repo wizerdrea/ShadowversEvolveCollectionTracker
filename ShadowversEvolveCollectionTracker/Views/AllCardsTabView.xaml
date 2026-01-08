@@ -53,7 +53,8 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="300" MinWidth="150"/>
+            <!-- Increased default width so card viewer shows both action buttons side-by-side -->
+            <ColumnDefinition Width="330" MinWidth="150"/>
         </Grid.ColumnDefinitions>
 
         <!-- DataGrid with "no data" message -->

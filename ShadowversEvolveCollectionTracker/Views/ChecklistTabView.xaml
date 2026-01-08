@@ -17,7 +17,8 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="6" />
-            <ColumnDefinition Width="320" MinWidth="200" />
+            <!-- Increased default width so card viewer shows both action buttons side-by-side -->
+            <ColumnDefinition Width="330" MinWidth="150" />
         </Grid.ColumnDefinitions>
 
         <!-- Wrap the DataGrid in a Grid so we can overlay a "calculating" message -->

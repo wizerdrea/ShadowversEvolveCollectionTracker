@@ -25,11 +25,38 @@ namespace ShadowversEvolveCardTracker.ViewModels
         public ICommand IncreaseWishlistCommand { get; }
         public ICommand DecreaseWishlistCommand { get; }
         public ICommand ViewRelatedCardsCommand { get; }
+        public ICommand ViewVersionsCommand { get; }
         public ICommand BackCommand { get; }
 
         // Delegate to request related cards from parent (AllCards collection)
         public Action<CardData>? RequestRelatedCards { get; set; }
 
+        // Delegate to request "other versions" from parent (used when button clicked)
+        public Action<CardData>? RequestOtherVersions { get; set; }
+
+        // Provider the view model can call to learn how many versions exist for the current card.
+        // MainWindowViewModel will set this to count versions from AllCards.
+        public Func<CardData, int>? GetOtherVersionsCount { get; set; }
+
+        private int _otherVersionsCount;
+        public int OtherVersionsCount
+        {
+            get => _otherVersionsCount;
+            private set
+            {
+                if (_otherVersionsCount != value)
+                {
+                    _otherVersionsCount = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(HasOtherVersions));
+                    ((RelayCommand?)ViewVersionsCommand)?.RaiseCanExecuteChanged();
+                }
+            }
+        }
+
+        public bool HasOtherVersions => OtherVersionsCount > 1;
+
+        // Delegate types and history entry
         private record HistoryEntry(List<CardData> Cards, int Index);
 
         public CardViewerViewModel()
@@ -79,6 +106,15 @@ namespace ShadowversEvolveCardTracker.ViewModels
                 },
                 canExecute: () => CurrentCard != null && (CurrentCard?.RelatedCards?.Count ?? 0) > 0);
 
+            ViewVersionsCommand = new RelayCommand(
+                execute: () =>
+                {
+                    if (CurrentCard != null)
+                        RequestOtherVersions?.Invoke(CurrentCard);
+                    return Task.CompletedTask;
+                },
+                canExecute: () => CurrentCard != null && HasOtherVersions);
+
             BackCommand = new RelayCommand(
                 execute: () =>
                 {
@@ -104,6 +140,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
                     ((RelayCommand)IncreaseWishlistCommand).RaiseCanExecuteChanged();
                     ((RelayCommand)DecreaseWishlistCommand).RaiseCanExecuteChanged();
                     ((RelayCommand)ViewRelatedCardsCommand).RaiseCanExecuteChanged();
+                    ((RelayCommand)ViewVersionsCommand).RaiseCanExecuteChanged();
                 }
             }
         }
@@ -170,6 +207,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
             ((RelayCommand)NextImageCommand).RaiseCanExecuteChanged();
             UpdateCurrentCardSubscription(CurrentCard);
             NotifyHistoryChanged();
+            UpdateOtherVersionsAvailability(CurrentCard);
         }
 
         // Set multiple cards from an enumerable of CardData
@@ -199,6 +237,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
             ((RelayCommand)NextImageCommand).RaiseCanExecuteChanged();
             UpdateCurrentCardSubscription(CurrentCard);
             NotifyHistoryChanged();
+            UpdateOtherVersionsAvailability(CurrentCard);
         }
 
         // Convenience: keep existing name used by other code
@@ -278,6 +317,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
             ((RelayCommand)IncreaseWishlistCommand).RaiseCanExecuteChanged();
             ((RelayCommand)DecreaseWishlistCommand).RaiseCanExecuteChanged();
             ((RelayCommand)ViewRelatedCardsCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)ViewVersionsCommand).RaiseCanExecuteChanged();
         }
 
         private void SubscribedCard_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -296,6 +336,31 @@ namespace ShadowversEvolveCardTracker.ViewModels
                 OnPropertyChanged(nameof(HasRelatedCards));
                 OnPropertyChanged(nameof(RelatedCardsCount));
                 ((RelayCommand)ViewRelatedCardsCommand).RaiseCanExecuteChanged();
+            }
+
+            // If name/type changed on the subscribed card, the available versions may change.
+            if (e.PropertyName == nameof(CardData.Name) || e.PropertyName == nameof(CardData.Type) || string.IsNullOrEmpty(e.PropertyName))
+            {
+                UpdateOtherVersionsAvailability(_subscribedCard);
+            }
+        }
+
+        private void UpdateOtherVersionsAvailability(CardData? card)
+        {
+            try
+            {
+                if (card == null || GetOtherVersionsCount == null)
+                {
+                    OtherVersionsCount = 0;
+                    return;
+                }
+
+                var count = GetOtherVersionsCount.Invoke(card);
+                OtherVersionsCount = count;
+            }
+            catch
+            {
+                OtherVersionsCount = 0;
             }
         }
 
