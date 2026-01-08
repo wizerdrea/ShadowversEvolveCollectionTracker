@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using System.Windows;
 using System.Windows.Data;
 using ShadowverseEvolveCardTracker.Models;
 
@@ -176,6 +177,8 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
             foreach (var c in _allCards)
                 SubscribeToCard(c);
+
+            SafeRefresh();
         }
 
         private void AllCards_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -228,159 +231,183 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
         private void SafeRefresh()
         {
+            // If the view is in the middle of an edit/new operation don't refresh.
             if (_filteredCards is IEditableCollectionView iecv &&
                 (iecv.IsAddingNew || iecv.IsEditingItem))
                 return;
-            _filteredCards.Refresh();
+
+            // Ensure Refresh happens on the UI thread to avoid cross-thread failures that can
+            // result in the view becoming empty.
+            var dispatcher = Application.Current?.Dispatcher;
+            if (dispatcher != null && !dispatcher.CheckAccess())
+            {
+                dispatcher.Invoke(() => _filteredCards.Refresh());
+            }
+            else
+            {
+                _filteredCards.Refresh();
+            }
         }
 
         private bool FilterCard(object? obj)
         {
-            if (obj is not CardData card) return false;
+            // CollectionViews sometimes pass placeholders or non-data items; don't exclude
+            // those by mistake. Only filter CardData instances explicitly.
+            if (obj is not CardData card) return true;
 
-            if (FavoritesOnly && !card.IsFavorite)
-                return false;
-
-            if (WishlistedOnly && !card.IsWishlisted)
-                return false;
-
-            if (!string.IsNullOrWhiteSpace(NameFilter))
+            try
             {
-                try
-                {
-                    if (!Regex.IsMatch(card.Name ?? string.Empty, NameFilter!, RegexOptions.IgnoreCase))
-                        return false;
-                }
-                catch (ArgumentException)
-                {
-                    if (!card.Name?.Contains(NameFilter!, StringComparison.OrdinalIgnoreCase) ?? true)
-                        return false;
-                }
-            }
+                if (FavoritesOnly && !card.IsFavorite)
+                    return false;
 
-            if (!string.IsNullOrWhiteSpace(CardNumberFilter))
+                if (WishlistedOnly && !card.IsWishlisted)
+                    return false;
+
+                if (!string.IsNullOrWhiteSpace(NameFilter))
+                {
+                    try
+                    {
+                        if (!Regex.IsMatch(card.Name ?? string.Empty, NameFilter!, RegexOptions.IgnoreCase))
+                            return false;
+                    }
+                    catch (ArgumentException)
+                    {
+                        if (!card.Name?.Contains(NameFilter!, StringComparison.OrdinalIgnoreCase) ?? true)
+                            return false;
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(CardNumberFilter))
+                {
+                    try
+                    {
+                        if (!Regex.IsMatch(card.CardNumber ?? string.Empty, CardNumberFilter!, RegexOptions.IgnoreCase))
+                            return false;
+                    }
+                    catch (ArgumentException)
+                    {
+                        if (!card.CardNumber?.Contains(CardNumberFilter!, StringComparison.OrdinalIgnoreCase) ?? true)
+                            return false;
+                    }
+                }
+
+                switch (QtyOwnedFilter)
+                {
+                    case "Owned":
+                        if (card.QuantityOwned <= 0) return false;
+                        break;
+                    case "Unowned":
+                        if (card.QuantityOwned > 0) return false;
+                        break;
+                }
+
+                if (!string.IsNullOrWhiteSpace(RarityFilter))
+                {
+                    try
+                    {
+                        if (!Regex.IsMatch(card.Rarity ?? string.Empty, RarityFilter!, RegexOptions.IgnoreCase))
+                            return false;
+                    }
+                    catch (ArgumentException)
+                    {
+                        if (!card.Rarity?.Contains(RarityFilter!, StringComparison.OrdinalIgnoreCase) ?? true)
+                            return false;
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(SetFilter))
+                {
+                    try
+                    {
+                        if (!Regex.IsMatch(card.Set ?? string.Empty, SetFilter!, RegexOptions.IgnoreCase))
+                            return false;
+                    }
+                    catch (ArgumentException)
+                    {
+                        if (!card.Set?.Contains(SetFilter!, StringComparison.OrdinalIgnoreCase) ?? true)
+                            return false;
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(FormatFilter))
+                {
+                    try
+                    {
+                        if (!Regex.IsMatch(card.Format ?? string.Empty, FormatFilter!, RegexOptions.IgnoreCase))
+                            return false;
+                    }
+                    catch (ArgumentException)
+                    {
+                        if (!card.Format?.Contains(FormatFilter!, StringComparison.OrdinalIgnoreCase) ?? true)
+                            return false;
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(ClassFilter))
+                {
+                    try
+                    {
+                        if (!Regex.IsMatch(card.Class ?? string.Empty, ClassFilter!, RegexOptions.IgnoreCase))
+                            return false;
+                    }
+                    catch (ArgumentException)
+                    {
+                        if (!card.Class?.Contains(ClassFilter!, StringComparison.OrdinalIgnoreCase) ?? true)
+                            return false;
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(TypeFilter))
+                {
+                    try
+                    {
+                        if (!Regex.IsMatch(card.Type ?? string.Empty, TypeFilter!, RegexOptions.IgnoreCase))
+                            return false;
+                    }
+                    catch (ArgumentException)
+                    {
+                        if (!card.Type?.Contains(TypeFilter!, StringComparison.OrdinalIgnoreCase) ?? true)
+                            return false;
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(TraitsFilter))
+                {
+                    try
+                    {
+                        if (!Regex.IsMatch(card.Traits ?? string.Empty, TraitsFilter!, RegexOptions.IgnoreCase))
+                            return false;
+                    }
+                    catch (ArgumentException)
+                    {
+                        if (!card.Traits?.Contains(TraitsFilter!, StringComparison.OrdinalIgnoreCase) ?? true)
+                            return false;
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(TextFilter))
+                {
+                    try
+                    {
+                        if (!Regex.IsMatch(card.Text ?? string.Empty, TextFilter!, RegexOptions.IgnoreCase))
+                            return false;
+                    }
+                    catch (ArgumentException)
+                    {
+                        if (!card.Text?.Contains(TextFilter!, StringComparison.OrdinalIgnoreCase) ?? true)
+                            return false;
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
             {
-                try
-                {
-                    if (!Regex.IsMatch(card.CardNumber ?? string.Empty, CardNumberFilter!, RegexOptions.IgnoreCase))
-                        return false;
-                }
-                catch (ArgumentException)
-                {
-                    if (!card.CardNumber?.Contains(CardNumberFilter!, StringComparison.OrdinalIgnoreCase) ?? true)
-                        return false;
-                }
+                // Defensive: if an unexpected exception occurs while filtering, log and
+                // include the item rather than filtering everything out.
+                System.Diagnostics.Debug.WriteLine($"AllCardsTabViewModel.FilterCard error: {ex}");
+                return true;
             }
-
-            switch (QtyOwnedFilter)
-            {
-                case "Owned":
-                    if (card.QuantityOwned <= 0) return false;
-                    break;
-                case "Unowned":
-                    if (card.QuantityOwned > 0) return false;
-                    break;
-            }
-
-            if (!string.IsNullOrWhiteSpace(RarityFilter))
-            {
-                try
-                {
-                    if (!Regex.IsMatch(card.Rarity ?? string.Empty, RarityFilter!, RegexOptions.IgnoreCase))
-                        return false;
-                }
-                catch (ArgumentException)
-                {
-                    if (!card.Rarity?.Contains(RarityFilter!, StringComparison.OrdinalIgnoreCase) ?? true)
-                        return false;
-                }
-            }
-
-            if (!string.IsNullOrWhiteSpace(SetFilter))
-            {
-                try
-                {
-                    if (!Regex.IsMatch(card.Set ?? string.Empty, SetFilter!, RegexOptions.IgnoreCase))
-                        return false;
-                }
-                catch (ArgumentException)
-                {
-                    if (!card.Set?.Contains(SetFilter!, StringComparison.OrdinalIgnoreCase) ?? true)
-                        return false;
-                }
-            }
-
-            if (!string.IsNullOrWhiteSpace(FormatFilter))
-            {
-                try
-                {
-                    if (!Regex.IsMatch(card.Format ?? string.Empty, FormatFilter!, RegexOptions.IgnoreCase))
-                        return false;
-                }
-                catch (ArgumentException)
-                {
-                    if (!card.Format?.Contains(FormatFilter!, StringComparison.OrdinalIgnoreCase) ?? true)
-                        return false;
-                }
-            }
-
-            if (!string.IsNullOrWhiteSpace(ClassFilter))
-            {
-                try
-                {
-                    if (!Regex.IsMatch(card.Class ?? string.Empty, ClassFilter!, RegexOptions.IgnoreCase))
-                        return false;
-                }
-                catch (ArgumentException)
-                {
-                    if (!card.Class?.Contains(ClassFilter!, StringComparison.OrdinalIgnoreCase) ?? true)
-                        return false;
-                }
-            }
-
-            if (!string.IsNullOrWhiteSpace(TypeFilter))
-            {
-                try
-                {
-                    if (!Regex.IsMatch(card.Type ?? string.Empty, TypeFilter!, RegexOptions.IgnoreCase))
-                        return false;
-                }
-                catch (ArgumentException)
-                {
-                    if (!card.Type?.Contains(TypeFilter!, StringComparison.OrdinalIgnoreCase) ?? true)
-                        return false;
-                }
-            }
-
-            if (!string.IsNullOrWhiteSpace(TraitsFilter))
-            {
-                try
-                {
-                    if (!Regex.IsMatch(card.Traits ?? string.Empty, TraitsFilter!, RegexOptions.IgnoreCase))
-                        return false;
-                }
-                catch (ArgumentException)
-                {
-                    if (!card.Traits?.Contains(TraitsFilter!, StringComparison.OrdinalIgnoreCase) ?? true)
-                        return false;
-                }
-            }
-
-            if (!string.IsNullOrWhiteSpace(TextFilter))
-            {
-                try
-                {
-                    if (!Regex.IsMatch(card.Text ?? string.Empty, TextFilter!, RegexOptions.IgnoreCase))
-                        return false;
-                }
-                catch (ArgumentException)
-                {
-                    if (!card.Text?.Contains(TextFilter!, StringComparison.OrdinalIgnoreCase) ?? true)
-                        return false;
-                }
-            }
-
-            return true;
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

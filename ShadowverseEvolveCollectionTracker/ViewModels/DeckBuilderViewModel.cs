@@ -151,16 +151,18 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             _allCards = allCards ?? throw new ArgumentNullException(nameof(allCards));
             _decks = decks ?? throw new ArgumentNullException(nameof(decks));
 
-            _standardDecks = CollectionViewSource.GetDefaultView(_decks);
+            // Use distinct CollectionViewSource instances so each tab gets its own view/filter.
+            _standardDecks = new CollectionViewSource { Source = _decks }.View;
             _standardDecks.Filter = obj => obj is Deck d && d.DeckType == DeckType.Standard;
 
-            _gloryfinderDecks = CollectionViewSource.GetDefaultView(_decks);
+            _gloryfinderDecks = new CollectionViewSource { Source = _decks }.View;
             _gloryfinderDecks.Filter = obj => obj is Deck d && d.DeckType == DeckType.Gloryfinder;
 
-            _crossPlayDecks = CollectionViewSource.GetDefaultView(_decks);
+            _crossPlayDecks = new CollectionViewSource { Source = _decks }.View;
             _crossPlayDecks.Filter = obj => obj is Deck d && d.DeckType == DeckType.CrossPlay;
 
-            _validCards = CollectionViewSource.GetDefaultView(_allCards);
+            // Valid cards view must be independent from the AllCards default view.
+            _validCards = new CollectionViewSource { Source = _allCards }.View;
             _validCards.Filter = FilterValidCards;
 
             CreateDeckCommand = new RelayCommand(
