@@ -47,6 +47,34 @@
                         </Image.RenderTransform>
                     </Image>
 
+                    <!-- Back button positioned at the top-left of the image viewport -->
+                    <Button Command="{Binding BackCommand}"
+                            Visibility="{Binding CanGoBack, Converter={StaticResource BoolToVisConverter}}"
+                            Padding="0"
+                            Margin="8,8,0,0"
+                            Width="34"
+                            Height="34"
+                            Background="Transparent"
+                            Cursor="Hand"
+                            Focusable="False"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Top"
+                            ToolTip="Go back">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <Viewbox Width="18" Height="18">
+                            <Canvas Width="24" Height="24">
+                                <!-- simple left arrow -->
+                                <Path Stroke="{DynamicResource GoldBrush}" StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M15,6 L9,12 L15,18" Fill="Transparent"/>
+                            </Canvas>
+                        </Viewbox>
+                    </Button>
+
                     <!-- Favorite Toggle positioned at the top-right of the image viewport -->
                     <ToggleButton Padding="0"
                                   Margin="0,0,0,0"

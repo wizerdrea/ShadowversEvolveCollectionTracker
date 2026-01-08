@@ -16,14 +16,21 @@ namespace ShadowversEvolveCardTracker.ViewModels
         private string? _cardName;
         private CardData? _subscribedCard;
 
+        // history of previously-viewed card lists + index
+        private readonly Stack<HistoryEntry> _history = new();
+        private bool _suppressHistoryPush;
+
         public ICommand PrevImageCommand { get; }
         public ICommand NextImageCommand { get; }
         public ICommand IncreaseWishlistCommand { get; }
         public ICommand DecreaseWishlistCommand { get; }
         public ICommand ViewRelatedCardsCommand { get; }
+        public ICommand BackCommand { get; }
 
         // Delegate to request related cards from parent (AllCards collection)
         public Action<CardData>? RequestRelatedCards { get; set; }
+
+        private record HistoryEntry(List<CardData> Cards, int Index);
 
         public CardViewerViewModel()
         {
@@ -71,6 +78,14 @@ namespace ShadowversEvolveCardTracker.ViewModels
                     return Task.CompletedTask;
                 },
                 canExecute: () => CurrentCard != null && (CurrentCard?.RelatedCards?.Count ?? 0) > 0);
+
+            BackCommand = new RelayCommand(
+                execute: () =>
+                {
+                    RestoreHistory();
+                    return Task.CompletedTask;
+                },
+                canExecute: () => CanGoBack);
         }
 
         public int CurrentIndex
@@ -126,9 +141,14 @@ namespace ShadowversEvolveCardTracker.ViewModels
         public bool HasRelatedCards => (CurrentCard?.RelatedCards?.Count ?? 0) > 0;
         public int RelatedCardsCount => CurrentCard?.RelatedCards?.Count ?? 0;
 
+        // Back navigation helper
+        public bool CanGoBack => _history.Count > 0;
+
         // Set a single card
         public void SetCard(CardData? card)
         {
+            PushHistoryIfNeeded();
+
             if (card == null)
             {
                 _cards = new List<CardData>();
@@ -149,11 +169,14 @@ namespace ShadowversEvolveCardTracker.ViewModels
             ((RelayCommand)PrevImageCommand).RaiseCanExecuteChanged();
             ((RelayCommand)NextImageCommand).RaiseCanExecuteChanged();
             UpdateCurrentCardSubscription(CurrentCard);
+            NotifyHistoryChanged();
         }
 
         // Set multiple cards from an enumerable of CardData
         public void SetCards(IEnumerable<CardData>? cards)
         {
+            PushHistoryIfNeeded();
+
             if (cards == null)
             {
                 _cards = new List<CardData>();
@@ -175,6 +198,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
             ((RelayCommand)PrevImageCommand).RaiseCanExecuteChanged();
             ((RelayCommand)NextImageCommand).RaiseCanExecuteChanged();
             UpdateCurrentCardSubscription(CurrentCard);
+            NotifyHistoryChanged();
         }
 
         // Convenience: keep existing name used by other code
@@ -183,6 +207,56 @@ namespace ShadowversEvolveCardTracker.ViewModels
             SetCards(combined?.Cards);
             if (combined != null)
                 CardName = combined.Name;
+        }
+
+        private void PushHistoryIfNeeded()
+        {
+            if (_suppressHistoryPush) return;
+            if (_cards == null || _cards.Count == 0) return;
+
+            // push a shallow copy of the current list and index
+            var copy = new List<CardData>(_cards);
+            _history.Push(new HistoryEntry(copy, CurrentIndex));
+
+            // keep history reasonable (optional cap)
+            const int MaxHistory = 100;
+            if (_history.Count > MaxHistory)
+            {
+                // remove oldest entry by rebuilding stack without the oldest
+                var temp = new Stack<HistoryEntry>();
+                while (_history.Count > 1)
+                    temp.Push(_history.Pop());
+                _history.Pop(); // remove the oldest
+                while (temp.Count > 0)
+                    _history.Push(temp.Pop());
+            }
+
+            NotifyHistoryChanged();
+        }
+
+        private void RestoreHistory()
+        {
+            if (!CanGoBack) return;
+
+            var entry = _history.Pop();
+            try
+            {
+                _suppressHistoryPush = true;
+                SetCards(entry.Cards);
+                CurrentIndex = Math.Clamp(entry.Index, 0, _cards.Count - 1);
+            }
+            finally
+            {
+                _suppressHistoryPush = false;
+            }
+
+            NotifyHistoryChanged();
+        }
+
+        private void NotifyHistoryChanged()
+        {
+            OnPropertyChanged(nameof(CanGoBack));
+            ((RelayCommand?)BackCommand)?.RaiseCanExecuteChanged();
         }
 
         private void UpdateCurrentCardSubscription(CardData? newCard)
