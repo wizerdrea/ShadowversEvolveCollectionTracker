@@ -20,6 +20,10 @@ namespace ShadowversEvolveCardTracker.ViewModels
         public ICommand NextImageCommand { get; }
         public ICommand IncreaseWishlistCommand { get; }
         public ICommand DecreaseWishlistCommand { get; }
+        public ICommand ViewRelatedCardsCommand { get; }
+
+        // Delegate to request related cards from parent (AllCards collection)
+        public Action<CardData>? RequestRelatedCards { get; set; }
 
         public CardViewerViewModel()
         {
@@ -58,6 +62,15 @@ namespace ShadowversEvolveCardTracker.ViewModels
                     return Task.CompletedTask;
                 },
                 canExecute: () => CurrentCard != null && (CurrentCard?.WishlistDesiredQuantity ?? 0) > 0);
+
+            ViewRelatedCardsCommand = new RelayCommand(
+                execute: () =>
+                {
+                    if (CurrentCard != null)
+                        RequestRelatedCards?.Invoke(CurrentCard);
+                    return Task.CompletedTask;
+                },
+                canExecute: () => CurrentCard != null && (CurrentCard?.RelatedCards?.Count ?? 0) > 0);
         }
 
         public int CurrentIndex
@@ -75,6 +88,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
                     UpdateCurrentCardSubscription(CurrentCard);
                     ((RelayCommand)IncreaseWishlistCommand).RaiseCanExecuteChanged();
                     ((RelayCommand)DecreaseWishlistCommand).RaiseCanExecuteChanged();
+                    ((RelayCommand)ViewRelatedCardsCommand).RaiseCanExecuteChanged();
                 }
             }
         }
@@ -107,6 +121,10 @@ namespace ShadowversEvolveCardTracker.ViewModels
         // Wishlist view helpers
         public int WishlistQuantity => CurrentCard?.WishlistDesiredQuantity ?? 0;
         public bool IsWishlisted => WishlistQuantity > 0;
+
+        // Related cards helper
+        public bool HasRelatedCards => (CurrentCard?.RelatedCards?.Count ?? 0) > 0;
+        public int RelatedCardsCount => CurrentCard?.RelatedCards?.Count ?? 0;
 
         // Set a single card
         public void SetCard(CardData? card)
@@ -181,8 +199,11 @@ namespace ShadowversEvolveCardTracker.ViewModels
 
             OnPropertyChanged(nameof(WishlistQuantity));
             OnPropertyChanged(nameof(IsWishlisted));
+            OnPropertyChanged(nameof(HasRelatedCards));
+            OnPropertyChanged(nameof(RelatedCardsCount));
             ((RelayCommand)IncreaseWishlistCommand).RaiseCanExecuteChanged();
             ((RelayCommand)DecreaseWishlistCommand).RaiseCanExecuteChanged();
+            ((RelayCommand)ViewRelatedCardsCommand).RaiseCanExecuteChanged();
         }
 
         private void SubscribedCard_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -193,6 +214,14 @@ namespace ShadowversEvolveCardTracker.ViewModels
                 OnPropertyChanged(nameof(WishlistQuantity));
                 OnPropertyChanged(nameof(IsWishlisted));
                 ((RelayCommand)DecreaseWishlistCommand).RaiseCanExecuteChanged();
+            }
+
+            // Bubble related cards changes to the view
+            if (e.PropertyName == nameof(CardData.RelatedCards) || string.IsNullOrEmpty(e.PropertyName))
+            {
+                OnPropertyChanged(nameof(HasRelatedCards));
+                OnPropertyChanged(nameof(RelatedCardsCount));
+                ((RelayCommand)ViewRelatedCardsCommand).RaiseCanExecuteChanged();
             }
         }
 

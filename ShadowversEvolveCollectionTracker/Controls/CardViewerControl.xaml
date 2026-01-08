@@ -19,6 +19,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <!-- Image viewport with panning/zooming - constrained to Row 0 -->
@@ -159,8 +160,36 @@
                 </Border>
             </StackPanel>
 
+            <!-- Related Cards button -->
+            <StackPanel Grid.Row="3"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        Margin="0,8,0,0"
+                        Visibility="{Binding HasRelatedCards, Converter={StaticResource BoolToVisConverter}}">
+                <Button Command="{Binding ViewRelatedCardsCommand}"
+                        Padding="8,4"
+                        Background="{DynamicResource ElevatedBrush}"
+                        BorderBrush="{DynamicResource AccentBrush}">
+                    <StackPanel Orientation="Horizontal">
+                        <Viewbox Width="16" Height="16" Margin="0,0,6,0">
+                            <Canvas Width="24" Height="24">
+                                <!-- Link icon: two circles connected by a line -->
+                                <Ellipse Stroke="{DynamicResource GoldBrush}" StrokeThickness="2" Width="7" Height="7" Canvas.Left="2" Canvas.Top="2"/>
+                                <Ellipse Stroke="{DynamicResource GoldBrush}" StrokeThickness="2" Width="7" Height="7" Canvas.Left="15" Canvas.Top="15"/>
+                                <Path Stroke="{DynamicResource GoldBrush}" StrokeThickness="2" Data="M8,8 L16,16"/>
+                            </Canvas>
+                        </Viewbox>
+                        <TextBlock VerticalAlignment="Center">
+                            <Run Text="View Related Cards (" />
+                            <Run Text="{Binding RelatedCardsCount, Mode=OneWay}" />
+                            <Run Text=")" />
+                        </TextBlock>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+
             <!-- Navigation buttons - shown only when there are multiple images -->
-            <StackPanel Grid.Row="3" 
+            <StackPanel Grid.Row="4" 
                         Orientation="Horizontal" 
                         HorizontalAlignment="Center" 
                         Margin="0,8,0,0"

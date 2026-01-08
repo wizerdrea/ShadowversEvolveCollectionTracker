@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -41,6 +42,21 @@ namespace ShadowversEvolveCardTracker.Models
         public string Attack { get; init; } = string.Empty;
         public string Defense { get; init; } = string.Empty;
         public string Text { get; init; } = string.Empty;
+
+        // Related cards: use a serializable class instead of ValueTuple so JSON saves properly
+        private HashSet<RelatedCard> _relatedCards = new();
+        public HashSet<RelatedCard> RelatedCards
+        {
+            get => _relatedCards;
+            set
+            {
+                if (!ReferenceEquals(_relatedCards, value))
+                {
+                    _relatedCards = value ?? new HashSet<RelatedCard>();
+                    OnPropertyChanged();
+                }
+            }
+        }
 
         // Quantity owned is editable in the UI; default is 0.
         private int _quantityOwned = 0;

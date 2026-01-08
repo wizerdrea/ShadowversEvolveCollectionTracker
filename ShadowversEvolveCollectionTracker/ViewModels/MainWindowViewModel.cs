@@ -21,17 +21,19 @@ namespace ShadowversEvolveCardTracker.ViewModels
     {
         private readonly ICardDataLoader _loader;
         private readonly IFolderDialogService _folderDialogService;
+        private readonly CardRelationsService _relationsService;
 
         public ObservableCollection<CardData> AllCards { get; } = new ObservableCollection<CardData>();
         public ObservableCollection<CombinedCardCount> CombinedCardCounts { get; } = new ObservableCollection<CombinedCardCount>();
 
         public AllCardsTabViewModel AllCardsTab { get; }
         public ChecklistTabViewModel ChecklistTab { get; }
-        public SetCompletionTabViewModel SetCompletionTab { get; } // new
+        public SetCompletionTabViewModel SetCompletionTab { get; }
 
         public ICommand LoadFolderCommand { get; }
         public ICommand SaveCommand { get; }
         public ICommand LoadImagesCommand { get; }
+        public ICommand FindCardRelationsCommand { get; }
 
         private string _status = "Ready";
         public string Status
@@ -51,19 +53,25 @@ namespace ShadowversEvolveCardTracker.ViewModels
         {
             _loader = loader ?? throw new ArgumentNullException(nameof(loader));
             _folderDialogService = folderDialogService ?? throw new ArgumentNullException(nameof(folderDialogService));
+            _relationsService = new CardRelationsService();
 
             AllCardsTab = new AllCardsTabViewModel(AllCards);
             ChecklistTab = new ChecklistTabViewModel(CombinedCardCounts);
-            SetCompletionTab = new SetCompletionTabViewModel(AllCards); // new
+            SetCompletionTab = new SetCompletionTabViewModel(AllCards);
 
             LoadFolderCommand = new RelayCommand(async () => await LoadFolderAsync(), () => true);
             SaveCommand = new RelayCommand(() => { SaveAllCards(); return Task.CompletedTask; }, () => true);
             LoadImagesCommand = new RelayCommand(async () => await LoadImagesAsync(), () => true);
+            FindCardRelationsCommand = new RelayCommand(async () => await FindCardRelationsAsync(), () => AllCards.Count > 0);
 
             AllCards.CollectionChanged += AllCards_CollectionChanged;
             foreach (var c in AllCards)
                 SubscribeToCard(c);
             RecalculateCombinedCounts();
+
+            // Wire up related cards functionality in card viewers
+            AllCardsTab.CardViewer.RequestRelatedCards = ShowRelatedCards;
+            ChecklistTab.CardViewer.RequestRelatedCards = ShowRelatedCards;
 
             _ = LoadSavedAsync();
         }
@@ -90,6 +98,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
                     }
                 });
                 Status = $"Loaded {list.Count} saved card(s).";
+                ((RelayCommand)FindCardRelationsCommand).RaiseCanExecuteChanged();
             }
             catch (Exception ex)
             {
@@ -140,6 +149,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
                 });
 
                 Status = $"Loaded {cards.Count} card(s) from {folder}";
+                ((RelayCommand)FindCardRelationsCommand).RaiseCanExecuteChanged();
             }
             catch (Exception ex)
             {
@@ -208,6 +218,43 @@ namespace ShadowversEvolveCardTracker.ViewModels
             }
         }
 
+        private async Task FindCardRelationsAsync()
+        {
+            Status = "Finding card relations...";
+
+            try
+            {
+                await Task.Run(() => _relationsService.FindCardRelationsAsync(AllCards)).ConfigureAwait(false);
+
+                var dispatcher = Application.Current?.Dispatcher ?? Dispatcher.CurrentDispatcher;
+                await dispatcher.InvokeAsync(() =>
+                {
+                    var totalRelations = AllCards.Sum(c => c.RelatedCards?.Count ?? 0) / 2; // Divide by 2 because relations are bidirectional
+                    Status = $"Found {totalRelations} card relation(s).";
+                });
+            }
+            catch (Exception ex)
+            {
+                Status = $"Failed to find card relations: {ex.Message}";
+            }
+        }
+
+        private void ShowRelatedCards(CardData sourceCard)
+        {
+            if (sourceCard?.RelatedCards == null || sourceCard.RelatedCards.Count == 0)
+                return;
+
+            var relatedCards = _relationsService.GetRelatedCardInstances(sourceCard, AllCards);
+            
+            if (relatedCards.Count > 0)
+            {
+                // Show in the appropriate card viewer based on which tab is active
+                AllCardsTab.CardViewer.SetCards(relatedCards);
+                ChecklistTab.CardViewer.SetCards(relatedCards);
+                Status = $"Showing {relatedCards.Count} related card(s) for '{sourceCard.Name}'.";
+            }
+        }
+
         private void AllCards_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
         {
             if (e?.OldItems != null)
@@ -223,6 +270,7 @@ namespace ShadowversEvolveCardTracker.ViewModels
             }
 
             RecalculateCombinedCounts();
+            ((RelayCommand)FindCardRelationsCommand).RaiseCanExecuteChanged();
         }
 
         private void SubscribeToCard(CardData card)
