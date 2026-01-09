@@ -59,6 +59,10 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         public ICommand IncreaseEvolveDeckQuantityCommand { get; private set; }
         public ICommand DecreaseEvolveDeckQuantityCommand { get; private set; }
 
+        // New: controls for modifying the viewed card's quantity in the current deck
+        public ICommand IncreaseCurrentCardQuantityCommand { get; }
+        public ICommand DecreaseCurrentCardQuantityCommand { get; }
+
         public Deck? CurrentDeck
         {
             get => _currentDeck;
@@ -114,6 +118,11 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                     if (DecreaseMainDeckQuantityCommand is IRelayCommand decMainRc) decMainRc.RaiseCanExecuteChanged();
                     if (IncreaseEvolveDeckQuantityCommand is IRelayCommand incEvolveRc) incEvolveRc.RaiseCanExecuteChanged();
                     if (DecreaseEvolveDeckQuantityCommand is IRelayCommand decEvolveRc) decEvolveRc.RaiseCanExecuteChanged();
+
+                    // Also update new current-card quantity commands/properties
+                    OnPropertyChanged(nameof(CurrentInDeckQuantity));
+                    if (IncreaseCurrentCardQuantityCommand is IRelayCommand incCurRc) incCurRc.RaiseCanExecuteChanged();
+                    if (DecreaseCurrentCardQuantityCommand is IRelayCommand decCurRc) decCurRc.RaiseCanExecuteChanged();
 
                     // BackToDeckList state also may change when CurrentDeck changes
                     if (BackToDeckListCommand is IRelayCommand backRc) backRc.RaiseCanExecuteChanged();
@@ -257,6 +266,33 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         public string Leader1Name => CurrentDeck?.Leader1?.Name ?? "None";
         public string Leader2Name => CurrentDeck?.Leader2?.Name ?? "None";
 
+        // New: how many of the currently-viewed card are present in the appropriate deck (main OR evolve)
+        public int CurrentInDeckQuantity
+        {
+            get
+            {
+                var card = CardViewer.CurrentCard;
+                if (card == null || CurrentDeck == null) return 0;
+
+                // Evolve cards go to EvolveDeck; otherwise MainDeck
+                if (card.Type?.Contains("Evolved", StringComparison.OrdinalIgnoreCase) ?? false)
+                {
+                    var ee = CurrentDeck.EvolveDeck.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
+                    return ee?.Quantity ?? 0;
+                }
+
+                // Leaders/tokens aren't represented by deck quantities
+                if ((card.Type?.Contains("Leader", StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (card.Type?.Contains("Token", StringComparison.OrdinalIgnoreCase) ?? false))
+                {
+                    return 0;
+                }
+
+                var me = CurrentDeck.MainDeck.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
+                return me?.Quantity ?? 0;
+            }
+        }
+
         public DeckBuilderViewModel(ObservableCollection<CardData> allCards, ObservableCollection<Deck> decks)
         {
             _allCards = allCards ?? throw new ArgumentNullException(nameof(allCards));
@@ -281,8 +317,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 canExecute: () => true);
 
             // Use parameter-capable commands for editing/deleting so row buttons can pass the deck item.
-            EditDeckCommand = new RelayCommand<Deck?>(
-                execute: deck =>
+            EditDeckCommand = new RelayCommand<Deck?>(execute: deck =>
                 {
                     if (deck == null) return System.Threading.Tasks.Task.CompletedTask;
                     CurrentDeck = deck;
@@ -291,8 +326,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 },
                 canExecute: deck => deck != null);
 
-            DeleteDeckCommand = new RelayCommand<Deck?>(
-                execute: deck =>
+            DeleteDeckCommand = new RelayCommand<Deck?>(execute: deck =>
                 {
                     if (deck == null) return System.Threading.Tasks.Task.CompletedTask;
 
@@ -345,8 +379,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 canExecute: () => SelectedEvolveDeckEntry != null);
 
             // Parameterized +/- commands so per-row buttons operate on the passed DeckEntry.
-            IncreaseMainDeckQuantityCommand = new RelayCommand<DeckEntry?>(
-                execute: entry =>
+            IncreaseMainDeckQuantityCommand = new RelayCommand<DeckEntry?>(execute: entry =>
                 {
                     IncreaseMainDeckQuantity(entry);
                     RaiseQuantityCommandStates();
@@ -354,8 +387,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 },
                 canExecute: entry => CanIncreaseMainDeckQuantity(entry));
 
-            DecreaseMainDeckQuantityCommand = new RelayCommand<DeckEntry?>(
-                execute: entry =>
+            DecreaseMainDeckQuantityCommand = new RelayCommand<DeckEntry?>(execute: entry =>
                 {
                     DecreaseMainDeckQuantity(entry);
                     RaiseQuantityCommandStates();
@@ -363,8 +395,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 },
                 canExecute: entry => entry != null);
 
-            IncreaseEvolveDeckQuantityCommand = new RelayCommand<DeckEntry?>(
-                execute: entry =>
+            IncreaseEvolveDeckQuantityCommand = new RelayCommand<DeckEntry?>(execute: entry =>
                 {
                     IncreaseEvolveDeckQuantity(entry);
                     RaiseQuantityCommandStates();
@@ -372,14 +403,30 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 },
                 canExecute: entry => CanIncreaseEvolveDeckQuantity(entry));
 
-            DecreaseEvolveDeckQuantityCommand = new RelayCommand<DeckEntry?>(
-                execute: entry =>
+            DecreaseEvolveDeckQuantityCommand = new RelayCommand<DeckEntry?>(execute: entry =>
                 {
                     DecreaseEvolveDeckQuantity(entry);
                     RaiseQuantityCommandStates();
                     return System.Threading.Tasks.Task.CompletedTask;
                 },
                 canExecute: entry => entry != null);
+
+            // New: commands to bump the quantity for the currently-viewed card
+            IncreaseCurrentCardQuantityCommand = new RelayCommand(
+                execute: () =>
+                {
+                    IncreaseQuantityForViewedCard();
+                    return System.Threading.Tasks.Task.CompletedTask;
+                },
+                canExecute: () => CanIncreaseQuantityForViewedCard());
+
+            DecreaseCurrentCardQuantityCommand = new RelayCommand(
+                execute: () =>
+                {
+                    DecreaseQuantityForViewedCard();
+                    return System.Threading.Tasks.Task.CompletedTask;
+                },
+                canExecute: () => CanDecreaseQuantityForViewedCard());
 
             // Subscribe to CardViewer changes so Add commands update when the viewed card changes
             CardViewer.PropertyChanged += CardViewer_PropertyChanged;
@@ -391,6 +438,9 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             if (DecreaseMainDeckQuantityCommand is IRelayCommand decMainRc) decMainRc.RaiseCanExecuteChanged();
             if (IncreaseEvolveDeckQuantityCommand is IRelayCommand incEvolveRc) incEvolveRc.RaiseCanExecuteChanged();
             if (DecreaseEvolveDeckQuantityCommand is IRelayCommand decEvolveRc) decEvolveRc.RaiseCanExecuteChanged();
+
+            if (IncreaseCurrentCardQuantityCommand is IRelayCommand incCurRc) incCurRc.RaiseCanExecuteChanged();
+            if (DecreaseCurrentCardQuantityCommand is IRelayCommand decCurRc) decCurRc.RaiseCanExecuteChanged();
         }
 
         private void CardViewer_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -401,6 +451,10 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 if (AddToDeckCommand is IRelayCommand addDeckRc) addDeckRc.RaiseCanExecuteChanged();
                 if (AddToMainDeckCommand is IRelayCommand addMainRc) addMainRc.RaiseCanExecuteChanged();
                 if (AddToEvolveDeckCommand is IRelayCommand addEvolveRc) addEvolveRc.RaiseCanExecuteChanged();
+
+                // Also update current-card quantity UI/commands
+                OnPropertyChanged(nameof(CurrentInDeckQuantity));
+                RaiseQuantityCommandStates();
             }
         }
 
@@ -437,6 +491,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 RefreshDeckLists();
                 OnPropertyChanged(nameof(MainDeckCount));
                 OnPropertyChanged(nameof(EvolveDeckCount));
+                OnPropertyChanged(nameof(CurrentInDeckQuantity)); // update viewer count when deck contents change
                 RaiseQuantityCommandStates();
             }
         }
@@ -683,6 +738,125 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 DeckType.CrossCraft => entry.Quantity < 3 && EvolveDeckCount < 10,
                 _ => false
             };
+        }
+
+        // New: helpers to determine if the viewed card can be increased/decreased
+        private bool CanIncreaseQuantityForViewedCard()
+        {
+            var card = CardViewer.CurrentCard;
+            if (card == null || CurrentDeck == null) return false;
+
+            if (card.Type?.Contains("Evolved", StringComparison.OrdinalIgnoreCase) ?? false)
+            {
+                var existing = CurrentDeck.EvolveDeck.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
+                return existing != null ? CanIncreaseEvolveDeckQuantity(existing) : CanAddToEvolveDeck(card);
+            }
+
+            if ((card.Type?.Contains("Leader", StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (card.Type?.Contains("Token", StringComparison.OrdinalIgnoreCase) ?? false))
+            {
+                return false;
+            }
+
+            var existingMain = CurrentDeck.MainDeck.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
+            return existingMain != null ? CanIncreaseMainDeckQuantity(existingMain) : CanAddToMainDeck(card);
+        }
+
+        private bool CanDecreaseQuantityForViewedCard()
+        {
+            var card = CardViewer.CurrentCard;
+            if (card == null || CurrentDeck == null) return false;
+
+            if (card.Type?.Contains("Evolved", StringComparison.OrdinalIgnoreCase) ?? false)
+            {
+                var existing = CurrentDeck.EvolveDeck.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
+                return existing != null && existing.Quantity > 0;
+            }
+
+            if ((card.Type?.Contains("Leader", StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (card.Type?.Contains("Token", StringComparison.OrdinalIgnoreCase) ?? false))
+            {
+                return false;
+            }
+
+            var existingMain = CurrentDeck.MainDeck.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
+            return existingMain != null && existingMain.Quantity > 0;
+        }
+
+        private void IncreaseQuantityForViewedCard()
+        {
+            var card = CardViewer.CurrentCard;
+            if (card == null || CurrentDeck == null) return;
+
+            if (card.Type?.Contains("Evolved", StringComparison.OrdinalIgnoreCase) ?? false)
+            {
+                var existing = CurrentDeck.EvolveDeck.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
+                if (existing != null)
+                {
+                    if (CanIncreaseEvolveDeckQuantity(existing))
+                    {
+                        IncreaseEvolveDeckQuantity(existing);
+                    }
+                }
+                else if (CanAddToEvolveDeck(card))
+                {
+                    AddCardToEvolveDeck(card);
+                }
+            }
+            else if ((card.Type?.Contains("Leader", StringComparison.OrdinalIgnoreCase) ?? false) ||
+                     (card.Type?.Contains("Token", StringComparison.OrdinalIgnoreCase) ?? false))
+            {
+                // no-op for leaders/tokens
+            }
+            else
+            {
+                var existingMain = CurrentDeck.MainDeck.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
+                if (existingMain != null)
+                {
+                    if (CanIncreaseMainDeckQuantity(existingMain))
+                    {
+                        IncreaseMainDeckQuantity(existingMain);
+                    }
+                }
+                else if (CanAddToMainDeck(card))
+                {
+                    AddCardToMainDeck(card);
+                }
+            }
+
+            OnPropertyChanged(nameof(CurrentInDeckQuantity));
+            RaiseQuantityCommandStates();
+        }
+
+        private void DecreaseQuantityForViewedCard()
+        {
+            var card = CardViewer.CurrentCard;
+            if (card == null || CurrentDeck == null) return;
+
+            if (card.Type?.Contains("Evolved", StringComparison.OrdinalIgnoreCase) ?? false)
+            {
+                var existing = CurrentDeck.EvolveDeck.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
+                if (existing != null)
+                {
+                    DecreaseEvolveDeckQuantity(existing);
+                }
+            }
+            else if ((card.Type?.Contains("Leader", StringComparison.OrdinalIgnoreCase) ?? false) ||
+                     (card.Type?.Contains("Token", StringComparison.OrdinalIgnoreCase) ?? false))
+            {
+                // no-op
+            }
+            else
+            {
+                var existingMain = CurrentDeck.MainDeck.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
+                if (existingMain != null)
+                {
+                    DecreaseMainDeckQuantity(existingMain);
+                }
+            }
+
+            OnPropertyChanged(nameof(CurrentInDeckQuantity));
+            RaiseQuantityCommandStates();
         }
 
         private void AddCardToDeck(CardData? card)

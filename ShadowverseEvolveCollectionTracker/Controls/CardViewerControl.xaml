@@ -160,7 +160,8 @@
                         Orientation="Horizontal"
                         HorizontalAlignment="Center"
                         Margin="0,8,0,0"
-                        Background="Transparent">
+                        Background="Transparent"
+                        Visibility="{Binding ShowWishlist, RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource BoolToVisConverter}}">
                 <Border Background="{DynamicResource ElevatedBrush}"
                         Padding="6"
                         CornerRadius="4"

@@ -314,17 +314,52 @@
                 <ContentControl Grid.Row="1" Content="{Binding CardViewer}">
                     <ContentControl.ContentTemplate>
                         <DataTemplate>
-                            <controls:CardViewerControl DataContext="{Binding}"/>
+                            <!-- Hide wishlist controls when CardViewer is hosted inside the deck builder -->
+                            <controls:CardViewerControl DataContext="{Binding}" ShowWishlist="False"/>
                         </DataTemplate>
                     </ContentControl.ContentTemplate>
                 </ContentControl>
 
-                <!-- Add/Remove Buttons -->
+                <!-- Add/Remove Buttons (replaced wishlist UI with "In Deck" +/- for the deck builder) -->
                 <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0">
-                    <Button Content="Add to Deck" 
-                            Command="{Binding AddToDeckCommand}"
-                            Padding="8,4"
-                            Margin="0,0,8,0"/>
+                    <Border Background="{DynamicResource ElevatedBrush}"
+                            Padding="6"
+                            CornerRadius="4"
+                            BorderBrush="{DynamicResource AccentBrush}"
+                            BorderThickness="1">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+
+                            <Button Content="−"
+                                    Width="26"
+                                    Height="24"
+                                    Padding="0"
+                                    Margin="0,0,6,0"
+                                    Command="{Binding DecreaseCurrentCardQuantityCommand}"
+                                    ToolTip="Decrease in-deck quantity"/>
+
+                            <!-- Center column: label "In Deck" above the numeric quantity -->
+                            <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,0">
+                                <TextBlock Text="In Deck"
+                                           FontSize="11"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           HorizontalAlignment="Center"/>
+                                <TextBlock VerticalAlignment="Center"
+                                           Foreground="{DynamicResource GoldBrush}"
+                                           FontWeight="SemiBold"
+                                           Text="{Binding CurrentInDeckQuantity}"
+                                           Width="26"
+                                           TextAlignment="Center"/>
+                            </StackPanel>
+
+                            <Button Content="+"
+                                    Width="26"
+                                    Height="24"
+                                    Padding="0"
+                                    Margin="6,0,0,0"
+                                    Command="{Binding IncreaseCurrentCardQuantityCommand}"
+                                    ToolTip="Increase in-deck quantity"/>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
             </Grid>
 

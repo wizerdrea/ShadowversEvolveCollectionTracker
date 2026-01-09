@@ -26,6 +26,16 @@ namespace ShadowverseEvolveCardTracker.Controls
         // Expose the view model if callers need it; it may be null until the parent binds DataContext.
         public CardViewerViewModel? ViewModel => DataContext as CardViewerViewModel;
 
+        // New: controls whether the wishlist +/- UI is shown (default true).
+        public static readonly DependencyProperty ShowWishlistProperty =
+            DependencyProperty.Register(nameof(ShowWishlist), typeof(bool), typeof(CardViewerControl), new PropertyMetadata(true));
+
+        public bool ShowWishlist
+        {
+            get => (bool)GetValue(ShowWishlistProperty);
+            set => SetValue(ShowWishlistProperty, value);
+        }
+
         private void ViewerImage_MouseWheel(object sender, MouseWheelEventArgs e)
         {
             if (sender is Border viewport && viewport.Tag is Image img && img.RenderTransform is TransformGroup tg)
