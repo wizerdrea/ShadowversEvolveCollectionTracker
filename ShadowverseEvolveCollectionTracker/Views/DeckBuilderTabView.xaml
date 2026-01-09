@@ -26,7 +26,9 @@
             <Setter Property="VerticalContentAlignment" Value="Center"/>
         </Style>
 
-        <Style TargetType="ListBoxItem">
+        <!-- Keyed ListBoxItem style (scope explicitly) to avoid designer binding error
+             that originates from the system default style binding to ItemsControl.HorizontalContentAlignment -->
+        <Style x:Key="DeckBuilderListBoxItemStyle" TargetType="ListBoxItem">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
             <Setter Property="Padding" Value="6,4"/>
@@ -439,7 +441,8 @@
                     <ListBox x:Name="LeadersListBox"
                              ItemsSource="{Binding LeadersList}"
                              SelectedItem="{Binding SelectedLeader}"
-                             SelectionChanged="LeadersListBox_SelectionChanged">
+                             SelectionChanged="LeadersListBox_SelectionChanged"
+                             ItemContainerStyle="{StaticResource DeckBuilderListBoxItemStyle}">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding Name}">
@@ -473,7 +476,8 @@
                     <ListBox x:Name="GloryCardListBox"
                              ItemsSource="{Binding GloryCardList}"
                              SelectedItem="{Binding SelectedGloryCard}"
-                             SelectionChanged="GloryCardListBox_SelectionChanged">
+                             SelectionChanged="GloryCardListBox_SelectionChanged"
+                             ItemContainerStyle="{StaticResource DeckBuilderListBoxItemStyle}">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding Name}">
@@ -506,7 +510,8 @@
                              ItemsSource="{Binding MainDeckList}"
                              SelectedItem="{Binding SelectedMainDeckEntry}"
                              SelectionChanged="MainDeckListBox_SelectionChanged"
-                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             ItemContainerStyle="{StaticResource DeckBuilderListBoxItemStyle}">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Grid Margin="0">
@@ -593,7 +598,8 @@
                              ItemsSource="{Binding EvolveDeckList}"
                              SelectedItem="{Binding SelectedEvolveDeckEntry}"
                              SelectionChanged="EvolveDeckListBox_SelectionChanged"
-                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             ItemContainerStyle="{StaticResource DeckBuilderListBoxItemStyle}">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Grid Margin="0">
