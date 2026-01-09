@@ -362,7 +362,20 @@
                              SelectionChanged="LeadersListBox_SelectionChanged">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding Name}"/>
+                                <TextBlock Text="{Binding Name}">
+                                    <TextBlock.ToolTip>
+                                        <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                            <Border Background="transparent" 
+                                                    Padding="0" 
+                                                    CornerRadius="4" 
+                                                    BorderBrush="Transparent" 
+                                                    BorderThickness="0">
+                                                <Image Source="{Binding ImageFile, Converter={StaticResource StringToImageConverter}}"
+                                                       Width="240" Height="320" Stretch="Uniform"/>
+                                            </Border>
+                                        </ToolTip>
+                                    </TextBlock.ToolTip>
+                                </TextBlock>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
@@ -383,7 +396,20 @@
                              SelectionChanged="GloryCardListBox_SelectionChanged">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding Name}"/>
+                                <TextBlock Text="{Binding Name}">
+                                    <TextBlock.ToolTip>
+                                        <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                            <Border Background="transparent" 
+                                                    Padding="0" 
+                                                    CornerRadius="4" 
+                                                    BorderBrush="Transparent" 
+                                                    BorderThickness="0">
+                                                <Image Source="{Binding ImageFile, Converter={StaticResource StringToImageConverter}}"
+                                                       Width="240" Height="320" Stretch="Uniform"/>
+                                            </Border>
+                                        </ToolTip>
+                                    </TextBlock.ToolTip>
+                                </TextBlock>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
@@ -399,11 +425,29 @@
                     <ListBox x:Name="MainDeckListBox"
                              ItemsSource="{Binding MainDeckList}"
                              SelectedItem="{Binding SelectedMainDeckEntry}"
-                             SelectionChanged="MainDeckListBox_SelectionChanged">
+                             SelectionChanged="MainDeckListBox_SelectionChanged"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <StackPanel Orientation="Horizontal">
-                                    <StackPanel.ToolTip>
+                                <Grid Margin="0">
+                                    <Grid.ColumnDefinitions>
+                                        <!-- fixed quantity column -->
+                                        <ColumnDefinition Width="Auto"/>
+                                        <!-- 'x' marker -->
+                                        <ColumnDefinition Width="Auto"/>
+                                        <!-- name column (will truncate when space is limited) -->
+                                        <ColumnDefinition Width="*"/>
+                                        <!-- minus button -->
+                                        <ColumnDefinition Width="Auto"/>
+                                        <!-- plus button -->
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <Grid.ToolTip>
                                         <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
                                             <Border Background="transparent" 
                                                     Padding="0" 
@@ -414,17 +458,39 @@
                                                        Width="240" Height="320" Stretch="Uniform"/>
                                             </Border>
                                         </ToolTip>
-                                    </StackPanel.ToolTip>
+                                    </Grid.ToolTip>
 
-                                    <TextBlock Text="{Binding Quantity}" 
-                                               Width="20"
+                                    <TextBlock Grid.Column="0"
+                                               VerticalAlignment="Center"
+                                               Text="{Binding Quantity}"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource GoldBrush}"/>
-                                    <TextBlock Text="x " 
+
+                                    <TextBlock Grid.Column="1" 
+                                               VerticalAlignment="Center"
+                                               Text=" x " 
                                                Foreground="{DynamicResource TextSecondaryBrush}"
                                                Margin="0,0,4,0"/>
-                                    <TextBlock Text="{Binding Card.Name}"/>
-                                </StackPanel>
+
+                                    <!-- Name will truncate with ellipsis when space is insufficient -->
+                                    <TextBlock Grid.Column="2"
+                                               Text="{Binding Card.Name}"
+                                               TextTrimming="CharacterEllipsis"
+                                               TextWrapping="NoWrap"
+                                               VerticalAlignment="Center"
+                                               MinWidth="0"
+                                               Margin="0,0,8,0"/>
+
+                                    <Button Grid.Column="3" Content="-" 
+                                            Command="{Binding DataContext.DecreaseMainDeckQuantityCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            Width="22" Height="20" Margin="0,0,4,0" Padding="0"/>
+
+                                    <Button Grid.Column="4" Content="+" 
+                                            Command="{Binding DataContext.IncreaseMainDeckQuantityCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            Width="22" Height="20" Padding="0"/>
+                                </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>
@@ -446,11 +512,20 @@
                     <ListBox x:Name="EvolveDeckListBox"
                              ItemsSource="{Binding EvolveDeckList}"
                              SelectedItem="{Binding SelectedEvolveDeckEntry}"
-                             SelectionChanged="EvolveDeckListBox_SelectionChanged">
+                             SelectionChanged="EvolveDeckListBox_SelectionChanged"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <StackPanel Orientation="Horizontal">
-                                    <StackPanel.ToolTip>
+                                <Grid Margin="0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Grid.ToolTip>
                                         <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
                                             <Border Background="transparent" 
                                                     Padding="0" 
@@ -461,16 +536,38 @@
                                                        Width="240" Height="320" Stretch="Uniform"/>
                                             </Border>
                                         </ToolTip>
-                                    </StackPanel.ToolTip>
-                                    <TextBlock Text="{Binding Quantity}" 
-                                               Width="20"
+                                    </Grid.ToolTip>
+
+                                    <TextBlock Grid.Column="0"
+                                               VerticalAlignment="Center"
+                                               Text="{Binding Quantity}" 
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource GoldBrush}"/>
-                                    <TextBlock Text="x " 
+
+                                    <TextBlock Grid.Column="1" 
+                                               VerticalAlignment="Center"
+                                               Text=" x " 
                                                Foreground="{DynamicResource TextSecondaryBrush}"
                                                Margin="0,0,4,0"/>
-                                    <TextBlock Text="{Binding Card.Name}"/>
-                                </StackPanel>
+
+                                    <TextBlock Grid.Column="2"
+                                               Text="{Binding Card.Name}"
+                                               TextTrimming="CharacterEllipsis"
+                                               TextWrapping="NoWrap"
+                                               VerticalAlignment="Center"
+                                               MinWidth="0"
+                                               Margin="0,0,8,0"/>
+
+                                    <Button Grid.Column="3" Content="-" 
+                                            Command="{Binding DataContext.DecreaseEvolveDeckQuantityCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            Width="22" Height="20" Margin="0,0,4,0" Padding="0"/>
+
+                                    <Button Grid.Column="4" Content="+" 
+                                            Command="{Binding DataContext.IncreaseEvolveDeckQuantityCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding}"
+                                            Width="22" Height="20" Padding="0"/>
+                                </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
                     </ListBox>

@@ -54,10 +54,10 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         public ICommand RemoveFromMainDeckCommand { get; }
         public ICommand AddToEvolveDeckCommand { get; }
         public ICommand RemoveFromEvolveDeckCommand { get; }
-        public ICommand IncreaseMainDeckQuantityCommand { get; }
-        public ICommand DecreaseMainDeckQuantityCommand { get; }
-        public ICommand IncreaseEvolveDeckQuantityCommand { get; }
-        public ICommand DecreaseEvolveDeckQuantityCommand { get; }
+        public ICommand IncreaseMainDeckQuantityCommand { get; private set; }
+        public ICommand DecreaseMainDeckQuantityCommand { get; private set; }
+        public ICommand IncreaseEvolveDeckQuantityCommand { get; private set; }
+        public ICommand DecreaseEvolveDeckQuantityCommand { get; private set; }
 
         public Deck? CurrentDeck
         {
@@ -344,24 +344,53 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 execute: () => { RemoveCardFromEvolveDeck(SelectedEvolveDeckEntry); return System.Threading.Tasks.Task.CompletedTask; },
                 canExecute: () => SelectedEvolveDeckEntry != null);
 
-            IncreaseMainDeckQuantityCommand = new RelayCommand(
-                execute: () => { IncreaseMainDeckQuantity(SelectedMainDeckEntry); return System.Threading.Tasks.Task.CompletedTask; },
-                canExecute: () => SelectedMainDeckEntry != null && CanIncreaseMainDeckQuantity(SelectedMainDeckEntry));
+            // Parameterized +/- commands so per-row buttons operate on the passed DeckEntry.
+            IncreaseMainDeckQuantityCommand = new RelayCommand<DeckEntry?>(
+                execute: entry =>
+                {
+                    IncreaseMainDeckQuantity(entry);
+                    RaiseQuantityCommandStates();
+                    return System.Threading.Tasks.Task.CompletedTask;
+                },
+                canExecute: entry => CanIncreaseMainDeckQuantity(entry));
 
-            DecreaseMainDeckQuantityCommand = new RelayCommand(
-                execute: () => { DecreaseMainDeckQuantity(SelectedMainDeckEntry); return System.Threading.Tasks.Task.CompletedTask; },
-                canExecute: () => SelectedMainDeckEntry != null && SelectedMainDeckEntry.Quantity > 1);
+            DecreaseMainDeckQuantityCommand = new RelayCommand<DeckEntry?>(
+                execute: entry =>
+                {
+                    DecreaseMainDeckQuantity(entry);
+                    RaiseQuantityCommandStates();
+                    return System.Threading.Tasks.Task.CompletedTask;
+                },
+                canExecute: entry => entry != null);
 
-            IncreaseEvolveDeckQuantityCommand = new RelayCommand(
-                execute: () => { IncreaseEvolveDeckQuantity(SelectedEvolveDeckEntry); return System.Threading.Tasks.Task.CompletedTask; },
-                canExecute: () => SelectedEvolveDeckEntry != null && CanIncreaseEvolveDeckQuantity(SelectedEvolveDeckEntry));
+            IncreaseEvolveDeckQuantityCommand = new RelayCommand<DeckEntry?>(
+                execute: entry =>
+                {
+                    IncreaseEvolveDeckQuantity(entry);
+                    RaiseQuantityCommandStates();
+                    return System.Threading.Tasks.Task.CompletedTask;
+                },
+                canExecute: entry => CanIncreaseEvolveDeckQuantity(entry));
 
-            DecreaseEvolveDeckQuantityCommand = new RelayCommand(
-                execute: () => { DecreaseEvolveDeckQuantity(SelectedEvolveDeckEntry); return System.Threading.Tasks.Task.CompletedTask; },
-                canExecute: () => SelectedEvolveDeckEntry != null && SelectedEvolveDeckEntry.Quantity > 1);
+            DecreaseEvolveDeckQuantityCommand = new RelayCommand<DeckEntry?>(
+                execute: entry =>
+                {
+                    DecreaseEvolveDeckQuantity(entry);
+                    RaiseQuantityCommandStates();
+                    return System.Threading.Tasks.Task.CompletedTask;
+                },
+                canExecute: entry => entry != null);
 
             // Subscribe to CardViewer changes so Add commands update when the viewed card changes
             CardViewer.PropertyChanged += CardViewer_PropertyChanged;
+        }
+
+        private void RaiseQuantityCommandStates()
+        {
+            if (IncreaseMainDeckQuantityCommand is IRelayCommand incMainRc) incMainRc.RaiseCanExecuteChanged();
+            if (DecreaseMainDeckQuantityCommand is IRelayCommand decMainRc) decMainRc.RaiseCanExecuteChanged();
+            if (IncreaseEvolveDeckQuantityCommand is IRelayCommand incEvolveRc) incEvolveRc.RaiseCanExecuteChanged();
+            if (DecreaseEvolveDeckQuantityCommand is IRelayCommand decEvolveRc) decEvolveRc.RaiseCanExecuteChanged();
         }
 
         private void CardViewer_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -408,6 +437,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 RefreshDeckLists();
                 OnPropertyChanged(nameof(MainDeckCount));
                 OnPropertyChanged(nameof(EvolveDeckCount));
+                RaiseQuantityCommandStates();
             }
         }
 
@@ -711,6 +741,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
             RefreshDeckLists();
             OnPropertyChanged(nameof(MainDeckCount));
+            RaiseQuantityCommandStates();
         }
 
         private void RemoveCardFromMainDeck(DeckEntry? entry)
@@ -719,6 +750,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             CurrentDeck.MainDeck.Remove(entry);
             RefreshDeckLists();
             OnPropertyChanged(nameof(MainDeckCount));
+            RaiseQuantityCommandStates();
         }
 
         private void AddCardToEvolveDeck(CardData? card)
@@ -737,6 +769,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
             RefreshDeckLists();
             OnPropertyChanged(nameof(EvolveDeckCount));
+            RaiseQuantityCommandStates();
         }
 
         private void RemoveCardFromEvolveDeck(DeckEntry? entry)
@@ -745,42 +778,68 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             CurrentDeck.EvolveDeck.Remove(entry);
             RefreshDeckLists();
             OnPropertyChanged(nameof(EvolveDeckCount));
+            RaiseQuantityCommandStates();
         }
 
         private void IncreaseMainDeckQuantity(DeckEntry? entry)
         {
-            if (entry != null)
-            {
-                entry.Quantity++;
-                OnPropertyChanged(nameof(MainDeckCount));
-            }
+            if (entry == null || CurrentDeck == null) return;
+
+            // Ensure we don't exceed allowed limits
+            if (!CanIncreaseMainDeckQuantity(entry)) return;
+
+            entry.Quantity++;
+            OnPropertyChanged(nameof(MainDeckCount));
+            RaiseQuantityCommandStates();
         }
 
         private void DecreaseMainDeckQuantity(DeckEntry? entry)
         {
-            if (entry != null && entry.Quantity > 1)
+            if (entry == null || CurrentDeck == null) return;
+
+            // If only 1 left, removing should remove the entry entirely
+            if (entry.Quantity <= 1)
+            {
+                CurrentDeck.MainDeck.Remove(entry);
+                RefreshDeckLists();
+            }
+            else
             {
                 entry.Quantity--;
-                OnPropertyChanged(nameof(MainDeckCount));
             }
+
+            OnPropertyChanged(nameof(MainDeckCount));
+            RaiseQuantityCommandStates();
         }
 
         private void IncreaseEvolveDeckQuantity(DeckEntry? entry)
         {
-            if (entry != null)
-            {
-                entry.Quantity++;
-                OnPropertyChanged(nameof(EvolveDeckCount));
-            }
+            if (entry == null || CurrentDeck == null) return;
+
+            if (!CanIncreaseEvolveDeckQuantity(entry)) return;
+
+            entry.Quantity++;
+            OnPropertyChanged(nameof(EvolveDeckCount));
+            RaiseQuantityCommandStates();
         }
 
         private void DecreaseEvolveDeckQuantity(DeckEntry? entry)
         {
-            if (entry != null && entry.Quantity > 1)
+            if (entry == null || CurrentDeck == null) return;
+
+            // If only 1 left, remove the entry; otherwise decrement
+            if (entry.Quantity <= 1)
+            {
+                CurrentDeck.EvolveDeck.Remove(entry);
+                RefreshDeckLists();
+            }
+            else
             {
                 entry.Quantity--;
-                OnPropertyChanged(nameof(EvolveDeckCount));
             }
+
+            OnPropertyChanged(nameof(EvolveDeckCount));
+            RaiseQuantityCommandStates();
         }
 
         private void RefreshDeckLists()
