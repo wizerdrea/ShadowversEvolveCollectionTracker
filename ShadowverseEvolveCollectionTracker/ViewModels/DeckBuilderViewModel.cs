@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows;
@@ -507,10 +508,8 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                     RaiseQuantityCommandStates();
                     return System.Threading.Tasks.Task.CompletedTask;
                 },
-                canExecute: card => card != null && CurrentDeck != null && (
-                    (card.Type?.Contains("Evolved", StringComparison.OrdinalIgnoreCase) ?? false && CurrentDeck.EvolveDeck.Any(e => e.Card.CardNumber == card.CardNumber)) ||
-                    (!(card.Type?.Contains("Evolved", StringComparison.OrdinalIgnoreCase) ?? false) && CurrentDeck.MainDeck.Any(e => e.Card.CardNumber == card.CardNumber))
-                ));
+                canExecute: CanDecreaseQuantity
+                );
 
             // Subscribe to CardViewer changes so Add commands update when the viewed card changes
             CardViewer.PropertyChanged += CardViewer_PropertyChanged;
@@ -972,6 +971,22 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
             var existingMain = CurrentDeck.MainDeck.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
             return existingMain != null ? CanIncreaseMainDeckQuantity(existingMain) : CanAddToMainDeck(card);
+        }
+
+        private bool CanDecreaseQuantity(CardData? card)
+        {
+            if (card == null || CurrentDeck == null) return false;
+            
+            if (card.Type?.Contains("Evolved", StringComparison.OrdinalIgnoreCase) ?? false)
+                return CurrentDeck?.EvolveDeck.Any(e => e.Card.CardNumber == card.CardNumber) ?? false;
+
+            if (card.Type?.Contains("Leader", StringComparison.OrdinalIgnoreCase) ?? false)
+                return false;
+
+            if (card.Type?.Contains("Token", StringComparison.OrdinalIgnoreCase) ?? false)
+                return false;
+
+            return CurrentDeck?.MainDeck.Any(e => e.Card.CardNumber == card.CardNumber) ?? false;
         }
 
         private bool CanDecreaseQuantityForAvailableCard(CardData? card)
