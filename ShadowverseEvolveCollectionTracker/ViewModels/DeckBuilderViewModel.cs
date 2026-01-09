@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
 using ShadowverseEvolveCardTracker.Models;
@@ -25,6 +26,11 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         private bool _isEditingDeck;
         private DeckEntry? _selectedMainDeckEntry;
         private DeckEntry? _selectedEvolveDeckEntry;
+        private CardData? _selectedLeader;
+        private CardData? _selectedGloryCard;
+
+        // Keep track of the deck we've subscribed to so we can unsubscribe cleanly.
+        private Deck? _subscribedDeck;
 
         public ICollectionView StandardDecks => _standardDecks;
         public ICollectionView GloryfinderDecks => _gloryfinderDecks;
@@ -35,11 +41,15 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
         public ObservableCollection<DeckEntry> MainDeckList { get; } = new();
         public ObservableCollection<DeckEntry> EvolveDeckList { get; } = new();
+        public ObservableCollection<CardData> LeadersList { get; } = new();
+        public ObservableCollection<CardData> GloryCardList { get; } = new();
 
         public ICommand CreateDeckCommand { get; }
         public ICommand EditDeckCommand { get; }
         public ICommand DeleteDeckCommand { get; }
         public ICommand BackToDeckListCommand { get; }
+
+        public ICommand AddToDeckCommand { get; }
         public ICommand AddToMainDeckCommand { get; }
         public ICommand RemoveFromMainDeckCommand { get; }
         public ICommand AddToEvolveDeckCommand { get; }
@@ -56,6 +66,16 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             {
                 if (SetProperty(ref _currentDeck, value))
                 {
+                    // Unsubscribe from previous deck notifications
+                    if (_subscribedDeck != null)
+                        _subscribedDeck.PropertyChanged -= Deck_PropertyChanged;
+
+                    _subscribedDeck = _currentDeck;
+
+                    // Subscribe to the new deck so changes to Leader/GloryCard/etc. propagate to the UI
+                    if (_subscribedDeck != null)
+                        _subscribedDeck.PropertyChanged += Deck_PropertyChanged;
+
                     RefreshDeckLists();
                     RefreshValidCards();
                     OnPropertyChanged(nameof(DeckName));
@@ -66,9 +86,37 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                     OnPropertyChanged(nameof(EvolveDeckCount));
                     OnPropertyChanged(nameof(Leader1Image));
                     OnPropertyChanged(nameof(Leader2Image));
+                    OnPropertyChanged(nameof(Leader1Name));
+                    OnPropertyChanged(nameof(Leader2Name));
                     OnPropertyChanged(nameof(ShowLeader2));
                     OnPropertyChanged(nameof(GloryCardImage));
                     OnPropertyChanged(nameof(ShowGloryCard));
+
+                    // Ensure leader/glory lists reflect the newly selected deck immediately
+                    RefreshLeadersAndGloryCard();
+
+                    // Clear any selections (keeps viewer state consistent when deck changes)
+                    SelectedCard = null;
+                    SelectedMainDeckEntry = null;
+                    SelectedEvolveDeckEntry = null;
+                    SelectedLeader = null;
+                    SelectedGloryCard = null;
+
+                    // Update commands whose CanExecute depends on CurrentDeck/collections
+                    if (EditDeckCommand is IRelayCommand editRc) editRc.RaiseCanExecuteChanged();
+                    if (DeleteDeckCommand is IRelayCommand delRc) delRc.RaiseCanExecuteChanged();
+                    if (AddToDeckCommand is IRelayCommand addDeckRc) addDeckRc.RaiseCanExecuteChanged();
+                    if (AddToMainDeckCommand is IRelayCommand addMainRc) addMainRc.RaiseCanExecuteChanged();
+                    if (AddToEvolveDeckCommand is IRelayCommand addEvolveRc) addEvolveRc.RaiseCanExecuteChanged();
+                    if (RemoveFromMainDeckCommand is IRelayCommand removeMainRc) removeMainRc.RaiseCanExecuteChanged();
+                    if (RemoveFromEvolveDeckCommand is IRelayCommand removeEvolveRc) removeEvolveRc.RaiseCanExecuteChanged();
+                    if (IncreaseMainDeckQuantityCommand is IRelayCommand incMainRc) incMainRc.RaiseCanExecuteChanged();
+                    if (DecreaseMainDeckQuantityCommand is IRelayCommand decMainRc) decMainRc.RaiseCanExecuteChanged();
+                    if (IncreaseEvolveDeckQuantityCommand is IRelayCommand incEvolveRc) incEvolveRc.RaiseCanExecuteChanged();
+                    if (DecreaseEvolveDeckQuantityCommand is IRelayCommand decEvolveRc) decEvolveRc.RaiseCanExecuteChanged();
+
+                    // BackToDeckList state also may change when CurrentDeck changes
+                    if (BackToDeckListCommand is IRelayCommand backRc) backRc.RaiseCanExecuteChanged();
                 }
             }
         }
@@ -80,9 +128,11 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             {
                 if (SetProperty(ref _selectedCard, value))
                 {
-                    CardViewer.SetCard(value);
-                    ((RelayCommand?)AddToMainDeckCommand)?.RaiseCanExecuteChanged();
-                    ((RelayCommand?)AddToEvolveDeckCommand)?.RaiseCanExecuteChanged();
+                    if (value != null)
+                        CardViewer.SetCard(value);
+                    if (AddToDeckCommand is IRelayCommand addDeckRc) addDeckRc.RaiseCanExecuteChanged();
+                    if (AddToMainDeckCommand is IRelayCommand addMainRc) addMainRc.RaiseCanExecuteChanged();
+                    if (AddToEvolveDeckCommand is IRelayCommand addEvolveRc) addEvolveRc.RaiseCanExecuteChanged();
                 }
             }
         }
@@ -94,9 +144,15 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             {
                 if (SetProperty(ref _selectedMainDeckEntry, value))
                 {
-                    ((RelayCommand?)IncreaseMainDeckQuantityCommand)?.RaiseCanExecuteChanged();
-                    ((RelayCommand?)DecreaseMainDeckQuantityCommand)?.RaiseCanExecuteChanged();
-                    ((RelayCommand?)RemoveFromMainDeckCommand)?.RaiseCanExecuteChanged();
+                    // Show the selected card in the viewer
+                    if (value?.Card != null)
+                    {
+                        CardViewer.SetCard(value.Card);
+                    }
+
+                    if (IncreaseMainDeckQuantityCommand is IRelayCommand incMainRc) incMainRc.RaiseCanExecuteChanged();
+                    if (DecreaseMainDeckQuantityCommand is IRelayCommand decMainRc) decMainRc.RaiseCanExecuteChanged();
+                    if (RemoveFromMainDeckCommand is IRelayCommand removeMainRc) removeMainRc.RaiseCanExecuteChanged();
                 }
             }
         }
@@ -108,9 +164,47 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             {
                 if (SetProperty(ref _selectedEvolveDeckEntry, value))
                 {
-                    ((RelayCommand?)IncreaseEvolveDeckQuantityCommand)?.RaiseCanExecuteChanged();
-                    ((RelayCommand?)DecreaseEvolveDeckQuantityCommand)?.RaiseCanExecuteChanged();
-                    ((RelayCommand?)RemoveFromEvolveDeckCommand)?.RaiseCanExecuteChanged();
+                    // Show the selected card in the viewer
+                    if (value?.Card != null)
+                    {
+                        CardViewer.SetCard(value.Card);
+                    }
+
+                    if (IncreaseEvolveDeckQuantityCommand is IRelayCommand incEvolveRc) incEvolveRc.RaiseCanExecuteChanged();
+                    if (DecreaseEvolveDeckQuantityCommand is IRelayCommand decEvolveRc) decEvolveRc.RaiseCanExecuteChanged();
+                    if (RemoveFromEvolveDeckCommand is IRelayCommand removeEvolveRc) removeEvolveRc.RaiseCanExecuteChanged();
+                }
+            }
+        }
+
+        public CardData? SelectedLeader
+        {
+            get => _selectedLeader;
+            set
+            {
+                if (SetProperty(ref _selectedLeader, value))
+                {
+                    // Show the selected leader in the viewer
+                    if (value != null)
+                    {
+                        CardViewer.SetCard(value);
+                    }
+                }
+            }
+        }
+
+        public CardData? SelectedGloryCard
+        {
+            get => _selectedGloryCard;
+            set
+            {
+                if (SetProperty(ref _selectedGloryCard, value))
+                {
+                    // Show the selected glory card in the viewer
+                    if (value != null)
+                    {
+                        CardViewer.SetCard(value);
+                    }
                 }
             }
         }
@@ -118,7 +212,19 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         public bool IsEditingDeck
         {
             get => _isEditingDeck;
-            set => SetProperty(ref _isEditingDeck, value);
+            set
+            {
+                if (SetProperty(ref _isEditingDeck, value))
+                {
+                    // BackToDeckListCommand's CanExecute depends on IsEditingDeck; ensure the UI updates
+                    if (BackToDeckListCommand is IRelayCommand backRc) backRc.RaiseCanExecuteChanged();
+
+                    // Some commands may enable/disable based on editing state - refresh them as well.
+                    if (CreateDeckCommand is IRelayCommand createRc) createRc.RaiseCanExecuteChanged();
+                    if (EditDeckCommand is IRelayCommand editRc) editRc.RaiseCanExecuteChanged();
+                    if (DeleteDeckCommand is IRelayCommand delRc) delRc.RaiseCanExecuteChanged();
+                }
+            }
         }
 
         public string DeckName
@@ -147,6 +253,10 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         public string? Leader2Image => CurrentDeck?.Leader2?.ImageFile;
         public string? GloryCardImage => CurrentDeck?.GloryCard?.ImageFile;
 
+        // New: expose leader names for the UI
+        public string Leader1Name => CurrentDeck?.Leader1?.Name ?? "None";
+        public string Leader2Name => CurrentDeck?.Leader2?.Name ?? "None";
+
         public DeckBuilderViewModel(ObservableCollection<CardData> allCards, ObservableCollection<Deck> decks)
         {
             _allCards = allCards ?? throw new ArgumentNullException(nameof(allCards));
@@ -170,29 +280,65 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 execute: () => { CreateNewDeck(); return System.Threading.Tasks.Task.CompletedTask; },
                 canExecute: () => true);
 
-            EditDeckCommand = new RelayCommand(
-                execute: () => { IsEditingDeck = true; return System.Threading.Tasks.Task.CompletedTask; },
-                canExecute: () => CurrentDeck != null);
+            // Use parameter-capable commands for editing/deleting so row buttons can pass the deck item.
+            EditDeckCommand = new RelayCommand<Deck?>(
+                execute: deck =>
+                {
+                    if (deck == null) return System.Threading.Tasks.Task.CompletedTask;
+                    CurrentDeck = deck;
+                    IsEditingDeck = true;
+                    return System.Threading.Tasks.Task.CompletedTask;
+                },
+                canExecute: deck => deck != null);
 
-            DeleteDeckCommand = new RelayCommand(
-                execute: () => { DeleteDeck(); return System.Threading.Tasks.Task.CompletedTask; },
-                canExecute: () => CurrentDeck != null);
+            DeleteDeckCommand = new RelayCommand<Deck?>(
+                execute: deck =>
+                {
+                    if (deck == null) return System.Threading.Tasks.Task.CompletedTask;
+
+                    // Use themed confirmation dialog
+                    var dlg = new ConfirmDialog
+                    {
+                        Owner = System.Windows.Application.Current.MainWindow,
+                        Message = $"Are you sure you want to delete the deck '{deck.Name}'?",
+                        Title = "Confirm Delete"
+                    };
+
+                    if (dlg.ShowDialog() != true)
+                        return System.Threading.Tasks.Task.CompletedTask;
+
+                    // If deleting the currently edited deck, clear editing state.
+                    if (CurrentDeck == deck)
+                    {
+                        CurrentDeck = null;
+                        IsEditingDeck = false;
+                    }
+                    _decks.Remove(deck);
+                    return System.Threading.Tasks.Task.CompletedTask;
+                },
+                canExecute: deck => deck != null);
 
             BackToDeckListCommand = new RelayCommand(
                 execute: () => { IsEditingDeck = false; CurrentDeck = null; return System.Threading.Tasks.Task.CompletedTask; },
                 canExecute: () => IsEditingDeck);
 
+            // Use the currently viewed card in the CardViewer (not the SelectedCard from the ValidCards list).
+            AddToDeckCommand = new RelayCommand(
+                execute: () => { AddCardToDeck(CardViewer.CurrentCard); return System.Threading.Tasks.Task.CompletedTask; },
+                canExecute: () => CardViewer.CurrentCard != null && CurrentDeck != null && CannAddToDeck(CardViewer.CurrentCard));
+
+            // Use the currently viewed card in the CardViewer (not the SelectedCard from the ValidCards list).
             AddToMainDeckCommand = new RelayCommand(
-                execute: () => { AddCardToMainDeck(SelectedCard); return System.Threading.Tasks.Task.CompletedTask; },
-                canExecute: () => SelectedCard != null && CurrentDeck != null && CanAddToMainDeck(SelectedCard));
+                execute: () => { AddCardToMainDeck(CardViewer.CurrentCard); return System.Threading.Tasks.Task.CompletedTask; },
+                canExecute: () => CardViewer.CurrentCard != null && CurrentDeck != null && CanAddToMainDeck(CardViewer.CurrentCard));
 
             RemoveFromMainDeckCommand = new RelayCommand(
                 execute: () => { RemoveCardFromMainDeck(SelectedMainDeckEntry); return System.Threading.Tasks.Task.CompletedTask; },
                 canExecute: () => SelectedMainDeckEntry != null);
 
             AddToEvolveDeckCommand = new RelayCommand(
-                execute: () => { AddCardToEvolveDeck(SelectedCard); return System.Threading.Tasks.Task.CompletedTask; },
-                canExecute: () => SelectedCard != null && CurrentDeck != null && CanAddToEvolveDeck(SelectedCard));
+                execute: () => { AddCardToEvolveDeck(CardViewer.CurrentCard); return System.Threading.Tasks.Task.CompletedTask; },
+                canExecute: () => CardViewer.CurrentCard != null && CurrentDeck != null && CanAddToEvolveDeck(CardViewer.CurrentCard));
 
             RemoveFromEvolveDeckCommand = new RelayCommand(
                 execute: () => { RemoveCardFromEvolveDeck(SelectedEvolveDeckEntry); return System.Threading.Tasks.Task.CompletedTask; },
@@ -213,6 +359,56 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             DecreaseEvolveDeckQuantityCommand = new RelayCommand(
                 execute: () => { DecreaseEvolveDeckQuantity(SelectedEvolveDeckEntry); return System.Threading.Tasks.Task.CompletedTask; },
                 canExecute: () => SelectedEvolveDeckEntry != null && SelectedEvolveDeckEntry.Quantity > 1);
+
+            // Subscribe to CardViewer changes so Add commands update when the viewed card changes
+            CardViewer.PropertyChanged += CardViewer_PropertyChanged;
+        }
+
+        private void CardViewer_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            // CurrentCard can change when navigating versions/related cards; refresh add-button states.
+            if (string.IsNullOrEmpty(e?.PropertyName) || e.PropertyName == nameof(CardViewer.CurrentCard))
+            {
+                if (AddToDeckCommand is IRelayCommand addDeckRc) addDeckRc.RaiseCanExecuteChanged();
+                if (AddToMainDeckCommand is IRelayCommand addMainRc) addMainRc.RaiseCanExecuteChanged();
+                if (AddToEvolveDeckCommand is IRelayCommand addEvolveRc) addEvolveRc.RaiseCanExecuteChanged();
+            }
+        }
+
+        // Listen to property changes on the active Deck so UI updates when Leader/GloryCard/etc. change
+        private void Deck_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            // If deck raised change, refresh dependent viewmodel properties and lists
+            var prop = e?.PropertyName ?? string.Empty;
+
+            if (string.IsNullOrEmpty(prop) || prop == nameof(Deck.Leader1) || prop == nameof(Deck.Leader2) || prop == nameof(Deck.GloryCard) ||
+                prop == nameof(Deck.Class1) || prop == nameof(Deck.Class2) || prop == nameof(Deck.Name))
+            {
+                OnPropertyChanged(nameof(Leader1Image));
+                OnPropertyChanged(nameof(Leader2Image));
+                OnPropertyChanged(nameof(Leader1Name));
+                OnPropertyChanged(nameof(Leader2Name));
+                OnPropertyChanged(nameof(GloryCardImage));
+                OnPropertyChanged(nameof(ShowLeader2));
+                OnPropertyChanged(nameof(ShowGloryCard));
+                OnPropertyChanged(nameof(DeckName));
+
+                // Refresh leaders and glory card lists
+                RefreshLeadersAndGloryCard();
+
+                // Commands that depend on leaders or classes may need refreshing
+                if (AddToDeckCommand is IRelayCommand addDeckRc) addDeckRc.RaiseCanExecuteChanged();
+                if (AddToMainDeckCommand is IRelayCommand addMainRc) addMainRc.RaiseCanExecuteChanged();
+                if (AddToEvolveDeckCommand is IRelayCommand addEvolveRc) addEvolveRc.RaiseCanExecuteChanged();
+            }
+
+            // If main/evolve deck lists changed notify counts and refresh the list views.
+            if (string.IsNullOrEmpty(prop) || prop == nameof(Deck.MainDeck) || prop == nameof(Deck.EvolveDeck))
+            {
+                RefreshDeckLists();
+                OnPropertyChanged(nameof(MainDeckCount));
+                OnPropertyChanged(nameof(EvolveDeckCount));
+            }
         }
 
         private void CreateNewDeck()
@@ -236,6 +432,17 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         private void DeleteDeck()
         {
             if (CurrentDeck == null) return;
+
+            var dlg = new ConfirmDialog
+            {
+                Owner = System.Windows.Application.Current.MainWindow,
+                Message = $"Are you sure you want to delete the deck '{CurrentDeck.Name}'?",
+                Title = "Confirm Delete"
+            };
+
+            if (dlg.ShowDialog() != true)
+                return;
+
             _decks.Remove(CurrentDeck);
             CurrentDeck = null;
             IsEditingDeck = false;
@@ -245,10 +452,12 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         {
             if (obj is not CardData card || CurrentDeck == null) return false;
 
-            // Exclude leaders from the valid cards list
-            if (card.Type?.Contains("Leader", StringComparison.OrdinalIgnoreCase) ?? false)
-                return false;
+            return IsValidForDeck(card);
+        }
 
+        private bool IsValidForDeck(CardData card)
+        {
+            if (CurrentDeck == null) return false;
             return CurrentDeck.DeckType switch
             {
                 DeckType.Standard => IsValidForStandard(card),
@@ -277,6 +486,60 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             return string.Equals(card.Class, CurrentDeck.Class1, StringComparison.OrdinalIgnoreCase) ||
                    string.Equals(card.Class, CurrentDeck.Class2, StringComparison.OrdinalIgnoreCase) ||
                    string.Equals(card.Class, "Neutral", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool CannAddToDeck(CardData? card)
+        {
+            if (card == null || CurrentDeck == null) return false;
+
+            if (!IsValidForDeck(card))
+                return false;
+
+            if (card.Type?.Contains("Leader", StringComparison.OrdinalIgnoreCase) ?? false)
+                return CanAddLeader(card);
+            else if (card.Type?.Contains("Token", StringComparison.OrdinalIgnoreCase) ?? false)
+                return CanAddToExtraDeck(card);
+            else if (card.Type?.Contains("Evolve", StringComparison.OrdinalIgnoreCase) ?? false)
+                return CanAddToEvolveDeck(card);
+            else
+                return CanAddToMainDeck(card);
+        }
+
+        private bool CanAddLeader(CardData? card)
+        {
+            if (card == null || CurrentDeck == null) return false;
+
+            return CurrentDeck.DeckType switch
+            {
+                DeckType.Standard => CanAddLeaderStandard(card),
+                DeckType.Gloryfinder => CanAddLeaderGloryfinder(card),
+                DeckType.CrossCraft => CanAddLeaderCrossCraft(card),
+                _ => false
+            };
+        }
+
+        private bool CanAddLeaderStandard(CardData card)
+        {
+            return CurrentDeck?.Leader1 is null;
+        }
+
+        private bool CanAddLeaderGloryfinder(CardData card)
+        {
+            return CurrentDeck?.Leader1 is null;
+        }
+
+        private bool CanAddLeaderCrossCraft(CardData card)
+        {
+            if (CurrentDeck?.Leader1 is null) return true;
+            else if (CurrentDeck?.Leader2 is null && !CurrentDeck.Leader1.Class.Contains(card.Class, StringComparison.OrdinalIgnoreCase))
+                return true;
+            else
+                return false;
+        }
+
+        private bool CanAddToExtraDeck(CardData card)
+        {
+            return true;
         }
 
         private bool CanAddToMainDeck(CardData? card)
@@ -392,6 +655,46 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             };
         }
 
+        private void AddCardToDeck(CardData? card)
+        {
+            if (card == null || CurrentDeck == null) return;
+
+            if (card.Type?.Contains("Leader", StringComparison.OrdinalIgnoreCase) ?? false)
+                AddLeaderToDeck(card);
+            else if (card.Type?.Contains("Token", StringComparison.OrdinalIgnoreCase) ?? false)
+                AddTokenToDeck(card);
+            else if (card.Type?.Contains("Evolve", StringComparison.OrdinalIgnoreCase) ?? false)
+                AddCardToEvolveDeck(card);
+            else
+                AddCardToMainDeck(card);
+
+        }
+
+        private void AddLeaderToDeck(CardData? card)
+        {
+            if (card == null || CurrentDeck == null) return;
+
+            if (CurrentDeck.DeckType is DeckType.Standard or DeckType.Gloryfinder)
+            {
+                CurrentDeck.Leader1 = card;
+                return;
+            }
+
+            if (CurrentDeck.Leader1 is null)
+            {
+                CurrentDeck.Leader1 = card;
+            }
+            else
+            {
+                CurrentDeck.Leader2 = card;
+            }
+        }
+
+        private void AddTokenToDeck(CardData? card)
+        {
+            return;
+        }
+
         private void AddCardToMainDeck(CardData? card)
         {
             if (card == null || CurrentDeck == null) return;
@@ -498,6 +801,26 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         private void RefreshValidCards()
         {
             _validCards.Refresh();
+        }
+
+        private void RefreshLeadersAndGloryCard()
+        {
+            LeadersList.Clear();
+            GloryCardList.Clear();
+
+            if (CurrentDeck != null)
+            {
+                if (CurrentDeck.Leader1 != null)
+                    LeadersList.Add(CurrentDeck.Leader1);
+                if (CurrentDeck.Leader2 != null)
+                    LeadersList.Add(CurrentDeck.Leader2);
+                if (CurrentDeck.GloryCard != null)
+                    GloryCardList.Add(CurrentDeck.GloryCard);
+            }
+
+            // Ensure UI bindings update
+            OnPropertyChanged(nameof(LeadersList));
+            OnPropertyChanged(nameof(GloryCardList));
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

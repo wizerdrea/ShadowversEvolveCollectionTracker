@@ -124,7 +124,7 @@ namespace ShadowverseEvolveCardTracker.Models
                 {
                     DeckType.Standard => IsValidStandard,
                     DeckType.Gloryfinder => IsValidGloryfinder,
-                    DeckType.CrossCraft => IsValidCrossPlay,
+                    DeckType.CrossCraft => IsValidCrossCraft,
                     _ => false
                 };
             }
@@ -162,7 +162,7 @@ namespace ShadowverseEvolveCardTracker.Models
             }
         }
 
-        private bool IsValidCrossPlay
+        private bool IsValidCrossCraft
         {
             get
             {

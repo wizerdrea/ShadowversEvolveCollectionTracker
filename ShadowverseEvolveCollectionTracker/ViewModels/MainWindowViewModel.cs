@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -75,10 +75,12 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             // Wire up related cards functionality in card viewers
             AllCardsTab.CardViewer.RequestRelatedCards = ShowRelatedCards;
             ChecklistTab.CardViewer.RequestRelatedCards = ShowRelatedCards;
+            DeckBuilderTab.CardViewer.RequestRelatedCards = ShowRelatedCards;
 
             // Wire up "other versions" requests
             AllCardsTab.CardViewer.RequestOtherVersions = ShowOtherVersions;
             ChecklistTab.CardViewer.RequestOtherVersions = ShowOtherVersions;
+            DeckBuilderTab.CardViewer.RequestOtherVersions = ShowOtherVersions;
 
             // Provide function so viewer can know how many versions exist (same Name + Type)
             Func<CardData, int> countVersions = card =>
@@ -87,6 +89,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
             AllCardsTab.CardViewer.GetOtherVersionsCount = countVersions;
             ChecklistTab.CardViewer.GetOtherVersionsCount = countVersions;
+            DeckBuilderTab.CardViewer.GetOtherVersionsCount = countVersions;
 
             _ = LoadSavedAsync();
         }
@@ -180,7 +183,10 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 var gloryCard = AllCards.FirstOrDefault(c => c.CardNumber == deck.GloryCard.CardNumber);
                 deck.GloryCard = gloryCard;
             }
-            
+
+            var mainDeck = new List<DeckEntry>();
+            var evolveDeck = new List<DeckEntry>();
+
             // Reconnect deck entry card references
             foreach (var entry in deck.MainDeck.Concat(deck.EvolveDeck))
             {
@@ -197,16 +203,21 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                     // Replace the entry in the deck
                     if (deck.MainDeck.Contains(entry))
                     {
-                        int idx = deck.MainDeck.IndexOf(entry);
-                        deck.MainDeck[idx] = newEntry;
+                        // Use Add to actually populate the new list (Append returns IEnumerable and does not modify list)
+                        mainDeck.Add(newEntry);
                     }
                     else if (deck.EvolveDeck.Contains(entry))
                     {
-                        int idx = deck.EvolveDeck.IndexOf(entry);
-                        deck.EvolveDeck[idx] = newEntry;
+                        evolveDeck.Add(newEntry);
                     }
                 }
             }
+
+            deck.MainDeck.Clear();
+            deck.MainDeck.AddRange(mainDeck);
+
+            deck.EvolveDeck.Clear();
+            deck.EvolveDeck.AddRange(evolveDeck);
         }
 
         public void SaveAllCards()
@@ -374,9 +385,14 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             
             if (relatedCards.Count > 0)
             {
-                // Show in the appropriate card viewer based on which tab is active
+                // Show in the appropriate card viewers
                 AllCardsTab.CardViewer.SetCards(relatedCards);
                 ChecklistTab.CardViewer.SetCards(relatedCards);
+                DeckBuilderTab.CardViewer.SetCards(relatedCards); // also update Deck Builder viewer
+
+                // Make sure DeckBuilder viewer shows the first related card
+                DeckBuilderTab.CardViewer.CurrentIndex = 0;
+
                 Status = $"Showing {relatedCards.Count} related card(s) for '{sourceCard.Name}'.";
             }
         }
@@ -398,9 +414,10 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
             if (versions.Count == 0) return;
 
-            // Show in both viewers
+            // Show in all viewers including deck builder
             AllCardsTab.CardViewer.SetCards(versions);
             ChecklistTab.CardViewer.SetCards(versions);
+            DeckBuilderTab.CardViewer.SetCards(versions);
 
             // Set current index to the version matching the source card (by card number)
             int idx = versions.FindIndex(c => string.Equals(c.CardNumber, sourceCard.CardNumber, StringComparison.OrdinalIgnoreCase));
@@ -408,6 +425,11 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             {
                 AllCardsTab.CardViewer.CurrentIndex = idx;
                 ChecklistTab.CardViewer.CurrentIndex = idx;
+                DeckBuilderTab.CardViewer.CurrentIndex = idx;
+            }
+            else
+            {
+                DeckBuilderTab.CardViewer.CurrentIndex = 0;
             }
 
             Status = $"Showing {versions.Count} version(s) of '{sourceCard.Name}' ({sourceCard.Type}).";

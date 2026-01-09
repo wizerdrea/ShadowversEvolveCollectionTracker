@@ -10,6 +10,52 @@
         <conv:StringToImageSourceConverter x:Key="StringToImageConverter" />
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
         <conv:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisConverter" />
+
+        <!-- ListBox styling to match app theme (Surface/Elevated/Accent/Selected colors) -->
+        <Style TargetType="ListBox">
+            <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="4"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style TargetType="ListBoxItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="Margin" Value="0,2,0,2"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="0"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource HoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource SelectedBrush}"/>
+                                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </UserControl.Resources>
 
     <Grid>
@@ -103,7 +149,7 @@
 
                 <!-- Cross Play Decks -->
                 <TabItem Header="Cross Play">
-                    <DataGrid ItemsSource="{Binding CrossPlayDecks}"
+                    <DataGrid ItemsSource="{Binding CrossCraftDecks}"
                               AutoGenerateColumns="False"
                               SelectionMode="Single"
                               IsReadOnly="True">
@@ -153,9 +199,20 @@
         <!-- Deck Editor View -->
         <Grid Visibility="{Binding IsEditingDeck, Converter={StaticResource BoolToVisConverter}}">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="300"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="250"/>
+                <!-- Left: Available cards (star so splitters can redistribute space) -->
+                <ColumnDefinition Width="6*" MinWidth="200"/>
+
+                <!-- Splitter between Left and Center -->
+                <ColumnDefinition Width="6"/>
+
+                <!-- Center: Card viewer (star to allow resizing) -->
+                <ColumnDefinition Width="2.5*" MinWidth="200"/>
+
+                <!-- Splitter between Center and Right -->
+                <ColumnDefinition Width="6"/>
+
+                <!-- Right: Deck lists (star to allow resizing) -->
+                <ColumnDefinition Width="1.75*" MinWidth="150"/>
             </Grid.ColumnDefinitions>
 
             <!-- Left: Available Cards -->
@@ -175,13 +232,18 @@
                                Foreground="{DynamicResource GoldBrush}"/>
                 </StackPanel>
 
-                <DataGrid Grid.Row="1" 
+                <DataGrid x:Name="AvailableCardsGrid"
+                          Grid.Row="1" 
                           ItemsSource="{Binding ValidCards}"
                           SelectedItem="{Binding SelectedCard}"
                           AutoGenerateColumns="False"
                           SelectionMode="Single"
                           IsReadOnly="True"
                           Margin="8,0,8,8">
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}" />
+                    </DataGrid.RowStyle>
+
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>
                         <DataGridTextColumn Header="Cost" Binding="{Binding Cost}" Width="50"/>
@@ -189,8 +251,19 @@
                 </DataGrid>
             </Grid>
 
+            <!-- GridSplitter between Left and Center -->
+            <GridSplitter Grid.Column="1"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Stretch"
+                          Width="6"
+                          Background="{DynamicResource AccentBrush}"
+                          ResizeDirection="Columns"
+                          ResizeBehavior="PreviousAndNext"
+                          ShowsPreview="True"
+                          IsTabStop="False"/>
+
             <!-- Center: Card Viewer & Deck Info -->
-            <Grid Grid.Column="1" Margin="8">
+            <Grid Grid.Column="2" Margin="8">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
@@ -248,18 +321,26 @@
 
                 <!-- Add/Remove Buttons -->
                 <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,8,0,0">
-                    <Button Content="Add to Main Deck" 
-                            Command="{Binding AddToMainDeckCommand}"
+                    <Button Content="Add to Deck" 
+                            Command="{Binding AddToDeckCommand}"
                             Padding="8,4"
                             Margin="0,0,8,0"/>
-                    <Button Content="Add to Evolve Deck" 
-                            Command="{Binding AddToEvolveDeckCommand}"
-                            Padding="8,4"/>
                 </StackPanel>
             </Grid>
 
+            <!-- GridSplitter between Center and Right -->
+            <GridSplitter Grid.Column="3"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Stretch"
+                          Width="6"
+                          Background="{DynamicResource AccentBrush}"
+                          ResizeDirection="Columns"
+                          ResizeBehavior="PreviousAndNext"
+                          ShowsPreview="True"
+                          IsTabStop="False"/>
+
             <!-- Right: Deck Lists -->
-            <Grid Grid.Column="2" Margin="8">
+            <Grid Grid.Column="4" Margin="8">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
@@ -269,29 +350,44 @@
                 </Grid.RowDefinitions>
 
                 <!-- Leaders Section -->
-                <StackPanel Grid.Row="0" Margin="0,0,0,8">
-                    <TextBlock Text="Leaders" 
+                <DockPanel Grid.Row="0" Margin="0,0,0,8">
+                    <TextBlock DockPanel.Dock="Top"
+                               Text="Leaders" 
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource GoldBrush}"
                                Margin="0,0,0,4"/>
-                    <Image Source="{Binding Leader1Image, Converter={StaticResource StringToImageConverter}}"
-                           Height="80" Stretch="Uniform" Margin="0,0,0,4"/>
-                    <Image Source="{Binding Leader2Image, Converter={StaticResource StringToImageConverter}}"
-                           Height="80" Stretch="Uniform"
-                           Visibility="{Binding ShowLeader2, Converter={StaticResource BoolToVisConverter}}"/>
-                </StackPanel>
+                    <ListBox x:Name="LeadersListBox"
+                             ItemsSource="{Binding LeadersList}"
+                             SelectedItem="{Binding SelectedLeader}"
+                             SelectionChanged="LeadersListBox_SelectionChanged">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Name}"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
 
                 <!-- Glory Card (Gloryfinder only) -->
-                <StackPanel Grid.Row="1" 
-                            Visibility="{Binding ShowGloryCard, Converter={StaticResource BoolToVisConverter}}"
-                            Margin="0,0,0,8">
-                    <TextBlock Text="Glory Card" 
+                <DockPanel Grid.Row="1" 
+                           Visibility="{Binding ShowGloryCard, Converter={StaticResource BoolToVisConverter}}"
+                           Margin="0,0,0,8">
+                    <TextBlock DockPanel.Dock="Top"
+                               Text="Glory Card" 
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource GoldBrush}"
                                Margin="0,0,0,4"/>
-                    <Image Source="{Binding GloryCardImage, Converter={StaticResource StringToImageConverter}}"
-                           Height="80" Stretch="Uniform"/>
-                </StackPanel>
+                    <ListBox x:Name="GloryCardListBox"
+                             ItemsSource="{Binding GloryCardList}"
+                             SelectedItem="{Binding SelectedGloryCard}"
+                             SelectionChanged="GloryCardListBox_SelectionChanged">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Name}"/>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
 
                 <!-- Main Deck -->
                 <DockPanel Grid.Row="2">
@@ -300,11 +396,26 @@
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource GoldBrush}"
                                Margin="0,0,0,4"/>
-                    <ListBox ItemsSource="{Binding MainDeckList}"
-                             SelectedItem="{Binding SelectedMainDeckEntry}">
+                    <ListBox x:Name="MainDeckListBox"
+                             ItemsSource="{Binding MainDeckList}"
+                             SelectedItem="{Binding SelectedMainDeckEntry}"
+                             SelectionChanged="MainDeckListBox_SelectionChanged">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
+                                    <StackPanel.ToolTip>
+                                        <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                            <Border Background="transparent" 
+                                                    Padding="0" 
+                                                    CornerRadius="4" 
+                                                    BorderBrush="Transparent" 
+                                                    BorderThickness="0">
+                                                <Image Source="{Binding Card.ImageFile, Converter={StaticResource StringToImageConverter}}"
+                                                       Width="240" Height="320" Stretch="Uniform"/>
+                                            </Border>
+                                        </ToolTip>
+                                    </StackPanel.ToolTip>
+
                                     <TextBlock Text="{Binding Quantity}" 
                                                Width="20"
                                                FontWeight="SemiBold"
@@ -332,11 +443,25 @@
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource GoldBrush}"
                                Margin="0,4,0,4"/>
-                    <ListBox ItemsSource="{Binding EvolveDeckList}"
-                             SelectedItem="{Binding SelectedEvolveDeckEntry}">
+                    <ListBox x:Name="EvolveDeckListBox"
+                             ItemsSource="{Binding EvolveDeckList}"
+                             SelectedItem="{Binding SelectedEvolveDeckEntry}"
+                             SelectionChanged="EvolveDeckListBox_SelectionChanged">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
+                                    <StackPanel.ToolTip>
+                                        <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                            <Border Background="transparent" 
+                                                    Padding="0" 
+                                                    CornerRadius="4" 
+                                                    BorderBrush="Transparent" 
+                                                    BorderThickness="0">
+                                                <Image Source="{Binding Card.ImageFile, Converter={StaticResource StringToImageConverter}}"
+                                                       Width="240" Height="320" Stretch="Uniform"/>
+                                            </Border>
+                                        </ToolTip>
+                                    </StackPanel.ToolTip>
                                     <TextBlock Text="{Binding Quantity}" 
                                                Width="20"
                                                FontWeight="SemiBold"
