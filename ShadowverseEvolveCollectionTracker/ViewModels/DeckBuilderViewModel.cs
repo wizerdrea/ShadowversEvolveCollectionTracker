@@ -35,6 +35,9 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         private CardData? _selectedGloryCard;
         private Deck? _subscribedDeck;
         private int _deckChangeTick;
+        private bool _deckIsValid;
+        private string _deckValidityText = "Invalid";
+        private string _deckValidationTooltip = "No deck selected.";
 
         #endregion
 
@@ -70,6 +73,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                     RefreshAll();
                     ClearSelections();
                     RaiseAllCommandStates();
+                    EvaluateDeckValidity();
                 }
             }
         }
@@ -152,6 +156,25 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         }
 
         public int DeckChangeTick => _deckChangeTick;
+
+        // Exposed properties for validity display and tooltip
+        public bool DeckIsValid
+        {
+            get => _deckIsValid;
+            private set => SetProperty(ref _deckIsValid, value);
+        }
+
+        public string DeckValidityText
+        {
+            get => _deckValidityText;
+            private set => SetProperty(ref _deckValidityText, value);
+        }
+
+        public string DeckValidationTooltip
+        {
+            get => _deckValidationTooltip;
+            private set => SetProperty(ref _deckValidationTooltip, value);
+        }
 
         #endregion
 
@@ -645,10 +668,10 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             var prop = e?.PropertyName ?? string.Empty;
 
             if (string.IsNullOrEmpty(prop) || 
-                prop == nameof(Deck.Leader1) || prop == nameof(Deck.Leader2) || 
-                prop == nameof(Deck.GloryCard) || prop == nameof(Deck.Class1) || 
-                prop == nameof(Deck.Class2) || prop == nameof(Deck.Name))
-            {
+                 prop == nameof(Deck.Leader1) || prop == nameof(Deck.Leader2) || 
+                 prop == nameof(Deck.GloryCard) || prop == nameof(Deck.Class1) || 
+                 prop == nameof(Deck.Class2) || prop == nameof(Deck.Name))
+             {
                 OnPropertyChanged(nameof(Leader1Image));
                 OnPropertyChanged(nameof(Leader2Image));
                 OnPropertyChanged(nameof(Leader1Name));
@@ -660,17 +683,19 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
                 RefreshLeadersAndGloryCard();
                 RaiseAddCommandStates();
-            }
-
-            if (string.IsNullOrEmpty(prop) || prop == nameof(Deck.MainDeck) || prop == nameof(Deck.EvolveDeck))
-            {
-                RefreshDeckLists();
-                OnPropertyChanged(nameof(MainDeckCount));
-                OnPropertyChanged(nameof(EvolveDeckCount));
-                OnPropertyChanged(nameof(CurrentInDeckQuantity));
-                RaiseQuantityCommandStates();
-            }
-        }
+                EvaluateDeckValidity();
+             }
+ 
+             if (string.IsNullOrEmpty(prop) || prop == nameof(Deck.MainDeck) || prop == nameof(Deck.EvolveDeck))
+             {
+                 RefreshDeckLists();
+                 OnPropertyChanged(nameof(MainDeckCount));
+                 OnPropertyChanged(nameof(EvolveDeckCount));
+                 OnPropertyChanged(nameof(CurrentInDeckQuantity));
+                 RaiseQuantityCommandStates();
+                 EvaluateDeckValidity();
+             }
+         }
 
         #endregion
 
@@ -683,6 +708,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             OnPropertyChanged(nameof(EvolveDeckCount));
             OnPropertyChanged(nameof(CurrentInDeckQuantity));
             RaiseQuantityCommandStates();
+            EvaluateDeckValidity();
             BumpDeckChangeTick();
         }
 
@@ -741,6 +767,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             OnPropertyChanged(nameof(ShowLeader2));
             OnPropertyChanged(nameof(GloryCardImage));
             OnPropertyChanged(nameof(ShowGloryCard));
+            EvaluateDeckValidity();
         }
 
         private void ClearSelections()
@@ -834,6 +861,35 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         protected void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        #endregion
+
+        #region Deck Validity Evaluation
+
+        private void EvaluateDeckValidity()
+        {
+            if (CurrentDeck == null)
+            {
+                DeckIsValid = false;
+                DeckValidityText = "No Deck";
+                DeckValidationTooltip = "No deck selected.";
+                return;
+            }
+
+            var errors = _validationService.ValidateDeck(CurrentDeck);
+            var valid = errors.Count == 0;
+            DeckIsValid = valid;
+            DeckValidityText = valid ? "Valid" : $"Invalid ({errors.Count})";
+            if (valid)
+            {
+                DeckValidationTooltip = "Deck is valid.";
+            }
+            else
+            {
+                // Join with newline for tooltip listing
+                DeckValidationTooltip = string.Join(Environment.NewLine, errors);
+            }
         }
 
         #endregion

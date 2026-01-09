@@ -265,8 +265,20 @@
                                                 Padding="0"
                                                 Margin="0,0,6,0"
                                                 Command="{Binding DataContext.DecreaseAvailableCardCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                CommandParameter="{Binding}"
-                                                ToolTip="Decrease quantity in deck"/>
+                                                CommandParameter="{Binding}">
+                                            <Button.ToolTip>
+                                                <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                                    <Border Background="{DynamicResource ElevatedBrush}"
+                                                            Padding="6"
+                                                            CornerRadius="4"
+                                                            BorderBrush="{DynamicResource AccentBrush}"
+                                                            BorderThickness="1">
+                                                        <TextBlock Text="Decrease quantity in deck"
+                                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                    </Border>
+                                                </ToolTip>
+                                            </Button.ToolTip>
+                                        </Button>
                                         <TextBlock VerticalAlignment="Center"
                                                    Foreground="{DynamicResource GoldBrush}"
                                                    FontWeight="SemiBold"
@@ -289,8 +301,20 @@
                                                 Padding="0"
                                                 Margin="6,0,0,0"
                                                 Command="{Binding DataContext.IncreaseAvailableCardCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                CommandParameter="{Binding}"
-                                                ToolTip="Increase quantity in deck"/>
+                                                CommandParameter="{Binding}">
+                                            <Button.ToolTip>
+                                                <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                                    <Border Background="{DynamicResource ElevatedBrush}"
+                                                            Padding="6"
+                                                            CornerRadius="4"
+                                                            BorderBrush="{DynamicResource AccentBrush}"
+                                                            BorderThickness="1">
+                                                        <TextBlock Text="Increase quantity in deck"
+                                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                    </Border>
+                                                </ToolTip>
+                                            </Button.ToolTip>
+                                        </Button>
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
@@ -353,6 +377,52 @@
                                         </Binding.Converter>
                                     </Binding>
                                 </TextBlock.Text>
+                            </TextBlock>
+
+                            <TextBlock Text="✓ "
+                                        Foreground="{DynamicResource GoldBrush}"
+                                        FontWeight="SemiBold"
+                                        Margin="12,0,0,0"
+                                        Visibility="{Binding DeckIsValid, Converter={StaticResource BoolToVisConverter}}"/>
+
+                            <TextBlock Text="✗ "
+                                        Foreground="{DynamicResource TextSecondaryBrush}"
+                                        FontWeight="SemiBold"
+                                        Margin="12,0,0,0"
+                                        Visibility="{Binding DeckIsValid, Converter={StaticResource InverseBoolToVisConverter}}"/>
+
+                            <!-- Deck validity indicator with tooltip listing failing rules -->
+                            <TextBlock Text="{Binding DeckValidityText}"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,0">
+                                <TextBlock.ToolTip>
+                                    <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                        <Border Background="{DynamicResource ElevatedBrush}"
+                                                Padding="6"
+                                                CornerRadius="4"
+                                                BorderBrush="{DynamicResource AccentBrush}"
+                                                BorderThickness="1">
+                                            <TextBlock Text="{Binding DeckValidationTooltip}"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                        </Border>
+                                    </ToolTip>
+                                </TextBlock.ToolTip>
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <!-- default = not valid color -->
+                                        <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DeckIsValid}" Value="True">
+                                                <Setter Property="Text" Value="✓ Valid"/>
+                                                <Setter Property="Foreground" Value="{DynamicResource GoldBrush}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding DeckIsValid}" Value="False">
+                                                <Setter Property="Text" Value="{Binding DeckValidityText}"/>
+                                                <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
                             </TextBlock>
                         </StackPanel>
                     </Grid>
