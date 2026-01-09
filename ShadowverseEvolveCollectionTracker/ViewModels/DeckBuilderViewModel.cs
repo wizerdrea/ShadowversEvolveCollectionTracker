@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Windows.Data;
 using System.Windows.Input;
 using ShadowverseEvolveCardTracker.Models;
+using ShadowverseEvolveCardTracker.Views;
 
 namespace ShadowverseEvolveCardTracker.ViewModels
 {
@@ -16,7 +17,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         private readonly ObservableCollection<Deck> _decks = new();
         private readonly ICollectionView _standardDecks;
         private readonly ICollectionView _gloryfinderDecks;
-        private readonly ICollectionView _crossPlayDecks;
+        private readonly ICollectionView _crossCraftDecks;
         private readonly ICollectionView _validCards;
 
         private Deck? _currentDeck;
@@ -27,7 +28,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
         public ICollectionView StandardDecks => _standardDecks;
         public ICollectionView GloryfinderDecks => _gloryfinderDecks;
-        public ICollectionView CrossPlayDecks => _crossPlayDecks;
+        public ICollectionView CrossCraftDecks => _crossCraftDecks;
         public ICollectionView ValidCards => _validCards;
 
         public CardViewerViewModel CardViewer { get; } = new();
@@ -60,7 +61,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                     OnPropertyChanged(nameof(DeckName));
                     OnPropertyChanged(nameof(IsStandard));
                     OnPropertyChanged(nameof(IsGloryfinder));
-                    OnPropertyChanged(nameof(IsCrossPlay));
+                    OnPropertyChanged(nameof(IsCrossCraft));
                     OnPropertyChanged(nameof(MainDeckCount));
                     OnPropertyChanged(nameof(EvolveDeckCount));
                     OnPropertyChanged(nameof(Leader1Image));
@@ -135,8 +136,8 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
         public bool IsStandard => CurrentDeck?.DeckType == DeckType.Standard;
         public bool IsGloryfinder => CurrentDeck?.DeckType == DeckType.Gloryfinder;
-        public bool IsCrossPlay => CurrentDeck?.DeckType == DeckType.CrossPlay;
-        public bool ShowLeader2 => IsCrossPlay;
+        public bool IsCrossCraft => CurrentDeck?.DeckType == DeckType.CrossCraft;
+        public bool ShowLeader2 => IsCrossCraft;
         public bool ShowGloryCard => IsGloryfinder;
 
         public int MainDeckCount => MainDeckList.Sum(e => e.Quantity);
@@ -158,8 +159,8 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             _gloryfinderDecks = new CollectionViewSource { Source = _decks }.View;
             _gloryfinderDecks.Filter = obj => obj is Deck d && d.DeckType == DeckType.Gloryfinder;
 
-            _crossPlayDecks = new CollectionViewSource { Source = _decks }.View;
-            _crossPlayDecks.Filter = obj => obj is Deck d && d.DeckType == DeckType.CrossPlay;
+            _crossCraftDecks = new CollectionViewSource { Source = _decks }.View;
+            _crossCraftDecks.Filter = obj => obj is Deck d && d.DeckType == DeckType.CrossCraft;
 
             // Valid cards view must be independent from the AllCards default view.
             _validCards = new CollectionViewSource { Source = _allCards }.View;
@@ -216,17 +217,20 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
         private void CreateNewDeck()
         {
-            // This would open a dialog/wizard - simplified here
-            var newDeck = new Deck
+            var wizardViewModel = new CreateDeckWizardViewModel(_allCards);
+            var dialog = new CreateDeckWizardDialog
             {
-                Name = $"New Deck {_decks.Count + 1}",
-                DeckType = DeckType.Standard,
-                Class1 = "Neutral"
+                DataContext = wizardViewModel,
+                Owner = System.Windows.Application.Current.MainWindow
             };
-            
-            _decks.Add(newDeck);
-            CurrentDeck = newDeck;
-            IsEditingDeck = true;
+
+            if (dialog.ShowDialog() == true)
+            {
+                var newDeck = wizardViewModel.CreateDeck();
+                _decks.Add(newDeck);
+                CurrentDeck = newDeck;
+                IsEditingDeck = true;
+            }
         }
 
         private void DeleteDeck()
@@ -249,7 +253,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             {
                 DeckType.Standard => IsValidForStandard(card),
                 DeckType.Gloryfinder => IsValidForGloryfinder(card),
-                DeckType.CrossPlay => IsValidForCrossPlay(card),
+                DeckType.CrossCraft => IsValidForCrossCraft(card),
                 _ => false
             };
         }
@@ -267,7 +271,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             return true;
         }
 
-        private bool IsValidForCrossPlay(CardData card)
+        private bool IsValidForCrossCraft(CardData card)
         {
             if (CurrentDeck == null) return false;
             return string.Equals(card.Class, CurrentDeck.Class1, StringComparison.OrdinalIgnoreCase) ||
@@ -283,7 +287,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             {
                 DeckType.Standard => CanAddToMainDeckStandard(card),
                 DeckType.Gloryfinder => CanAddToMainDeckGloryfinder(card),
-                DeckType.CrossPlay => CanAddToMainDeckCrossPlay(card),
+                DeckType.CrossCraft => CanAddToMainDeckCrossCraft(card),
                 _ => false
             };
         }
@@ -316,9 +320,9 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             return true;
         }
 
-        private bool CanAddToMainDeckCrossPlay(CardData card)
+        private bool CanAddToMainDeckCrossCraft(CardData card)
         {
-            // Same rules as Standard for CrossPlay
+            // Same rules as Standard for CrossCraft
             return CanAddToMainDeckStandard(card);
         }
 
@@ -334,7 +338,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             {
                 DeckType.Standard => CanAddToEvolveDeckStandard(card),
                 DeckType.Gloryfinder => CanAddToEvolveDeckGloryfinder(card),
-                DeckType.CrossPlay => CanAddToEvolveDeckCrossPlay(card),
+                DeckType.CrossCraft => CanAddToEvolveDeckCrossCraft(card),
                 _ => false
             };
         }
@@ -357,7 +361,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             return currentCount < 20;
         }
 
-        private bool CanAddToEvolveDeckCrossPlay(CardData card)
+        private bool CanAddToEvolveDeckCrossCraft(CardData card)
         {
             return CanAddToEvolveDeckStandard(card);
         }
@@ -370,7 +374,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             {
                 DeckType.Standard => entry.Quantity < 3 && MainDeckCount < 50,
                 DeckType.Gloryfinder => false, // No duplicates in Gloryfinder
-                DeckType.CrossPlay => entry.Quantity < 3 && MainDeckCount < 50,
+                DeckType.CrossCraft => entry.Quantity < 3 && MainDeckCount < 50,
                 _ => false
             };
         }
@@ -383,7 +387,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             {
                 DeckType.Standard => entry.Quantity < 3 && EvolveDeckCount < 10,
                 DeckType.Gloryfinder => false, // No duplicates in Gloryfinder
-                DeckType.CrossPlay => entry.Quantity < 3 && EvolveDeckCount < 10,
+                DeckType.CrossCraft => entry.Quantity < 3 && EvolveDeckCount < 10,
                 _ => false
             };
         }

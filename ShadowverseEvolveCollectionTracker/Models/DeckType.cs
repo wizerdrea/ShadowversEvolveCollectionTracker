@@ -7,6 +7,6 @@ namespace ShadowverseEvolveCardTracker.Models
     {
         Standard,
         Gloryfinder,
-        CrossPlay
+        CrossCraft
     }
 }

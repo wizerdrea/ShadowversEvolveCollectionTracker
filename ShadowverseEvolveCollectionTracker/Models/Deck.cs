@@ -124,7 +124,7 @@ namespace ShadowverseEvolveCardTracker.Models
                 {
                     DeckType.Standard => IsValidStandard,
                     DeckType.Gloryfinder => IsValidGloryfinder,
-                    DeckType.CrossPlay => IsValidCrossPlay,
+                    DeckType.CrossCraft => IsValidCrossPlay,
                     _ => false
                 };
             }

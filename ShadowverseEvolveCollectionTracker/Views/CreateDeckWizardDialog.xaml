@@ -1,0 +1,379 @@
+﻿<Window x:Class="ShadowverseEvolveCardTracker.Views.CreateDeckWizardDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:conv="clr-namespace:ShadowverseEvolveCardTracker.Converters"
+        mc:Ignorable="d"
+        Title="Create New Deck"
+        Height="600"
+        Width="800"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource PrimaryBrush}"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        ResizeMode="NoResize">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <conv:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisibilityConverter"/>
+        <conv:ClassEqualityConverter x:Key="ClassEqualityConverter"/>
+        <conv:DeckTypeEqualityConverter x:Key="DeckTypeEqualityConverter"/>
+
+        <Style x:Key="DeckTypeButton" TargetType="RadioButton">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Border"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="2"
+                                Background="{DynamicResource SurfaceBrush}"
+                                CornerRadius="10"
+                                Padding="20"
+                                Margin="10"
+                                MinHeight="120">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0"
+                                          Text="{TemplateBinding Tag}"
+                                          FontSize="24"
+                                          FontWeight="Bold"
+                                          Foreground="{DynamicResource TextPrimaryBrush}"
+                                          HorizontalAlignment="Center"
+                                          Margin="0,0,0,10"/>
+
+                                <ContentPresenter Grid.Row="1"
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource HoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource SelectedBrush}"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                <Setter TargetName="Border" Property="BorderThickness" Value="3"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="ClassButton" TargetType="RadioButton">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="Border"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="2"
+                                Background="{DynamicResource SurfaceBrush}"
+                                CornerRadius="10"
+                                Padding="10"
+                                Margin="10"
+                                Width="140"
+                                Height="140">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <Image Grid.Row="0"
+                                      Source="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=Tag}"
+                                      Stretch="Uniform"
+                                      Margin="10"/>
+
+                                <TextBlock Grid.Row="1"
+                                          Text="{TemplateBinding Content}"
+                                          FontSize="16"
+                                          FontWeight="Bold"
+                                          Foreground="{DynamicResource TextPrimaryBrush}"
+                                          HorizontalAlignment="Center"
+                                          Margin="0,5,0,0"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource HoverBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="{DynamicResource SelectedBrush}"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                                <Setter TargetName="Border" Property="BorderThickness" Value="3"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="10">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Title Bar -->
+            <Border Grid.Row="0"
+                    Background="{DynamicResource ElevatedBrush}"
+                    CornerRadius="10,10,0,0"
+                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid Height="40">
+                    <TextBlock Text="Create New Deck"
+                              FontSize="18"
+                              FontWeight="Bold"
+                              Foreground="{DynamicResource TextPrimaryBrush}"
+                              VerticalAlignment="Center"
+                              Margin="15,0,0,0"/>
+
+                    <Button Content="✕"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            Width="40"
+                            Height="40"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Foreground="{DynamicResource TextPrimaryBrush}"
+                            FontSize="20"
+                            Click="CloseButton_Click"
+                            Cursor="Hand">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}"
+                                                   CornerRadius="0,10,0,0">
+                                                <ContentPresenter HorizontalAlignment="Center"
+                                                                  VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#FF5252"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <!-- Content -->
+            <Grid Grid.Row="1" Margin="20">
+                <!-- Step 1: Select Deck Type -->
+                <Grid Visibility="{Binding IsStep1, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0"
+                              Text="Step 1: Choose Deck Type"
+                              FontSize="20"
+                              FontWeight="Bold"
+                              Foreground="{DynamicResource TextPrimaryBrush}"
+                              Margin="0,0,0,20"/>
+
+                    <UniformGrid Grid.Row="1" Columns="3" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <RadioButton GroupName="DeckType"
+                                    Style="{StaticResource DeckTypeButton}"
+                                    Tag="Standard"
+                                    IsChecked="{Binding SelectedDeckType, Converter={StaticResource DeckTypeEqualityConverter}, ConverterParameter=Standard, Mode=TwoWay}"
+                                    >
+                            <TextBlock TextWrapping="Wrap" TextAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}">
+                                Single class<LineBreak/>
+                                40-50 card main deck<LineBreak/>
+                                Up to 10 evolve deck
+                            </TextBlock>
+                        </RadioButton>
+
+                        <RadioButton GroupName="DeckType"
+                                    Style="{StaticResource DeckTypeButton}"
+                                    Tag="Gloryfinder"
+                                    IsChecked="{Binding SelectedDeckType, Converter={StaticResource DeckTypeEqualityConverter}, ConverterParameter=Gloryfinder, Mode=TwoWay}"
+                                    >
+                            <TextBlock TextWrapping="Wrap" TextAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}">
+                                Any class<LineBreak/>
+                                50 unique cards + 1 glory<LineBreak/>
+                                Up to 20 unique evolve
+                            </TextBlock>
+                        </RadioButton>
+
+                        <RadioButton GroupName="DeckType"
+                                    Style="{StaticResource DeckTypeButton}"
+                                    Tag="Cross Craft"
+                                    IsChecked="{Binding SelectedDeckType, Converter={StaticResource DeckTypeEqualityConverter}, ConverterParameter=CrossCraft, Mode=TwoWay}"
+                                    >
+                            <TextBlock TextWrapping="Wrap" TextAlignment="Center" Foreground="{DynamicResource TextPrimaryBrush}">
+                                Two classes<LineBreak/>
+                                40-50 card main deck<LineBreak/>
+                                Up to 10 evolve deck
+                            </TextBlock>
+                        </RadioButton>
+                    </UniformGrid>
+                </Grid>
+
+                <!-- Step 2: Select Class(es) -->
+                <ScrollViewer Grid.Row="1" 
+                             VerticalScrollBarVisibility="Auto"
+                             Visibility="{Binding IsStep2, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0"
+                                  Text="Step 2: Choose Class"
+                                  FontSize="20"
+                                  FontWeight="Bold"
+                                  Foreground="{DynamicResource TextPrimaryBrush}"
+                                  Margin="0,0,0,10"/>
+
+                        <TextBlock Grid.Row="1"
+                                  Text="Select Primary Class:"
+                                  FontSize="16"
+                                  Foreground="{DynamicResource TextPrimaryBrush}"
+                                  Margin="0,0,0,10"/>
+
+                        <WrapPanel Grid.Row="2" HorizontalAlignment="Center">
+                            <RadioButton GroupName="Class1" Content="Forestcraft" Tag="./Data/ClassIcons/forestcraft.png" Style="{StaticResource ClassButton}" IsChecked="{Binding SelectedClass1, Converter={StaticResource ClassEqualityConverter}, ConverterParameter=Forestcraft}"/>
+                            <RadioButton GroupName="Class1" Content="Swordcraft" Tag="./Data/ClassIcons/swordcraft.png" Style="{StaticResource ClassButton}" IsChecked="{Binding SelectedClass1, Converter={StaticResource ClassEqualityConverter}, ConverterParameter=Swordcraft}"/>
+                            <RadioButton GroupName="Class1" Content="Runecraft" Tag="./Data/ClassIcons/runecraft.png" Style="{StaticResource ClassButton}" IsChecked="{Binding SelectedClass1, Converter={StaticResource ClassEqualityConverter}, ConverterParameter=Runecraft}"/>
+                            <RadioButton GroupName="Class1" Content="Dragoncraft" Tag="./Data/ClassIcons/dragoncraft.png" Style="{StaticResource ClassButton}" IsChecked="{Binding SelectedClass1, Converter={StaticResource ClassEqualityConverter}, ConverterParameter=Dragoncraft}"/>
+                            <RadioButton GroupName="Class1" Content="Shadowcraft" Tag="./Data/ClassIcons/shadowcraft.png" Style="{StaticResource ClassButton}" IsChecked="{Binding SelectedClass1, Converter={StaticResource ClassEqualityConverter}, ConverterParameter=Shadowcraft}"/>
+                            <RadioButton GroupName="Class1" Content="Bloodcraft" Tag="./Data/ClassIcons/bloodcraft.png" Style="{StaticResource ClassButton}" IsChecked="{Binding SelectedClass1, Converter={StaticResource ClassEqualityConverter}, ConverterParameter=Bloodcraft}"/>
+                            <RadioButton GroupName="Class1" Content="Havencraft" Tag="./Data/ClassIcons/havencraft.png" Style="{StaticResource ClassButton}" IsChecked="{Binding SelectedClass1, Converter={StaticResource ClassEqualityConverter}, ConverterParameter=Havencraft}"/>
+                        </WrapPanel>
+
+                        <StackPanel Grid.Row="3"
+                                   Visibility="{Binding NeedsTwoClasses, Converter={StaticResource BoolToVisibilityConverter}}"
+                                   Margin="0,20,0,0">
+                            <TextBlock Text="Select Secondary Class:"
+                                      FontSize="16"
+                                      Foreground="{DynamicResource TextPrimaryBrush}"
+                                      Margin="0,0,0,10"/>
+
+                            <WrapPanel HorizontalAlignment="Center">
+                                <RadioButton GroupName="Class2" Content="Forestcraft" Tag="./Data/ClassIcons/forestcraft.png" Style="{StaticResource ClassButton}" IsChecked="{Binding SelectedClass2, Converter={StaticResource ClassEqualityConverter}, ConverterParameter=Forestcraft}"/>
+                                <RadioButton GroupName="Class2" Content="Swordcraft" Tag="./Data/ClassIcons/swordcraft.png" Style="{StaticResource ClassButton}" IsChecked="{Binding SelectedClass2, Converter={StaticResource ClassEqualityConverter}, ConverterParameter=Swordcraft}"/>
+                                <RadioButton GroupName="Class2" Content="Runecraft" Tag="./Data/ClassIcons/runecraft.png" Style="{StaticResource ClassButton}" IsChecked="{Binding SelectedClass2, Converter={StaticResource ClassEqualityConverter}, ConverterParameter=Runecraft}"/>
+                                <RadioButton GroupName="Class2" Content="Dragoncraft" Tag="./Data/ClassIcons/dragoncraft.png" Style="{StaticResource ClassButton}" IsChecked="{Binding SelectedClass2, Converter={StaticResource ClassEqualityConverter}, ConverterParameter=Dragoncraft}"/>
+                                <RadioButton GroupName="Class2" Content="Shadowcraft" Tag="./Data/ClassIcons/shadowcraft.png" Style="{StaticResource ClassButton}" IsChecked="{Binding SelectedClass2, Converter={StaticResource ClassEqualityConverter}, ConverterParameter=Shadowcraft}"/>
+                                <RadioButton GroupName="Class2" Content="Bloodcraft" Tag="./Data/ClassIcons/bloodcraft.png" Style="{StaticResource ClassButton}" IsChecked="{Binding SelectedClass2, Converter={StaticResource ClassEqualityConverter}, ConverterParameter=Bloodcraft}"/>
+                                <RadioButton GroupName="Class2" Content="Havencraft" Tag="./Data/ClassIcons/havencraft.png" Style="{StaticResource ClassButton}" IsChecked="{Binding SelectedClass2, Converter={StaticResource ClassEqualityConverter}, ConverterParameter=Havencraft}"/>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+
+                <!-- Step 3: Name Deck -->
+                <Grid Visibility="{Binding IsStep3, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0"
+                              Text="Step 3: Name Your Deck"
+                              FontSize="20"
+                              FontWeight="Bold"
+                              Foreground="{DynamicResource TextPrimaryBrush}"
+                              Margin="0,0,0,20"/>
+
+                    <StackPanel Grid.Row="1" VerticalAlignment="Center">
+                        <TextBlock Text="Enter Deck Name:"
+                                  FontSize="16"
+                                  Foreground="{DynamicResource TextPrimaryBrush}"
+                                  Margin="0,0,0,10"/>
+
+                        <TextBox Text="{Binding DeckName, UpdateSourceTrigger=PropertyChanged}"
+                                FontSize="18"
+                                Padding="10"
+                                MaxLength="50"
+                                Background="{DynamicResource SurfaceBrush}"
+                                Foreground="{DynamicResource TextPrimaryBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="2"
+                                HorizontalAlignment="Stretch"
+                                MaxWidth="400"/>
+
+                        <TextBlock Text="{Binding SelectedDeckType, StringFormat='Creating {0} deck'}"
+                                  FontSize="14"
+                                  Foreground="{DynamicResource TextSecondaryBrush}"
+                                  Margin="0,20,0,0"
+                                  HorizontalAlignment="Center"/>
+
+                        <StackPanel Orientation="Horizontal"
+                                    HorizontalAlignment="Center"
+                                    Margin="0,5,0,0">
+                            <TextBlock Text="Class: " FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            <TextBlock Text="{Binding SelectedClass1, Mode=OneWay}" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}"/>
+                            <TextBlock Text=" + " FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" Visibility="{Binding NeedsTwoClasses, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                            <TextBlock Text="{Binding SelectedClass2, Mode=OneWay}" FontSize="14" Foreground="{DynamicResource TextSecondaryBrush}" Visibility="{Binding NeedsTwoClasses, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+
+            <!-- Navigation Buttons -->
+            <Border Grid.Row="2"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0,1,0,0"
+                    CornerRadius="0,0,10,10"
+                    Padding="20">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                        <Button Content="← Back"
+                                Width="100"
+                                Height="35"
+                                IsEnabled="{Binding CanGoBack}"
+                                Click="BackButton_Click"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Cancel"
+                                Width="100"
+                                Height="35"
+                                Margin="0,0,10,0"
+                                Click="CancelButton_Click"/>
+
+                        <Button Content="Next →"
+                                Width="100"
+                                Height="35"
+                                Margin="0,0,10,0"
+                                IsEnabled="{Binding CanGoNext}"
+                                Click="NextButton_Click"
+                                Visibility="{Binding IsStep3, Converter={StaticResource InverseBoolToVisibilityConverter}}"/>
+
+                        <Button Content="Create Deck"
+                                Width="120"
+                                Height="35"
+                                IsEnabled="{Binding CanFinish}"
+                                Click="FinishButton_Click"
+                                Background="{DynamicResource AccentBrush}"
+                                Visibility="{Binding IsStep3, Converter={StaticResource BoolToVisibilityConverter}}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Border>
+</Window>
