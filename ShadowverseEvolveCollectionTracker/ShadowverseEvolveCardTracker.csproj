@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-	<ApplicationIcon>app_icon.ico</ApplicationIcon>
+    <ApplicationIcon>app_icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,6 +21,9 @@
     <None Update="app_icon.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+
+    <!-- Class icon images are now compiled as WPF resources so pack://application:,,,/Assembly;component/... URIs work -->
+    <Resource Include="Data\ClassIcons\*.png" />
   </ItemGroup>
 
 </Project>

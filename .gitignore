@@ -361,3 +361,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Ignore class icon PNG assets in Data/ClassIcons folders
+# Matches any folder named Data/ClassIcons anywhere in the repo
+**/Data/ClassIcons/*.png

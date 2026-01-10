@@ -13,6 +13,7 @@
         <conv:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisConverter" />
         <conv:CardInDeckQuantityConverter x:Key="CardInDeckQuantityConverter" />
         <conv:RarityAbbreviationConverter x:Key="RarityAbbreviationConverter" />
+        <conv:SetNameExtractorConverter x:Key="SetNameExtractorConverter" />
 
         <!-- ListBox styling to match app theme (Surface/Elevated/Accent/Selected colors) -->
         <Style TargetType="ListBox">
@@ -356,7 +357,7 @@
                         <DataGridTextColumn Header="Cost" Binding="{Binding Cost}" Width="50"/>
 
                         <!-- UPDATED: Rarity column now contains the rarity filters directly in the header context menu -->
-                        <DataGridTextColumn Width="60"
+                        <DataGridTextColumn Width="45"
                                              Binding="{Binding Rarity, Converter={StaticResource RarityAbbreviationConverter}}">
                             <DataGridTextColumn.HeaderStyle>
                                 <Style TargetType="DataGridColumnHeader">
@@ -445,6 +446,8 @@
                                 </Style>
                             </DataGridTextColumn.HeaderStyle>
                         </DataGridTextColumn>
+
+                        <DataGridTextColumn Header="Set" Binding="{Binding Set, Converter={StaticResource SetNameExtractorConverter}}" Width="120"/>
 
                         <!-- Updated: per-row in-deck quantity now bound to the row card + current deck -->
                         <DataGridTemplateColumn Header="In Deck" Width="120">
