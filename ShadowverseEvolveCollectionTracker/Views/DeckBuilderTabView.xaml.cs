@@ -90,10 +90,10 @@ namespace ShadowverseEvolveCardTracker.Views
                 LeadersListBox.SelectedItem = null;
             if (GloryCardListBox != null)
                 GloryCardListBox.SelectedItem = null;
-            if (MainDeckListBox != null)
-                MainDeckListBox.SelectedItem = null;
-            if (EvolveDeckListBox != null)
-                EvolveDeckListBox.SelectedItem = null;
+            if (MainDeckListControl != null)
+                MainDeckListControl.SelectedItem = null;
+            if (EvolveDeckListControl != null)
+                EvolveDeckListControl.SelectedItem = null;
         }
 
         private void LeadersListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -105,10 +105,10 @@ namespace ShadowverseEvolveCardTracker.Views
                     AvailableCardsGrid.SelectedItem = null;
                 if (GloryCardListBox != null)
                     GloryCardListBox.SelectedItem = null;
-                if (MainDeckListBox != null)
-                    MainDeckListBox.SelectedItem = null;
-                if (EvolveDeckListBox != null)
-                    EvolveDeckListBox.SelectedItem = null;
+                if (MainDeckListControl != null)
+                    MainDeckListControl.SelectedItem = null;
+                if (EvolveDeckListControl != null)
+                    EvolveDeckListControl.SelectedItem = null;
             }
         }
 
@@ -121,16 +121,17 @@ namespace ShadowverseEvolveCardTracker.Views
                     AvailableCardsGrid.SelectedItem = null;
                 if (LeadersListBox != null)
                     LeadersListBox.SelectedItem = null;
-                if (MainDeckListBox != null)
-                    MainDeckListBox.SelectedItem = null;
-                if (EvolveDeckListBox != null)
-                    EvolveDeckListBox.SelectedItem = null;
+                if (MainDeckListControl != null)
+                    MainDeckListControl.SelectedItem = null;
+                if (EvolveDeckListControl != null)
+                    EvolveDeckListControl.SelectedItem = null;
             }
         }
 
         private void MainDeckListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (MainDeckListBox.SelectedItem != null)
+            // Note: XAML still calls this handler name for the DeckListControl's SelectionChanged event.
+            if (MainDeckListControl != null && MainDeckListControl.SelectedItem != null)
             {
                 // Clear selections in other lists
                 if (AvailableCardsGrid != null)
@@ -139,14 +140,15 @@ namespace ShadowverseEvolveCardTracker.Views
                     LeadersListBox.SelectedItem = null;
                 if (GloryCardListBox != null)
                     GloryCardListBox.SelectedItem = null;
-                if (EvolveDeckListBox != null)
-                    EvolveDeckListBox.SelectedItem = null;
+                if (EvolveDeckListControl != null)
+                    EvolveDeckListControl.SelectedItem = null;
             }
         }
 
         private void EvolveDeckListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (EvolveDeckListBox.SelectedItem != null)
+            // Handler name left as-is because XAML still references it.
+            if (EvolveDeckListControl != null && EvolveDeckListControl.SelectedItem != null)
             {
                 // Clear selections in other lists
                 if (AvailableCardsGrid != null)
@@ -155,8 +157,8 @@ namespace ShadowverseEvolveCardTracker.Views
                     LeadersListBox.SelectedItem = null;
                 if (GloryCardListBox != null)
                     GloryCardListBox.SelectedItem = null;
-                if (MainDeckListBox != null)
-                    MainDeckListBox.SelectedItem = null;
+                if (MainDeckListControl != null)
+                    MainDeckListControl.SelectedItem = null;
             }
         }
 

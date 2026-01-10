@@ -66,6 +66,16 @@ namespace ShadowverseEvolveCardTracker.Controls
             set => SetValue(DecreaseCommandProperty, value);
         }
 
+        // ItemContainerStyle - re-exposed so callers can provide a ListBoxItem style (used for deck builder item style)
+        public static readonly DependencyProperty ItemContainerStyleProperty =
+            DependencyProperty.Register(nameof(ItemContainerStyle), typeof(Style), typeof(DeckListControl), new PropertyMetadata(null));
+
+        public Style ItemContainerStyle
+        {
+            get => (Style)GetValue(ItemContainerStyleProperty);
+            set => SetValue(ItemContainerStyleProperty, value);
+        }
+
         // Re-expose SelectionChanged so parent can attach handlers (keeps existing DeckBuilderTabView.xaml.cs)
         public event SelectionChangedEventHandler? SelectionChanged;
 

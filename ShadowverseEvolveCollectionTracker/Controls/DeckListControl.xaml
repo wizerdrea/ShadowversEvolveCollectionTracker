@@ -19,7 +19,8 @@
                  ItemsSource="{Binding ItemsSource, RelativeSource={RelativeSource AncestorType=UserControl}}"
                  SelectedItem="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay}"
                  SelectionChanged="PART_ListBox_SelectionChanged"
-                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 ItemContainerStyle="{Binding ItemContainerStyle, RelativeSource={RelativeSource AncestorType=UserControl}}">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Grid Margin="0">
