@@ -335,7 +335,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
             // Initialize commands directly in constructor
             CreateDeckCommand = new RelayCommand(
-                execute: async () => await System.Threading.Tasks.Task.Run(CreateNewDeck),
+                execute: () => { CreateNewDeck(); return Task.CompletedTask; },
                 canExecute: () => true);
 
             EditDeckCommand = new RelayCommand<Deck?>(
