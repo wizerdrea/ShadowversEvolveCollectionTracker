@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows.Data;
 using System.Windows.Input;
+using ShadowverseEvolveCardTracker.Constants;
 using ShadowverseEvolveCardTracker.Models;
 using ShadowverseEvolveCardTracker.Services;
 using ShadowverseEvolveCardTracker.Views;
@@ -22,7 +23,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         private readonly ICollectionView _gloryfinderDecks;
         private readonly ICollectionView _crossCraftDecks;
         private readonly ICollectionView _validCards;
-        
+
         private readonly DeckValidationService _validationService;
         private readonly DeckOperationsHandler _operationsHandler;
 
@@ -39,6 +40,9 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         private string _deckValidityText = "Invalid";
         private string _deckValidationTooltip = "No deck selected.";
 
+        // NEW: favorites-only filter flag
+        private bool _favoritesOnly;
+
         #endregion
 
         #region Properties - Collections
@@ -54,6 +58,23 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         public ObservableCollection<DeckEntry> EvolveDeckList { get; } = new();
         public ObservableCollection<CardData> LeadersList { get; } = new();
         public ObservableCollection<CardData> GloryCardList { get; } = new();
+
+        // NEW: Rarity filter items exposed to the header context menu
+        public ObservableCollection<RarityFilterItem> RarityFilters { get; } = new();
+
+        #endregion
+
+        #region Favorites filter
+
+        public bool FavoritesOnly
+        {
+            get => _favoritesOnly;
+            set
+            {
+                if (SetProperty(ref _favoritesOnly, value))
+                    _validCards.Refresh();
+            }
+        }
 
         #endregion
 
@@ -251,6 +272,10 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         public ICommand IncreaseAvailableCardCommand { get; }
         public ICommand DecreaseAvailableCardCommand { get; }
 
+        // NEW: commands used by the Rarity header context menu
+        public ICommand SelectAllRarityFiltersCommand { get; private set; }
+        public ICommand ClearAllRarityFiltersCommand { get; private set; }
+
         #endregion
 
         #region Constructor
@@ -274,7 +299,39 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             _crossCraftDecks.Filter = obj => obj is Deck d && d.DeckType == DeckType.CrossCraft;
 
             _validCards = new CollectionViewSource { Source = _allCards }.View;
-            _validCards.Filter = obj => obj is CardData card && CurrentDeck != null && _validationService.IsValidForDeck(card, CurrentDeck);
+            // include favorites-only check to mirror AllCardsTab behavior
+            _validCards.Filter = obj =>
+            {
+                if (obj is not CardData card) return true;
+                if (CurrentDeck == null) return false;
+                if (!_validationService.IsValidForDeck(card, CurrentDeck)) return false;
+                if (FavoritesOnly && !card.IsFavorite) return false;
+
+                // NEW: apply rarity filters if defined (and not all checked)
+                if (RarityFilters.Count > 0)
+                {
+                    var checkedCount = RarityFilters.Count(f => f.IsChecked);
+                    if (checkedCount != RarityFilters.Count) // only filter when some are unchecked
+                    {
+                        var cardParts = (card.Rarity ?? string.Empty)
+                            .Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)
+                            .Select(p => p.Trim());
+                        // If card has no rarity parts, exclude
+                        if (!cardParts.Any()) return false;
+
+                        bool anyMatch = cardParts.Any(cp =>
+                            RarityFilters.Any(f => f.IsChecked &&
+                                string.Equals(f.Name, cp, StringComparison.OrdinalIgnoreCase)));
+
+                        if (!anyMatch) return false;
+                    }
+                }
+
+                return true;
+            };
+
+            // Initialize rarity filters from the card set (order by preferred list first)
+            InitializeRarityFilters();
 
             // Initialize commands directly in constructor
             CreateDeckCommand = new RelayCommand(
@@ -367,7 +424,59 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 execute: card => { ExecuteDecreaseAvailableCard(card); return System.Threading.Tasks.Task.CompletedTask; },
                 canExecute: CanRemoveCardFromDeck);
 
+            // NEW: select/clear commands for header menu
+            SelectAllRarityFiltersCommand = new RelayCommand(
+                execute: () => { SelectAllRarityFilters(); return System.Threading.Tasks.Task.CompletedTask; },
+                canExecute: () => RarityFilters.Count > 0);
+
+            ClearAllRarityFiltersCommand = new RelayCommand(
+                execute: () => { ClearAllRarityFilters(); return System.Threading.Tasks.Task.CompletedTask; },
+                canExecute: () => RarityFilters.Count > 0);
+
             CardViewer.PropertyChanged += CardViewer_PropertyChanged;
+        }
+
+        #endregion
+
+        #region Rarity Filter Initialization & Handling
+
+        private void InitializeRarityFilters()
+        {
+            try
+            {
+                // Initialize collection, default to checked (show all)
+                RarityFilters.Clear();
+                foreach (var rarity in Rarities.AllRarities)
+                {
+                    var item = new RarityFilterItem(rarity, isChecked: true);
+                    item.PropertyChanged += RarityFilterItem_PropertyChanged;
+                    RarityFilters.Add(item);
+                }
+            }
+            catch
+            {
+                // swallow - no filters available
+            }
+        }
+
+        private void SelectAllRarityFilters()
+        {
+            foreach (var f in RarityFilters) f.IsChecked = true;
+            _validCards.Refresh();
+        }
+
+        private void ClearAllRarityFilters()
+        {
+            foreach (var f in RarityFilters) f.IsChecked = false;
+            _validCards.Refresh();
+        }
+
+        private void RarityFilterItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(e?.PropertyName) || e.PropertyName == nameof(RarityFilterItem.IsChecked))
+            {
+                _validCards.Refresh();
+            }
         }
 
         #endregion
