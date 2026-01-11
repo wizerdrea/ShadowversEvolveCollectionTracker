@@ -9,6 +9,7 @@ using System.Windows.Input;
 using ShadowverseEvolveCardTracker.Constants;
 using ShadowverseEvolveCardTracker.Models;
 using ShadowverseEvolveCardTracker.Services;
+using ShadowverseEvolveCardTracker.Utilities;
 using ShadowverseEvolveCardTracker.Views;
 
 namespace ShadowverseEvolveCardTracker.ViewModels
@@ -67,6 +68,18 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
         // NEW: Class filter items exposed to the header context menu
         public ObservableCollection<RarityFilterItem> ClassFilters { get; } = new();
+
+        // NEW: Set filter items exposed to the header context menu
+        public ObservableCollection<RarityFilterItem> SetFilters { get; } = new();
+
+        // NEW: Cost filter items exposed to the header context menu
+        public ObservableCollection<RarityFilterItem> CostFilters { get; } = new();
+
+        // NEW: Owned (quantity) filter items exposed to the header context menu
+        public ObservableCollection<RarityFilterItem> OwnedFilters { get; } = new();
+
+        // NEW: In-deck quantity filters (0/1/2/3) or (9/1) for Gloryfinder
+        public ObservableCollection<RarityFilterItem> InDeckFilters { get; } = new();
 
         #endregion
 
@@ -290,6 +303,22 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         public ICommand SelectAllClassFiltersCommand { get; private set; }
         public ICommand ClearAllClassFiltersCommand { get; private set; }
 
+        // NEW: commands used by the Set header context menu
+        public ICommand SelectAllSetFiltersCommand { get; private set; }
+        public ICommand ClearAllSetFiltersCommand { get; private set; }
+
+        // NEW: commands used by the Cost header context menu
+        public ICommand SelectAllCostFiltersCommand { get; private set; }
+        public ICommand ClearAllCostFiltersCommand { get; private set; }
+
+        // NEW: commands used by the Owned header context menu
+        public ICommand SelectAllOwnedFiltersCommand { get; private set; }
+        public ICommand ClearAllOwnedFiltersCommand { get; private set; }
+
+        // NEW: commands used by the In-Deck header context menu
+        public ICommand SelectAllInDeckFiltersCommand { get; private set; }
+        public ICommand ClearAllInDeckFiltersCommand { get; private set; }
+
         #endregion
 
         #region Constructor
@@ -376,17 +405,101 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                     }
                 }
 
+                // NEW: apply set filters if defined (and not all checked)
+                if (SetFilters.Count > 0)
+                {
+                    var checkedCount = SetFilters.Count(f => f.IsChecked);
+                    if (checkedCount != SetFilters.Count) // only filter when some are unchecked
+                    {
+                        var cardParts = (card.Set ?? string.Empty)
+                            .Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)
+                            .Select(p => p.Trim());
+                        if (!cardParts.Any()) return false;
+
+                        bool anyMatch = cardParts.Any(cp =>
+                            SetFilters.Any(f => f.IsChecked &&
+                                string.Equals(f.Name, cp, StringComparison.OrdinalIgnoreCase)));
+
+                        if (!anyMatch) return false;
+                    }
+                }
+
+                // NEW: apply cost filters if defined (and not all checked)
+                if (CostFilters.Count > 0)
+                {
+                    var checkedCount = CostFilters.Count(f => f.IsChecked);
+                    if (checkedCount != CostFilters.Count) // only filter when some are unchecked
+                    {
+                        var cardCost = (card.Cost ?? string.Empty).Trim();
+                        if (string.IsNullOrEmpty(cardCost)) return false;
+
+                        bool anyMatch = CostFilters.Any(f => f.IsChecked &&
+                            string.Equals(f.Name, cardCost, StringComparison.OrdinalIgnoreCase));
+
+                        if (!anyMatch) return false;
+                    }
+                }
+
+                // NEW: apply owned filters if defined (and not all checked)
+                if (OwnedFilters.Count > 0)
+                {
+                    var checkedCount = OwnedFilters.Count(f => f.IsChecked);
+                    if (checkedCount != OwnedFilters.Count) // only filter when some are unchecked
+                    {
+                        var ownedCategory = card.QuantityOwned > 0 ? QuantityOwnedHelper.Owned : QuantityOwnedHelper.Unowned;
+
+                        bool anyMatch = OwnedFilters.Any(f => f.IsChecked &&
+                            string.Equals(f.Name, ownedCategory, StringComparison.OrdinalIgnoreCase));
+
+                        if (!anyMatch) return false;
+                    }
+                }
+
+                // NEW: apply in-deck quantity filters if defined (and not all checked)
+                if (InDeckFilters.Count > 0)
+                {
+                    var checkedCount = InDeckFilters.Count(f => f.IsChecked);
+                    if (checkedCount != InDeckFilters.Count)
+                    {
+                        // Determine in-deck quantity for this card relative to CurrentDeck
+                        int inDeckQty = 0;
+                        if (_validationService.IsNonDeckCard(card))
+                        {
+                            inDeckQty = 0;
+                        }
+                        else
+                        {
+                            var deckList = _validationService.IsEvolvedCard(card) ? CurrentDeck.EvolveDeck : CurrentDeck.MainDeck;
+                            var existing = deckList.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
+                            inDeckQty = existing?.Quantity ?? 0;
+                        }
+
+                        var qtyStr = inDeckQty.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+                        bool anyMatch = InDeckFilters.Any(f => f.IsChecked &&
+                            string.Equals(f.Name, qtyStr, StringComparison.OrdinalIgnoreCase));
+
+                        if (!anyMatch) return false;
+                    }
+                }
+
                 return true;
             };
 
             // Initialize rarity, type and class filters from the card set (order by preferred list first)
             InitializeRarityFilters();
             InitializeTypeFilters();
+            InitializeSetFilters();
             InitializeClassFilters();
+
+            // NEW: initialize cost & owned filters
+            InitializeCostFilters();
+            InitializeOwnedFilters();
+            InitializeInDeckFilters();
 
             // Initialize commands directly in constructor
             CreateDeckCommand = new RelayCommand(
-                execute: () => { CreateNewDeck(); return Task.CompletedTask; },
+                execute: () => { CreateNewDeck(); return System.Threading.Tasks.Task.CompletedTask; },
                 canExecute: () => true);
 
             EditDeckCommand = new RelayCommand<Deck?>(
@@ -501,6 +614,41 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 execute: () => { ClearAllClassFilters(); return System.Threading.Tasks.Task.CompletedTask; },
                 canExecute: () => ClassFilters.Count > 0);
 
+            // NEW: select/clear commands for set menu
+            SelectAllSetFiltersCommand = new RelayCommand(
+                execute: () => { SelectAllSetFilters(); return System.Threading.Tasks.Task.CompletedTask; },
+                canExecute: () => SetFilters.Count > 0);
+
+            ClearAllSetFiltersCommand = new RelayCommand(
+                execute: () => { ClearAllSetFilters(); return System.Threading.Tasks.Task.CompletedTask; },
+                canExecute: () => SetFilters.Count > 0);
+
+            // NEW: select/clear commands for cost menu
+            SelectAllCostFiltersCommand = new RelayCommand(
+                execute: () => { SelectAllCostFilters(); return System.Threading.Tasks.Task.CompletedTask; },
+                canExecute: () => CostFilters.Count > 0);
+
+            ClearAllCostFiltersCommand = new RelayCommand(
+                execute: () => { ClearAllCostFilters(); return System.Threading.Tasks.Task.CompletedTask; },
+                canExecute: () => CostFilters.Count > 0);
+
+            // NEW: select/clear commands for owned menu
+            SelectAllOwnedFiltersCommand = new RelayCommand(
+                execute: () => { SelectAllOwnedFilters(); return System.Threading.Tasks.Task.CompletedTask; },
+                canExecute: () => OwnedFilters.Count > 0);
+
+            ClearAllOwnedFiltersCommand = new RelayCommand(
+                execute: () => { ClearAllOwnedFilters(); return System.Threading.Tasks.Task.CompletedTask; },
+                canExecute: () => OwnedFilters.Count > 0);
+
+            SelectAllInDeckFiltersCommand = new RelayCommand(
+                execute: () => { SelectAllInDeckFilters(); return System.Threading.Tasks.Task.CompletedTask; },
+                canExecute: () => OwnedFilters.Count > 0);
+
+            ClearAllInDeckFiltersCommand = new RelayCommand(
+                execute: () => { ClearAllInDeckFilters(); return System.Threading.Tasks.Task.CompletedTask; },
+                canExecute: () => OwnedFilters.Count > 0);
+
             CardViewer.PropertyChanged += CardViewer_PropertyChanged;
         }
 
@@ -592,6 +740,57 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
         #endregion
 
+        #region Set Filter Initialization & Handling
+
+        private void InitializeSetFilters()
+        {
+            try
+            {
+                SetFilters.Clear();
+
+                // Build distinct set names from all cards; default to checked (show all)
+                var sets = _allCards
+                    .Select(c => (c.Set ?? string.Empty).Trim())
+                    .Where(s => !string.IsNullOrEmpty(s))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(s => s, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                foreach (var s in sets)
+                {
+                    var item = new RarityFilterItem(SetHelper.ExtractSetName(s), isChecked: true);
+                    item.PropertyChanged += SetFilterItem_PropertyChanged;
+                    SetFilters.Add(item);
+                }
+            }
+            catch
+            {
+                // swallow - no filters available
+            }
+        }
+
+        private void SelectAllSetFilters()
+        {
+            foreach (var f in SetFilters) f.IsChecked = true;
+            _validCards.Refresh();
+        }
+
+        private void ClearAllSetFilters()
+        {
+            foreach (var f in SetFilters) f.IsChecked = false;
+            _validCards.Refresh();
+        }
+
+        private void SetFilterItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(e?.PropertyName) || e.PropertyName == nameof(RarityFilterItem.IsChecked))
+            {
+                _validCards.Refresh();
+            }
+        }
+
+        #endregion
+
         #region Class Filter Initialization & Handling
 
         private void InitializeClassFilters()
@@ -648,6 +847,162 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         }
 
         private void ClassFilterItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(e?.PropertyName) || e.PropertyName == nameof(RarityFilterItem.IsChecked))
+            {
+                _validCards.Refresh();
+            }
+        }
+
+        #endregion
+
+        #region Cost Filter Initialization & Handling
+
+        private void InitializeCostFilters()
+        {
+            try
+            {
+                CostFilters.Clear();
+
+                var costs = _allCards
+                    .Select(c => (c.Cost ?? string.Empty).Trim())
+                    .Where(s => !string.IsNullOrEmpty(s))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(s =>
+                    {
+                        // attempt numeric ordering when possible
+                        if (int.TryParse(s, out var n)) return (n, s);
+                        return (int.MaxValue, s);
+                    })
+                    .ToList();
+
+                foreach (var cost in costs)
+                {
+                    var item = new RarityFilterItem(cost, isChecked: true);
+                    item.PropertyChanged += CostFilterItem_PropertyChanged;
+                    CostFilters.Add(item);
+                }
+            }
+            catch
+            {
+                // swallow - no filters available
+            }
+        }
+
+        private void SelectAllCostFilters()
+        {
+            foreach (var f in CostFilters) f.IsChecked = true;
+            _validCards.Refresh();
+        }
+
+        private void ClearAllCostFilters()
+        {
+            foreach (var f in CostFilters) f.IsChecked = false;
+            _validCards.Refresh();
+        }
+
+        private void CostFilterItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(e?.PropertyName) || e.PropertyName == nameof(RarityFilterItem.IsChecked))
+            {
+                _validCards.Refresh();
+            }
+        }
+
+        #endregion
+
+        #region Owned Filter Initialization & Handling
+
+        private void InitializeOwnedFilters()
+        {
+            try
+            {
+                OwnedFilters.Clear();
+
+                foreach (var f in QuantityOwnedHelper.GetFilters())
+                {
+                    // attach the change handler and reuse the item
+                    f.PropertyChanged += OwnedFilterItem_PropertyChanged;
+                    OwnedFilters.Add(f);
+                }
+            }
+            catch
+            {
+                // swallow - no filters available
+            }
+        }
+
+        private void SelectAllOwnedFilters()
+        {
+            foreach (var f in OwnedFilters) f.IsChecked = true;
+            _validCards.Refresh();
+        }
+
+        private void ClearAllOwnedFilters()
+        {
+            foreach (var f in OwnedFilters) f.IsChecked = false;
+            _validCards.Refresh();
+        }
+
+        private void OwnedFilterItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(e?.PropertyName) || e.PropertyName == nameof(RarityFilterItem.IsChecked))
+            {
+                _validCards.Refresh();
+            }
+        }
+
+        #endregion
+
+        #region In-Deck Filter Initialization & Handling
+
+        private void InitializeInDeckFilters()
+        {
+            try
+            {
+                InDeckFilters.Clear();
+
+                if (CurrentDeck == null)
+                    return;
+
+                IEnumerable<string> options;
+                if (CurrentDeck.DeckType == DeckType.Gloryfinder)
+                {
+                    // Gloryfinder: options "9" and "1" per request
+                    options = new[] { "0", "1" };
+                }
+                else
+                {
+                    // Standard / CrossCraft: options 0..3
+                    options = new[] { "0", "1", "2", "3" };
+                }
+
+                foreach (var opt in options)
+                {
+                    var item = new RarityFilterItem(opt, isChecked: true);
+                    item.PropertyChanged += InDeckFilterItem_PropertyChanged;
+                    InDeckFilters.Add(item);
+                }
+            }
+            catch
+            {
+                // swallow
+            }
+        }
+
+        private void SelectAllInDeckFilters()
+        {
+            foreach (var f in InDeckFilters) f.IsChecked = true;
+            _validCards.Refresh();
+        }
+
+        private void ClearAllInDeckFilters()
+        {
+            foreach (var f in InDeckFilters) f.IsChecked = false;
+            _validCards.Refresh();
+        }
+
+        private void InDeckFilterItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             if (string.IsNullOrEmpty(e?.PropertyName) || e.PropertyName == nameof(RarityFilterItem.IsChecked))
             {
@@ -979,6 +1334,9 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 OnPropertyChanged(nameof(CurrentInDeckQuantity));
                 RaiseQuantityCommandStates();
                 EvaluateDeckValidity();
+
+                // Reinitialize in-deck filters when deck contents or deck type change
+                InitializeInDeckFilters();
             }
         }
 
@@ -1055,6 +1413,14 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             EvaluateDeckValidity();
 
             InitializeClassFilters();
+            InitializeSetFilters();
+
+            // Ensure cost/owned filters reflect any card collection changes
+            InitializeCostFilters();
+            InitializeOwnedFilters();
+
+            // In-deck filters depend on current deck type/contents
+            InitializeInDeckFilters();
         }
 
         private void ClearSelections()

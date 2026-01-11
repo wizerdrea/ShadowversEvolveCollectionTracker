@@ -1,3 +1,4 @@
+using ShadowverseEvolveCardTracker.Utilities;
 using System;
 using System.Globalization;
 using System.Windows.Data;
@@ -16,21 +17,7 @@ namespace ShadowverseEvolveCardTracker.Converters
             try
             {
                 var s = value as string;
-                if (string.IsNullOrWhiteSpace(s))
-                    return string.Empty;
-
-                // Accept straight (") and curly (“ ”) double quotes as delimiters
-                char[] quoteChars = new[] { '"', '“', '”' };
-
-                int first = s.IndexOfAny(quoteChars);
-                if (first < 0)
-                    return s.Trim();
-
-                int second = s.IndexOfAny(quoteChars, first + 1);
-                if (second <= first)
-                    return s.Trim();
-
-                return s.Substring(first + 1, second - first - 1).Trim();
+                return SetHelper.ExtractSetName(s);
             }
             catch
             {
