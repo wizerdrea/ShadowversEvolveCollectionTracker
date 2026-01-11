@@ -1,9 +1,9 @@
-using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using ShadowverseEvolveCardTracker.Models;
+using ShadowverseEvolveCardTracker.ViewModels;
 
 namespace ShadowverseEvolveCardTracker.Views
 {
@@ -17,15 +17,26 @@ namespace ShadowverseEvolveCardTracker.Views
 
             Loaded += DeckBuilderTabView_Loaded;
             Unloaded += DeckBuilderTabView_Unloaded;
+
+            // Keep popup DataContext in sync when the viewmodel (DataContext) changes
+            DataContextChanged += DeckBuilderTabView_DataContextChanged;
         }
 
         private void DeckBuilderTabView_Loaded(object? sender, RoutedEventArgs e)
         {
             AttachHeaderContextMenuHandlers();
 
-            // Column headers can be recreated (layout changes) so re-attach if layout updates create new headers.
             if (AvailableCardsGrid != null)
                 AvailableCardsGrid.LayoutUpdated += AvailableCardsGrid_LayoutUpdated;
+
+            if (TraitsPopup != null)
+                TraitsPopup.DataContext = this.DataContext;
+
+            // Wire the Select All / Clear All buttons to viewmodel commands as a robust fallback
+            if (SelectAllTraitsButton != null)
+                SelectAllTraitsButton.Click += SelectAllTraitsButton_Click;
+            if (ClearAllTraitsButton != null)
+                ClearAllTraitsButton.Click += ClearAllTraitsButton_Click;
         }
 
         private void DeckBuilderTabView_Unloaded(object? sender, RoutedEventArgs e)
@@ -34,6 +45,83 @@ namespace ShadowverseEvolveCardTracker.Views
                 AvailableCardsGrid.LayoutUpdated -= AvailableCardsGrid_LayoutUpdated;
 
             DetachHeaderContextMenuHandlers();
+
+            DataContextChanged -= DeckBuilderTabView_DataContextChanged;
+
+            if (SelectAllTraitsButton != null)
+                SelectAllTraitsButton.Click -= SelectAllTraitsButton_Click;
+            if (ClearAllTraitsButton != null)
+                ClearAllTraitsButton.Click -= ClearAllTraitsButton_Click;
+        }
+
+        private void DeckBuilderTabView_DataContextChanged(object? sender, DependencyPropertyChangedEventArgs e)
+        {
+            // Update popup DataContext so bindings inside it bind to the viewmodel
+            if (TraitsPopup != null)
+                TraitsPopup.DataContext = this.DataContext;
+        }
+
+        // ToggleButton checked -> open popup and rotate arrow up
+        private void TraitsToggle_Checked(object sender, RoutedEventArgs e)
+        {
+            if (TraitsPopup != null)
+                TraitsPopup.IsOpen = true;
+
+            if (TraitsArrowPath != null)
+                TraitsArrowPath.RenderTransform = new RotateTransform(180);
+        }
+
+        // ToggleButton unchecked -> close popup and rotate arrow down
+        private void TraitsToggle_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (TraitsPopup != null)
+                TraitsPopup.IsOpen = false;
+
+            if (TraitsArrowPath != null)
+                TraitsArrowPath.RenderTransform = new RotateTransform(0);
+        }
+
+        // When popup closes (eg. clicking outside), ensure toggle is unchecked and arrow reset
+        private void TraitsPopup_Closed(object sender, EventArgs e)
+        {
+            if (TraitsToggle != null && TraitsToggle.IsChecked == true)
+            {
+                // set to false without re-entering Checked handler (Unchecked will run)
+                TraitsToggle.IsChecked = false;
+            }
+
+            if (TraitsArrowPath != null)
+                TraitsArrowPath.RenderTransform = new RotateTransform(0);
+        }
+
+        private void SelectAllTraitsButton_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is DeckBuilderViewModel vm && vm.SelectAllTraitFiltersCommand != null)
+            {
+                var cmd = vm.SelectAllTraitFiltersCommand;
+                if (cmd.CanExecute(null))
+                    cmd.Execute(null);
+                else
+                {
+                    foreach (var f in vm.TraitsFilters) f.IsChecked = true;
+                    vm.ValidCards.Refresh();
+                }
+            }
+        }
+
+        private void ClearAllTraitsButton_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is DeckBuilderViewModel vm && vm.ClearAllTraitFiltersCommand != null)
+            {
+                var cmd = vm.ClearAllTraitFiltersCommand;
+                if (cmd.CanExecute(null))
+                    cmd.Execute(null);
+                else
+                {
+                    foreach (var f in vm.TraitsFilters) f.IsChecked = false;
+                    vm.ValidCards.Refresh();
+                }
+            }
         }
 
         private void AvailableCardsGrid_LayoutUpdated(object? sender, System.EventArgs e)
@@ -130,7 +218,6 @@ namespace ShadowverseEvolveCardTracker.Views
 
         private void MainDeckListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // Note: XAML still calls this handler name for the DeckListControl's SelectionChanged event.
             if (MainDeckListControl != null && MainDeckListControl.SelectedItem != null)
             {
                 // Clear selections in other lists

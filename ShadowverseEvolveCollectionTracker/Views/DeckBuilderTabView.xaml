@@ -64,6 +64,44 @@
             </Setter>
         </Style>
 
+        <!-- Filter dropdown ToggleButton style (bordered, hover highlight, down arrow) -->
+        <Style x:Key="FilterDropdownToggleButtonStyle" TargetType="ToggleButton">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <Grid>
+                                <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource ElevatedBrush}"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource SelectedBrush}"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- Shared header ContextMenu control template and MenuItem style to avoid duplication -->
         <ControlTemplate x:Key="HeaderContextMenuControlTemplate" TargetType="ContextMenu">
             <Border Background="{TemplateBinding Background}"
@@ -112,6 +150,7 @@
         <CollectionViewSource x:Key="CostFilters" Source="{Binding CostFilters}"/>
         <CollectionViewSource x:Key="OwnedFilters" Source="{Binding OwnedFilters}"/>
         <CollectionViewSource x:Key="InDeckFilters" Source="{Binding InDeckFilters}"/>
+        <CollectionViewSource x:Key="TraitsFilters" Source="{Binding TraitsFilters}"/>
     </UserControl.Resources>
 
     <Grid>
@@ -275,6 +314,7 @@
             <Grid Grid.Column="0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/> <!-- filters row -->
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
@@ -288,8 +328,76 @@
                                Foreground="{DynamicResource GoldBrush}"/>
                 </StackPanel>
 
+                <!-- Filters expander -->
+                <Expander Grid.Row="1" Margin="8,0,8,4" Header="Filters" IsExpanded="True">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Name" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBox Width="220" 
+                                     Text="{Binding NameFilter, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Filter cards by name using a regex (or plain text if regex invalid)"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Text" VerticalAlignment="Center" Margin="12,0,6,0"/>
+                            <TextBox Width="220" 
+                                     Text="{Binding TextFilter, UpdateSourceTrigger=PropertyChanged}"
+                                     ToolTip="Filter card text using a regex (or plain text if regex invalid)"/>
+                        </StackPanel>
+
+                        <!-- Traits dropdown (toggle + popup) -->
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+                            <ToggleButton x:Name="TraitsToggle"
+                                          Style="{StaticResource FilterDropdownToggleButtonStyle}"
+                                          Width="120"
+                                          HorizontalAlignment="Left"
+                                          Checked="TraitsToggle_Checked"
+                                          Unchecked="TraitsToggle_Unchecked">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <TextBlock Text="Traits" Margin="0,0,6,0" VerticalAlignment="Center" Foreground="{StaticResource TextPrimaryBrush}" />
+                                    <!-- arrow path; we'll rotate it in code-behind when popup opens/closes -->
+                                    <Path x:Name="TraitsArrowPath" Data="M0,0 L8,0 L4,5 Z" Fill="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" Width="8" Height="5" RenderTransformOrigin="0.5,0.5">
+                                        <Path.RenderTransform>
+                                            <RotateTransform Angle="0"/>
+                                        </Path.RenderTransform>
+                                    </Path>
+                                </StackPanel>
+                            </ToggleButton>
+
+                            <Popup x:Name="TraitsPopup"
+                                   Placement="Bottom"
+                                   PlacementTarget="{Binding ElementName=TraitsToggle}"
+                                   StaysOpen="False"
+                                   AllowsTransparency="True"
+                                   PopupAnimation="Fade"
+                                   Closed="TraitsPopup_Closed">
+                                <Border Background="{DynamicResource SurfaceBrush}" Padding="6" CornerRadius="6" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" Width="280">
+                                    <StackPanel>
+                                        <TextBlock Text="Select Traits (multi-select)" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                        <ScrollViewer Height="180" VerticalScrollBarVisibility="Auto">
+                                            <ItemsControl ItemsSource="{Binding TraitsFilters}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <CheckBox Content="{Binding Name}" IsChecked="{Binding IsChecked, Mode=TwoWay}" Padding="4,2"/>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </ScrollViewer>
+
+                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+                                            <!-- Buttons keep their names; code-behind wires click handlers -->
+                                            <Button x:Name="SelectAllTraitsButton" Content="Select All" Margin="0,0,6,0"/>
+                                            <Button x:Name="ClearAllTraitsButton" Content="Clear All"/>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </Border>
+                            </Popup>
+                        </StackPanel>
+                    </StackPanel>
+                </Expander>
+
                 <DataGrid x:Name="AvailableCardsGrid"
-                          Grid.Row="1" 
+                          Grid.Row="2" 
                           ItemsSource="{Binding ValidCards}"
                           SelectedItem="{Binding SelectedCard}"
                           AutoGenerateColumns="False"

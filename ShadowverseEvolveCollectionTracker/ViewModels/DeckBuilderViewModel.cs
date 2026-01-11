@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using System.Windows.Data;
 using System.Windows.Input;
 using ShadowverseEvolveCardTracker.Constants;
@@ -44,6 +46,10 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         // NEW: favorites-only filter flag
         private bool _favoritesOnly;
 
+        // NEW: name/text filter backing fields
+        private string? _nameFilter;
+        private string? _textFilter;
+
         #endregion
 
         #region Properties - Collections
@@ -81,6 +87,9 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         // NEW: In-deck quantity filters (0/1/2/3) or (9/1) for Gloryfinder
         public ObservableCollection<RarityFilterItem> InDeckFilters { get; } = new();
 
+        // NEW: Traits filter collection (multi-select)
+        public ObservableCollection<RarityFilterItem> TraitsFilters { get; } = new();
+
         #endregion
 
         #region Favorites filter
@@ -94,6 +103,34 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                     _validCards.Refresh();
             }
         }
+
+        #endregion
+
+        #region Name / Text / Traits filters
+
+        public string? NameFilter
+        {
+            get => _nameFilter;
+            set
+            {
+                if (SetProperty(ref _nameFilter, value))
+                    _validCards.Refresh();
+            }
+        }
+
+        public string? TextFilter
+        {
+            get => _textFilter;
+            set
+            {
+                if (SetProperty(ref _textFilter, value))
+                    _validCards.Refresh();
+            }
+        }
+
+        // Commands for Traits dropdown select/clear
+        public ICommand SelectAllTraitFiltersCommand { get; private set; }
+        public ICommand ClearAllTraitFiltersCommand { get; private set; }
 
         #endregion
 
@@ -350,6 +387,55 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 if (!_validationService.IsValidForDeck(card, CurrentDeck)) return false;
                 if (FavoritesOnly && !card.IsFavorite) return false;
 
+                // NEW: apply name regex filter
+                if (!string.IsNullOrWhiteSpace(NameFilter))
+                {
+                    try
+                    {
+                        if (!Regex.IsMatch(card.Name ?? string.Empty, NameFilter!, RegexOptions.IgnoreCase))
+                            return false;
+                    }
+                    catch (ArgumentException)
+                    {
+                        if (!card.Name?.Contains(NameFilter!, StringComparison.OrdinalIgnoreCase) ?? true)
+                            return false;
+                    }
+                }
+
+                // NEW: apply text regex filter
+                if (!string.IsNullOrWhiteSpace(TextFilter))
+                {
+                    try
+                    {
+                        if (!Regex.IsMatch(card.Text ?? string.Empty, TextFilter!, RegexOptions.IgnoreCase))
+                            return false;
+                    }
+                    catch (ArgumentException)
+                    {
+                        if (!card.Text?.Contains(TextFilter!, StringComparison.OrdinalIgnoreCase) ?? true)
+                            return false;
+                    }
+                }
+
+                // NEW: apply traits filters (multi-select) if defined (and not all checked)
+                if (TraitsFilters.Count > 0)
+                {
+                    var checkedCount = TraitsFilters.Count(f => f.IsChecked);
+                    if (checkedCount != TraitsFilters.Count) // only filter when some are unchecked
+                    {
+                        var cardParts = (card.Traits ?? string.Empty)
+                            .Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)
+                            .Select(p => p.Trim());
+                        if (!cardParts.Any()) return false;
+
+                        bool anyMatch = cardParts.Any(cp =>
+                            TraitsFilters.Any(f => f.IsChecked &&
+                                string.Equals(f.Name, cp, StringComparison.OrdinalIgnoreCase)));
+
+                        if (!anyMatch) return false;
+                    }
+                }
+
                 // NEW: apply rarity filters if defined (and not all checked)
                 if (RarityFilters.Count > 0)
                 {
@@ -496,6 +582,16 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             InitializeCostFilters();
             InitializeOwnedFilters();
             InitializeInDeckFilters();
+
+            // NEW: initialize traits filters
+            InitializeTraitsFilters();
+
+            // Subscribe to collection/card changes so filters update when card properties change
+            if (_allCards is INotifyCollectionChanged incc)
+                incc.CollectionChanged += AllCards_CollectionChanged;
+
+            foreach (var c in _allCards)
+                SubscribeToCard(c);
 
             // Initialize commands directly in constructor
             CreateDeckCommand = new RelayCommand(
@@ -649,7 +745,122 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 execute: () => { ClearAllInDeckFilters(); return System.Threading.Tasks.Task.CompletedTask; },
                 canExecute: () => OwnedFilters.Count > 0);
 
+            // NEW: traits select/clear commands
+            SelectAllTraitFiltersCommand = new RelayCommand(
+                execute: () => { SelectAllTraits(); return System.Threading.Tasks.Task.CompletedTask; },
+                canExecute: () => TraitsFilters.Count > 0);
+
+            ClearAllTraitFiltersCommand = new RelayCommand(
+                execute: () => { ClearAllTraits(); return System.Threading.Tasks.Task.CompletedTask; },
+                canExecute: () => TraitsFilters.Count > 0);
+
             CardViewer.PropertyChanged += CardViewer_PropertyChanged;
+        }
+
+        #endregion
+
+        #region AllCards collection change / card property subscription
+
+        private void AllCards_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e?.OldItems != null)
+            {
+                foreach (var old in e.OldItems.OfType<CardData>())
+                    UnsubscribeFromCard(old);
+            }
+
+            if (e?.NewItems != null)
+            {
+                foreach (var nw in e.NewItems.OfType<CardData>())
+                    SubscribeToCard(nw);
+            }
+
+            // Rebuild trait list if card set changed
+            InitializeTraitsFilters();
+            _validCards.Refresh();
+        }
+
+        private void SubscribeToCard(CardData card)
+        {
+            if (card is INotifyPropertyChanged inpc)
+                inpc.PropertyChanged += Card_PropertyChanged;
+        }
+
+        private void UnsubscribeFromCard(CardData card)
+        {
+            if (card is INotifyPropertyChanged inpc)
+                inpc.PropertyChanged -= Card_PropertyChanged;
+        }
+
+        private void Card_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(e?.PropertyName)) return;
+
+            // If one of the properties that affect filtering changed, refresh view
+            if (e.PropertyName == nameof(CardData.Name) ||
+                e.PropertyName == nameof(CardData.Text) ||
+                e.PropertyName == nameof(CardData.Traits) ||
+                e.PropertyName == nameof(CardData.Rarity) ||
+                e.PropertyName == nameof(CardData.Set) ||
+                e.PropertyName == nameof(CardData.Type) ||
+                e.PropertyName == nameof(CardData.Class) ||
+                e.PropertyName == nameof(CardData.Cost) ||
+                e.PropertyName == nameof(CardData.QuantityOwned) ||
+                e.PropertyName == nameof(CardData.IsFavorite))
+            {
+                _validCards.Refresh();
+            }
+        }
+
+        #endregion
+
+        #region Traits Filter Initialization & Handling
+
+        private void InitializeTraitsFilters()
+        {
+            try
+            {
+                TraitsFilters.Clear();
+
+                var traits = _allCards
+                    .SelectMany(c => (c.Traits ?? string.Empty).Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)
+                        .Select(s => s.Trim()))
+                    .Where(s => !string.IsNullOrEmpty(s))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(s => s, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                foreach (var t in traits)
+                {
+                    var item = new RarityFilterItem(t, isChecked: true);
+                    item.PropertyChanged += TraitFilterItem_PropertyChanged;
+                    TraitsFilters.Add(item);
+                }
+            }
+            catch
+            {
+                // swallow - no traits available
+            }
+        }
+
+        private void SelectAllTraits()
+        {
+            foreach (var f in TraitsFilters) f.IsChecked = true;
+            _validCards.Refresh();
+        }
+
+        private void ClearAllTraits()
+        {
+            foreach (var f in TraitsFilters) f.IsChecked = false;
+            _validCards.Refresh();
+        }
+
+        private void TraitFilterItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(e?.PropertyName) || e.PropertyName == nameof(RarityFilterItem.IsChecked))
+            {
+                _validCards.Refresh();
+            }
         }
 
         #endregion
@@ -1421,6 +1632,9 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
             // In-deck filters depend on current deck type/contents
             InitializeInDeckFilters();
+
+            // Ensure trait list reflects any card changes
+            InitializeTraitsFilters();
         }
 
         private void ClearSelections()
