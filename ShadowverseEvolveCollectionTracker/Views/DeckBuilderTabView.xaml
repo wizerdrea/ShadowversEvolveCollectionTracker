@@ -448,6 +448,8 @@
                             </DataGridTextColumn.HeaderStyle>
                         </DataGridTextColumn>
 
+                        <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="70"/>
+
                         <!-- New: Class icon column (between Rarity and Set) -->
                         <DataGridTemplateColumn Header="Class" Width="45">
                             <DataGridTemplateColumn.CellTemplate>
@@ -475,6 +477,8 @@
                         </DataGridTemplateColumn>
 
                         <DataGridTextColumn Header="Set" Binding="{Binding Set, Converter={StaticResource SetNameExtractorConverter}}" Width="120"/>
+
+                        <DataGridTextColumn Header="# Owned" Binding="{Binding QuantityOwned}" Width="65" />
 
                         <!-- Updated: per-row in-deck quantity now bound to the row card + current deck -->
                         <DataGridTemplateColumn Header="In Deck" Width="120">
