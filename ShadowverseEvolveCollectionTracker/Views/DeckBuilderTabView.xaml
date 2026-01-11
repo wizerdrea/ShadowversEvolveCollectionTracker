@@ -9,6 +9,7 @@
 
     <UserControl.Resources>
         <conv:StringToImageSourceConverter x:Key="StringToImageConverter" />
+        <conv:ClassToPackImageConverter x:Key="ClassIconConverter" />
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
         <conv:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisConverter" />
         <conv:CardInDeckQuantityConverter x:Key="CardInDeckQuantityConverter" />
@@ -354,7 +355,7 @@
                         </DataGridTemplateColumn>
 
                         <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>
-                        <DataGridTextColumn Header="Cost" Binding="{Binding Cost}" Width="50"/>
+                        <DataGridTextColumn Header="Cost" Binding="{Binding Cost}" Width="45"/>
 
                         <!-- UPDATED: Rarity column now contains the rarity filters directly in the header context menu -->
                         <DataGridTextColumn Width="45"
@@ -446,6 +447,32 @@
                                 </Style>
                             </DataGridTextColumn.HeaderStyle>
                         </DataGridTextColumn>
+
+                        <!-- New: Class icon column (between Rarity and Set) -->
+                        <DataGridTemplateColumn Header="Class" Width="45">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Border Background="Transparent" Padding="2" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Image Source="{Binding Class, Converter={StaticResource ClassIconConverter}}"
+                                               Height="20" Stretch="Uniform" HorizontalAlignment="Center">
+                                            <Image.ToolTip>
+                                                <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                                    <Border Background="{DynamicResource ElevatedBrush}"
+                                                            Padding="6"
+                                                            CornerRadius="4"
+                                                            BorderBrush="{DynamicResource AccentBrush}"
+                                                            BorderThickness="1">
+                                                        <TextBlock Text="{Binding Class}"
+                                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                    </Border>
+                                                </ToolTip>
+                                            </Image.ToolTip>
+                                            
+                                        </Image>
+                                    </Border>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
 
                         <DataGridTextColumn Header="Set" Binding="{Binding Set, Converter={StaticResource SetNameExtractorConverter}}" Width="120"/>
 
