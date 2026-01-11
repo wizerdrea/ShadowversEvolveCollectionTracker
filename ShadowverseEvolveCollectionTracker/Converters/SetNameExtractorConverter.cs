@@ -5,7 +5,7 @@ using System.Windows.Data;
 namespace ShadowverseEvolveCardTracker.Converters
 {
     /// <summary>
-    /// Extracts the first substring found between double-quotes in the input string.
+    /// Extracts the first substring found between double-quotes (straight or curly) in the input string.
     /// If no quotes are present the original trimmed string is returned.
     /// Designed for showing the short set identifier contained in CardData.Set.
     /// </summary>
@@ -19,11 +19,14 @@ namespace ShadowverseEvolveCardTracker.Converters
                 if (string.IsNullOrWhiteSpace(s))
                     return string.Empty;
 
-                int first = s.IndexOf('"');
+                // Accept straight (") and curly (“ ”) double quotes as delimiters
+                char[] quoteChars = new[] { '"', '“', '”' };
+
+                int first = s.IndexOfAny(quoteChars);
                 if (first < 0)
                     return s.Trim();
 
-                int second = s.IndexOf('"', first + 1);
+                int second = s.IndexOfAny(quoteChars, first + 1);
                 if (second <= first)
                     return s.Trim();
 
