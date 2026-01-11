@@ -65,6 +65,9 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         // NEW: Type filter items exposed to the header context menu
         public ObservableCollection<RarityFilterItem> TypeFilters { get; } = new();
 
+        // NEW: Class filter items exposed to the header context menu
+        public ObservableCollection<RarityFilterItem> ClassFilters { get; } = new();
+
         #endregion
 
         #region Favorites filter
@@ -241,8 +244,8 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
                 if (_validationService.IsNonDeckCard(card)) return 0;
 
-                var deck = _validationService.IsEvolvedCard(card) 
-                    ? CurrentDeck.EvolveDeck 
+                var deck = _validationService.IsEvolvedCard(card)
+                    ? CurrentDeck.EvolveDeck
                     : CurrentDeck.MainDeck;
 
                 return deck.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber)?.Quantity ?? 0;
@@ -263,7 +266,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         public ICommand RemoveFromMainDeckCommand { get; }
         public ICommand AddToEvolveDeckCommand { get; }
         public ICommand RemoveFromEvolveDeckCommand { get; }
-        
+
         public ICommand IncreaseMainDeckQuantityCommand { get; }
         public ICommand DecreaseMainDeckQuantityCommand { get; }
         public ICommand IncreaseEvolveDeckQuantityCommand { get; }
@@ -282,6 +285,10 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         // NEW: commands used by the Type header context menu
         public ICommand SelectAllTypeFiltersCommand { get; private set; }
         public ICommand ClearAllTypeFiltersCommand { get; private set; }
+
+        // NEW: commands used by the Class header context menu
+        public ICommand SelectAllClassFiltersCommand { get; private set; }
+        public ICommand ClearAllClassFiltersCommand { get; private set; }
 
         #endregion
 
@@ -353,12 +360,29 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                     }
                 }
 
+                // NEW: apply class filters if defined (and not all checked)
+                if (ClassFilters.Count > 0)
+                {
+                    var checkedCount = ClassFilters.Count(f => f.IsChecked);
+                    if (checkedCount != ClassFilters.Count) // only filter when some are unchecked
+                    {
+                        var cardClass = (card.Class ?? string.Empty).Trim();
+                        if (string.IsNullOrEmpty(cardClass)) return false;
+
+                        bool anyMatch = ClassFilters.Any(f => f.IsChecked &&
+                            string.Equals(f.Name, cardClass, StringComparison.OrdinalIgnoreCase));
+
+                        if (!anyMatch) return false;
+                    }
+                }
+
                 return true;
             };
 
-            // Initialize rarity and type filters from the card set (order by preferred list first)
+            // Initialize rarity, type and class filters from the card set (order by preferred list first)
             InitializeRarityFilters();
             InitializeTypeFilters();
+            InitializeClassFilters();
 
             // Initialize commands directly in constructor
             CreateDeckCommand = new RelayCommand(
@@ -401,7 +425,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
             AddToMainDeckCommand = new RelayCommand(
                 execute: () => { ExecuteAddToMainDeck(CardViewer.CurrentCard); return System.Threading.Tasks.Task.CompletedTask; },
-                canExecute: () => CardViewer.CurrentCard != null && CurrentDeck != null && 
+                canExecute: () => CardViewer.CurrentCard != null && CurrentDeck != null &&
                     _validationService.CanAddToMainDeck(CardViewer.CurrentCard, CurrentDeck));
 
             RemoveFromMainDeckCommand = new RelayCommand(
@@ -410,7 +434,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
             AddToEvolveDeckCommand = new RelayCommand(
                 execute: () => { ExecuteAddToEvolveDeck(CardViewer.CurrentCard); return System.Threading.Tasks.Task.CompletedTask; },
-                canExecute: () => CardViewer.CurrentCard != null && CurrentDeck != null && 
+                canExecute: () => CardViewer.CurrentCard != null && CurrentDeck != null &&
                     _validationService.CanAddToEvolveDeck(CardViewer.CurrentCard, CurrentDeck));
 
             RemoveFromEvolveDeckCommand = new RelayCommand(
@@ -419,7 +443,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
             IncreaseMainDeckQuantityCommand = new RelayCommand<DeckEntry?>(
                 execute: entry => { ExecuteIncreaseQuantity(entry, false); return System.Threading.Tasks.Task.CompletedTask; },
-                canExecute: entry => entry != null && CurrentDeck != null && 
+                canExecute: entry => entry != null && CurrentDeck != null &&
                     _validationService.CanIncreaseMainDeckQuantity(entry, CurrentDeck));
 
             DecreaseMainDeckQuantityCommand = new RelayCommand<DeckEntry?>(
@@ -428,7 +452,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
             IncreaseEvolveDeckQuantityCommand = new RelayCommand<DeckEntry?>(
                 execute: entry => { ExecuteIncreaseQuantity(entry, true); return System.Threading.Tasks.Task.CompletedTask; },
-                canExecute: entry => entry != null && CurrentDeck != null && 
+                canExecute: entry => entry != null && CurrentDeck != null &&
                     _validationService.CanIncreaseEvolveDeckQuantity(entry, CurrentDeck));
 
             DecreaseEvolveDeckQuantityCommand = new RelayCommand<DeckEntry?>(
@@ -467,6 +491,15 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             ClearAllTypeFiltersCommand = new RelayCommand(
                 execute: () => { ClearAllTypeFilters(); return System.Threading.Tasks.Task.CompletedTask; },
                 canExecute: () => TypeFilters.Count > 0);
+
+            // NEW: select/clear commands for class menu
+            SelectAllClassFiltersCommand = new RelayCommand(
+                execute: () => { SelectAllClassFilters(); return System.Threading.Tasks.Task.CompletedTask; },
+                canExecute: () => ClassFilters.Count > 0);
+
+            ClearAllClassFiltersCommand = new RelayCommand(
+                execute: () => { ClearAllClassFilters(); return System.Threading.Tasks.Task.CompletedTask; },
+                canExecute: () => ClassFilters.Count > 0);
 
             CardViewer.PropertyChanged += CardViewer_PropertyChanged;
         }
@@ -559,6 +592,71 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
         #endregion
 
+        #region Class Filter Initialization & Handling
+
+        private void InitializeClassFilters()
+        {
+            try
+            {
+                ClassFilters.Clear();
+
+                if (CurrentDeck is null) return;
+
+                var classesToAdd = new List<String>();
+
+                switch (CurrentDeck.DeckType)
+                {
+                    case DeckType.Standard:
+                        classesToAdd.Add(CurrentDeck.Class1);
+                        classesToAdd.Add(Classes.Neutral);
+                        break;
+                    case DeckType.CrossCraft:
+                        classesToAdd.Add(CurrentDeck.Class1);
+                        classesToAdd.Add(CurrentDeck.Class2 ?? string.Empty);
+                        classesToAdd.Add(Classes.Neutral);
+                        break;
+                    case DeckType.Gloryfinder:
+                        classesToAdd = Classes.AllClasses.ToList();
+                        break;
+                    default:
+                        return;
+                }
+
+                foreach (var cls in classesToAdd)
+                {
+                    var item = new RarityFilterItem(cls, isChecked: true);
+                    item.PropertyChanged += ClassFilterItem_PropertyChanged;
+                    ClassFilters.Add(item);
+                }
+            }
+            catch
+            {
+                // swallow - no filters available
+            }
+        }
+
+        private void SelectAllClassFilters()
+        {
+            foreach (var f in ClassFilters) f.IsChecked = true;
+            _validCards.Refresh();
+        }
+
+        private void ClearAllClassFilters()
+        {
+            foreach (var f in ClassFilters) f.IsChecked = false;
+            _validCards.Refresh();
+        }
+
+        private void ClassFilterItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(e?.PropertyName) || e.PropertyName == nameof(RarityFilterItem.IsChecked))
+            {
+                _validCards.Refresh();
+            }
+        }
+
+        #endregion
+
         #region Command Execution
 
         private void CreateNewDeck()
@@ -601,7 +699,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         private void ExecuteAddCard(CardData? card)
         {
             if (card == null || CurrentDeck == null) return;
-            
+
             if (_operationsHandler.TryAddCard(card, CurrentDeck, out var onSuccess))
             {
                 onSuccess?.Invoke();
@@ -652,7 +750,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         private void ExecuteIncreaseQuantity(DeckEntry? entry, bool isEvolveDeck)
         {
             if (entry == null || CurrentDeck == null) return;
-            
+
             _operationsHandler.IncreaseQuantity(entry, CurrentDeck, isEvolveDeck);
             NotifyDeckChanged();
         }
@@ -660,7 +758,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         private void ExecuteDecreaseQuantity(DeckEntry? entry, bool isEvolveDeck)
         {
             if (entry == null || CurrentDeck == null) return;
-            
+
             _operationsHandler.DecreaseQuantity(entry, CurrentDeck, isEvolveDeck);
             RefreshDeckLists();
             NotifyDeckChanged();
@@ -780,13 +878,13 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
             if (_validationService.IsLeaderCard(card))
                 return _validationService.CanAddLeader(card, CurrentDeck);
-            
+
             if (_validationService.IsTokenCard(card))
                 return false;
-            
+
             if (_validationService.IsEvolvedCard(card))
                 return _validationService.CanAddToEvolveDeck(card, CurrentDeck);
-            
+
             return _validationService.CanAddToMainDeck(card, CurrentDeck);
         }
 
@@ -812,7 +910,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             if (_validationService.IsEvolvedCard(card))
             {
                 var existing = CurrentDeck.EvolveDeck.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
-                return existing != null 
+                return existing != null
                     ? _validationService.CanIncreaseEvolveDeckQuantity(existing, CurrentDeck)
                     : _validationService.CanAddToEvolveDeck(card, CurrentDeck);
             }
@@ -854,11 +952,11 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         {
             var prop = e?.PropertyName ?? string.Empty;
 
-            if (string.IsNullOrEmpty(prop) || 
-                 prop == nameof(Deck.Leader1) || prop == nameof(Deck.Leader2) || 
-                 prop == nameof(Deck.GloryCard) || prop == nameof(Deck.Class1) || 
+            if (string.IsNullOrEmpty(prop) ||
+                 prop == nameof(Deck.Leader1) || prop == nameof(Deck.Leader2) ||
+                 prop == nameof(Deck.GloryCard) || prop == nameof(Deck.Class1) ||
                  prop == nameof(Deck.Class2) || prop == nameof(Deck.Name))
-             {
+            {
                 OnPropertyChanged(nameof(Leader1Image));
                 OnPropertyChanged(nameof(Leader2Image));
                 OnPropertyChanged(nameof(Leader1Name));
@@ -871,18 +969,18 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 RefreshLeadersAndGloryCard();
                 RaiseAddCommandStates();
                 EvaluateDeckValidity();
-             }
- 
-             if (string.IsNullOrEmpty(prop) || prop == nameof(Deck.MainDeck) || prop == nameof(Deck.EvolveDeck))
-             {
-                 RefreshDeckLists();
-                 OnPropertyChanged(nameof(MainDeckCount));
-                 OnPropertyChanged(nameof(EvolveDeckCount));
-                 OnPropertyChanged(nameof(CurrentInDeckQuantity));
-                 RaiseQuantityCommandStates();
-                 EvaluateDeckValidity();
-             }
-         }
+            }
+
+            if (string.IsNullOrEmpty(prop) || prop == nameof(Deck.MainDeck) || prop == nameof(Deck.EvolveDeck))
+            {
+                RefreshDeckLists();
+                OnPropertyChanged(nameof(MainDeckCount));
+                OnPropertyChanged(nameof(EvolveDeckCount));
+                OnPropertyChanged(nameof(CurrentInDeckQuantity));
+                RaiseQuantityCommandStates();
+                EvaluateDeckValidity();
+            }
+        }
 
         #endregion
 
@@ -940,7 +1038,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             RefreshDeckLists();
             RefreshValidCards();
             RefreshLeadersAndGloryCard();
-            
+
             OnPropertyChanged(nameof(DeckName));
             OnPropertyChanged(nameof(IsStandard));
             OnPropertyChanged(nameof(IsGloryfinder));
@@ -955,6 +1053,8 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             OnPropertyChanged(nameof(GloryCardImage));
             OnPropertyChanged(nameof(ShowGloryCard));
             EvaluateDeckValidity();
+
+            InitializeClassFilters();
         }
 
         private void ClearSelections()

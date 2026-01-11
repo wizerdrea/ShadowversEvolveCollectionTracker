@@ -64,8 +64,48 @@
             </Setter>
         </Style>
 
+        <!-- Shared header ContextMenu control template and MenuItem style to avoid duplication -->
+        <ControlTemplate x:Key="HeaderContextMenuControlTemplate" TargetType="ContextMenu">
+            <Border Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="6"
+                    Padding="{TemplateBinding Padding}">
+                <StackPanel IsItemsHost="True" />
+            </Border>
+        </ControlTemplate>
+
+        <Style x:Key="HeaderContextMenuItemStyle" TargetType="MenuItem">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="MenuItem">
+                        <Border Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter ContentSource="Header" RecognizesAccessKey="True"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Icon" Value="{x:Null}"/>
+        </Style>
+
+        <Style x:Key="HeaderContextMenuStyle" TargetType="ContextMenu">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="4" />
+            <Setter Property="HasDropShadow" Value="True" />
+            <Setter Property="Template" Value="{StaticResource HeaderContextMenuControlTemplate}" />
+            <Setter Property="ItemContainerStyle" Value="{StaticResource HeaderContextMenuItemStyle}" />
+        </Style>
+
         <CollectionViewSource x:Key="RarityFilters" Source="{Binding RarityFilters}"/>
         <CollectionViewSource x:Key="TypeFilters" Source="{Binding TypeFilters}"/>
+        <CollectionViewSource x:Key="ClassFilters" Source="{Binding ClassFilters}"/>
     </UserControl.Resources>
 
     <Grid>
@@ -370,49 +410,7 @@
 
                                     <Setter Property="ContextMenu">
                                         <Setter.Value>
-                                            <!-- Fully override ContextMenu template and MenuItem containers to remove default icon column (white bar). -->
-                                            <ContextMenu Background="{DynamicResource SurfaceBrush}"
-                                                         Foreground="{StaticResource TextPrimaryBrush}"
-                                                         BorderBrush="{StaticResource BorderBrush}"
-                                                         BorderThickness="1"
-                                                         Padding="4"
-                                                         HasDropShadow="True">
-                                                <!-- Custom ContextMenu template so there is no default chrome that may add unexpected padding/columns -->
-                                                <ContextMenu.Template>
-                                                    <ControlTemplate TargetType="ContextMenu">
-                                                        <Border Background="{TemplateBinding Background}"
-                                                                BorderBrush="{TemplateBinding BorderBrush}"
-                                                                BorderThickness="{TemplateBinding BorderThickness}"
-                                                                CornerRadius="6"
-                                                                Padding="{TemplateBinding Padding}">
-                                                            <!-- ItemsPresenter hosts menu items directly (no default Grid with icon column) -->
-                                                            <StackPanel IsItemsHost="True" />
-                                                        </Border>
-                                                    </ControlTemplate>
-                                                </ContextMenu.Template>
-
-                                                <!-- ItemContainerStyle removes the MenuItem default template (which reserves icon column) -->
-                                                <ContextMenu.ItemContainerStyle>
-                                                    <Style TargetType="MenuItem">
-                                                        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
-                                                        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-                                                        <Setter Property="Padding" Value="0"/>
-                                                        <Setter Property="Template">
-                                                            <Setter.Value>
-                                                                <!-- Minimal MenuItem template: don't include Icon / InputGesture columns -->
-                                                                <ControlTemplate TargetType="MenuItem">
-                                                                    <Border Background="{TemplateBinding Background}"
-                                                                            Padding="{TemplateBinding Padding}">
-                                                                        <ContentPresenter ContentSource="Header" RecognizesAccessKey="True"/>
-                                                                    </Border>
-                                                                </ControlTemplate>
-                                                            </Setter.Value>
-                                                        </Setter>
-                                                        <!-- remove default space for IconPresenter by setting Icon property to empty template when used by system -->
-                                                        <Setter Property="Icon" Value="{x:Null}"/>
-                                                    </Style>
-                                                </ContextMenu.ItemContainerStyle>
-
+                                            <ContextMenu Style="{StaticResource HeaderContextMenuStyle}">
                                                 <ContextMenu.ItemsSource>
                                                     <CompositeCollection>
                                                         <CollectionContainer Collection="{Binding Source={StaticResource RarityFilters}}"/>
@@ -460,49 +458,7 @@
 
                                     <Setter Property="ContextMenu">
                                         <Setter.Value>
-                                            <!-- Fully override ContextMenu template and MenuItem containers to remove default icon column (white bar). -->
-                                            <ContextMenu Background="{DynamicResource SurfaceBrush}"
-                                                         Foreground="{StaticResource TextPrimaryBrush}"
-                                                         BorderBrush="{StaticResource BorderBrush}"
-                                                         BorderThickness="1"
-                                                         Padding="4"
-                                                         HasDropShadow="True">
-                                                <!-- Custom ContextMenu template so there is no default chrome that may add unexpected padding/columns -->
-                                                <ContextMenu.Template>
-                                                    <ControlTemplate TargetType="ContextMenu">
-                                                        <Border Background="{TemplateBinding Background}"
-                                                                BorderBrush="{TemplateBinding BorderBrush}"
-                                                                BorderThickness="{TemplateBinding BorderThickness}"
-                                                                CornerRadius="6"
-                                                                Padding="{TemplateBinding Padding}">
-                                                            <!-- ItemsPresenter hosts menu items directly (no default Grid with icon column) -->
-                                                            <StackPanel IsItemsHost="True" />
-                                                        </Border>
-                                                    </ControlTemplate>
-                                                </ContextMenu.Template>
-
-                                                <!-- ItemContainerStyle removes the MenuItem default template (which reserves icon column) -->
-                                                <ContextMenu.ItemContainerStyle>
-                                                    <Style TargetType="MenuItem">
-                                                        <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
-                                                        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
-                                                        <Setter Property="Padding" Value="0"/>
-                                                        <Setter Property="Template">
-                                                            <Setter.Value>
-                                                                <!-- Minimal MenuItem template: don't include Icon / InputGesture columns -->
-                                                                <ControlTemplate TargetType="MenuItem">
-                                                                    <Border Background="{TemplateBinding Background}"
-                                                                            Padding="{TemplateBinding Padding}">
-                                                                        <ContentPresenter ContentSource="Header" RecognizesAccessKey="True"/>
-                                                                    </Border>
-                                                                </ControlTemplate>
-                                                            </Setter.Value>
-                                                        </Setter>
-                                                        <!-- remove default space for IconPresenter by setting Icon property to empty template when used by system -->
-                                                        <Setter Property="Icon" Value="{x:Null}"/>
-                                                    </Style>
-                                                </ContextMenu.ItemContainerStyle>
-
+                                            <ContextMenu Style="{StaticResource HeaderContextMenuStyle}">
                                                 <ContextMenu.ItemsSource>
                                                     <CompositeCollection>
                                                         <CollectionContainer Collection="{Binding Source={StaticResource TypeFilters}}"/>
@@ -541,6 +497,50 @@
 
                         <!-- New: Class icon column (between Rarity and Set) -->
                         <DataGridTemplateColumn Header="Class" Width="45">
+                            <DataGridTemplateColumn.HeaderStyle>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+                                    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+                                    <Setter Property="Padding" Value="6,4" />
+
+                                    <Setter Property="ContextMenu">
+                                        <Setter.Value>
+                                            <ContextMenu Style="{StaticResource HeaderContextMenuStyle}">
+                                                <ContextMenu.ItemsSource>
+                                                    <CompositeCollection>
+                                                        <CollectionContainer Collection="{Binding Source={StaticResource ClassFilters}}"/>
+                                                        <!--<Separator/>-->
+                                                        <MenuItem Header="Select All"
+                                                                  Command="{Binding SelectAllClassFiltersCommand}"/>
+                                                        <MenuItem Header="Clear All"
+                                                                  Command="{Binding ClearAllClassFiltersCommand}"/>
+                                                    </CompositeCollection>
+                                                </ContextMenu.ItemsSource>
+
+                                                <ContextMenu.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <!-- Use a CheckBox as the content; make its background transparent so the context surface shows through -->
+                                                        <CheckBox VerticalAlignment="Center" HorizontalAlignment="Left" OverridesDefaultStyle="False"
+                                                                  BorderThickness="0"
+                                                                  Content="{Binding Name}"
+                                                                  IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                                                                  Padding="6,4"/>
+                                                    </DataTemplate>
+                                                </ContextMenu.ItemTemplate>
+                                            </ContextMenu>
+                                        </Setter.Value>
+                                    </Setter>
+
+                                    <Setter Property="ContentTemplate">
+                                        <Setter.Value>
+                                            <DataTemplate>
+                                                <TextBlock Text="Class" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </DataGridTemplateColumn.HeaderStyle>
+
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <Border Background="Transparent" Padding="2" HorizontalAlignment="Center" VerticalAlignment="Center">
