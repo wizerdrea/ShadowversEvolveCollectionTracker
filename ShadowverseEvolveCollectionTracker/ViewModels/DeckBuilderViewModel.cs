@@ -62,6 +62,9 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         // NEW: Rarity filter items exposed to the header context menu
         public ObservableCollection<RarityFilterItem> RarityFilters { get; } = new();
 
+        // NEW: Type filter items exposed to the header context menu
+        public ObservableCollection<RarityFilterItem> TypeFilters { get; } = new();
+
         #endregion
 
         #region Favorites filter
@@ -276,6 +279,10 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         public ICommand SelectAllRarityFiltersCommand { get; private set; }
         public ICommand ClearAllRarityFiltersCommand { get; private set; }
 
+        // NEW: commands used by the Type header context menu
+        public ICommand SelectAllTypeFiltersCommand { get; private set; }
+        public ICommand ClearAllTypeFiltersCommand { get; private set; }
+
         #endregion
 
         #region Constructor
@@ -327,11 +334,31 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                     }
                 }
 
+                // NEW: apply type filters if defined (and not all checked)
+                if (TypeFilters.Count > 0)
+                {
+                    var checkedCount = TypeFilters.Count(f => f.IsChecked);
+                    if (checkedCount != TypeFilters.Count) // only filter when some are unchecked
+                    {
+                        var cardParts = (card.Type ?? string.Empty)
+                            .Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries)
+                            .Select(p => p.Trim());
+                        if (!cardParts.Any()) return false;
+
+                        bool anyMatch = cardParts.Any(cp =>
+                            TypeFilters.Any(f => f.IsChecked &&
+                                string.Equals(f.Name, cp, StringComparison.OrdinalIgnoreCase)));
+
+                        if (!anyMatch) return false;
+                    }
+                }
+
                 return true;
             };
 
-            // Initialize rarity filters from the card set (order by preferred list first)
+            // Initialize rarity and type filters from the card set (order by preferred list first)
             InitializeRarityFilters();
+            InitializeTypeFilters();
 
             // Initialize commands directly in constructor
             CreateDeckCommand = new RelayCommand(
@@ -424,7 +451,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 execute: card => { ExecuteDecreaseAvailableCard(card); return System.Threading.Tasks.Task.CompletedTask; },
                 canExecute: CanRemoveCardFromDeck);
 
-            // NEW: select/clear commands for header menu
+            // NEW: select/clear commands for header menus
             SelectAllRarityFiltersCommand = new RelayCommand(
                 execute: () => { SelectAllRarityFilters(); return System.Threading.Tasks.Task.CompletedTask; },
                 canExecute: () => RarityFilters.Count > 0);
@@ -432,6 +459,14 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             ClearAllRarityFiltersCommand = new RelayCommand(
                 execute: () => { ClearAllRarityFilters(); return System.Threading.Tasks.Task.CompletedTask; },
                 canExecute: () => RarityFilters.Count > 0);
+
+            SelectAllTypeFiltersCommand = new RelayCommand(
+                execute: () => { SelectAllTypeFilters(); return System.Threading.Tasks.Task.CompletedTask; },
+                canExecute: () => TypeFilters.Count > 0);
+
+            ClearAllTypeFiltersCommand = new RelayCommand(
+                execute: () => { ClearAllTypeFilters(); return System.Threading.Tasks.Task.CompletedTask; },
+                canExecute: () => TypeFilters.Count > 0);
 
             CardViewer.PropertyChanged += CardViewer_PropertyChanged;
         }
@@ -472,6 +507,49 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         }
 
         private void RarityFilterItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(e?.PropertyName) || e.PropertyName == nameof(RarityFilterItem.IsChecked))
+            {
+                _validCards.Refresh();
+            }
+        }
+
+        #endregion
+
+        #region Type Filter Initialization & Handling
+
+        private void InitializeTypeFilters()
+        {
+            try
+            {
+                // Initialize collection, default to checked (show all)
+                TypeFilters.Clear();
+                foreach (var t in CardTypes.AllCardTypes)
+                {
+                    var item = new RarityFilterItem(t, isChecked: true);
+                    item.PropertyChanged += TypeFilterItem_PropertyChanged;
+                    TypeFilters.Add(item);
+                }
+            }
+            catch
+            {
+                // swallow - no filters available
+            }
+        }
+
+        private void SelectAllTypeFilters()
+        {
+            foreach (var f in TypeFilters) f.IsChecked = true;
+            _validCards.Refresh();
+        }
+
+        private void ClearAllTypeFilters()
+        {
+            foreach (var f in TypeFilters) f.IsChecked = false;
+            _validCards.Refresh();
+        }
+
+        private void TypeFilterItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             if (string.IsNullOrEmpty(e?.PropertyName) || e.PropertyName == nameof(RarityFilterItem.IsChecked))
             {
