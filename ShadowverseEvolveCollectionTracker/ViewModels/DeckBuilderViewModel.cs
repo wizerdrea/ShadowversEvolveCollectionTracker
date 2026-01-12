@@ -504,7 +504,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
                         bool anyMatch = cardParts.Any(cp =>
                             SetFilters.Any(f => f.IsChecked &&
-                                string.Equals(f.Name, cp, StringComparison.OrdinalIgnoreCase)));
+                                cp.Contains(f.Name, StringComparison.OrdinalIgnoreCase)));
 
                         if (!anyMatch) return false;
                     }

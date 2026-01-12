@@ -502,8 +502,24 @@
                           SelectionMode="Single"
                           IsReadOnly="True"
                           Margin="8,0,8,8">
+
                     <DataGrid.RowStyle>
-                        <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}" />
+                        <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                            <Setter Property="ToolTip">
+                                <Setter.Value>
+                                    <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                        <Border Background="transparent" 
+                                                Padding="0" 
+                                                CornerRadius="4" 
+                                                BorderBrush="Transparent" 
+                                                BorderThickness="0">
+                                            <Image Source="{Binding ImageFile, Converter={StaticResource StringToImageConverter}}"
+                                                   Width="240" Height="320" Stretch="Uniform"/>
+                                        </Border>
+                                    </ToolTip>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
                     </DataGrid.RowStyle>
 
                     <DataGrid.Columns>
