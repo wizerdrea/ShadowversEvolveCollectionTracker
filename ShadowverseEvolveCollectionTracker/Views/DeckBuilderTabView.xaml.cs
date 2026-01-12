@@ -171,17 +171,21 @@ namespace ShadowverseEvolveCardTracker.Views
             }
         }
 
-        private void AvailableCardsGrid_Selected(object sender, RoutedEventArgs e)
+        // Updated: correct event signature for DataGrid SelectionChanged
+        private void AvailableCardsGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // Clear selections in other lists
-            if (LeadersListBox != null)
-                LeadersListBox.SelectedItem = null;
-            if (GloryCardListBox != null)
-                GloryCardListBox.SelectedItem = null;
-            if (MainDeckListControl != null)
-                MainDeckListControl.SelectedItem = null;
-            if (EvolveDeckListControl != null)
-                EvolveDeckListControl.SelectedItem = null;
+            if (AvailableCardsGrid.SelectedItem != null)
+            {
+                // Clear selections in other lists
+                if (LeadersListBox != null)
+                    LeadersListBox.SelectedItem = null;
+                if (GloryCardListBox != null)
+                    GloryCardListBox.SelectedItem = null;
+                if (MainDeckListControl != null)
+                    MainDeckListControl.SelectedItem = null;
+                if (EvolveDeckListControl != null)
+                    EvolveDeckListControl.SelectedItem = null;
+            }
         }
 
         private void LeadersListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)

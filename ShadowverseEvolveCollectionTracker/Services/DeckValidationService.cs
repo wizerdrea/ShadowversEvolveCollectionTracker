@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using ShadowverseEvolveCardTracker.Models;
 using System.Collections.Generic;
+using ShadowverseEvolveCardTracker.Constants;
 
 namespace ShadowverseEvolveCardTracker.Services
 {
@@ -142,7 +143,10 @@ namespace ShadowverseEvolveCardTracker.Services
             (string.Equals(card.Class, deck.Class1, StringComparison.OrdinalIgnoreCase) ||
             string.Equals(card.Class, "Neutral", StringComparison.OrdinalIgnoreCase));
 
-        private bool IsValidForGloryfinder(CardData card, Deck deck) => IsValidFormat(card, deck);
+        private bool IsValidForGloryfinder(CardData card, Deck deck) =>
+            IsValidFormat(card, deck) &&
+            (!card.Type.Contains(CardTypes.Leader, StringComparison.OrdinalIgnoreCase) || 
+             card.Class.Contains(deck.Class1, StringComparison.OrdinalIgnoreCase));
 
         private bool IsValidForCrossCraft(CardData card, Deck deck) =>
             IsValidFormat(card, deck) &&

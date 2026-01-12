@@ -292,6 +292,16 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 var card = CardViewer.CurrentCard;
                 if (card == null || CurrentDeck == null) return 0;
 
+                // If the card is a leader and assigned to either leader slot, present as 1 "in deck"
+                if (_validationService.IsLeaderCard(card))
+                {
+                    if (CurrentDeck.Leader1?.CardNumber == card.CardNumber ||
+                        CurrentDeck.Leader2?.CardNumber == card.CardNumber)
+                    {
+                        return 1;
+                    }
+                }
+
                 if (_validationService.IsNonDeckCard(card)) return 0;
 
                 var deck = _validationService.IsEvolvedCard(card)
@@ -551,7 +561,17 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                         int inDeckQty = 0;
                         if (_validationService.IsNonDeckCard(card))
                         {
-                            inDeckQty = 0;
+                            // but if it's a leader assigned to a slot, treat as 1
+                            if (_validationService.IsLeaderCard(card) &&
+                                (CurrentDeck.Leader1?.CardNumber == card.CardNumber ||
+                                 CurrentDeck.Leader2?.CardNumber == card.CardNumber))
+                            {
+                                inDeckQty = 1;
+                            }
+                            else
+                            {
+                                inDeckQty = 0;
+                            }
                         }
                         else
                         {
@@ -598,7 +618,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 execute: () => { CreateNewDeck(); return System.Threading.Tasks.Task.CompletedTask; },
                 canExecute: () => true);
 
-            EditDeckCommand = new RelayCommand<Deck?>(
+            EditDeckCommand = new RelayCommand<Deck?>( 
                 execute: deck =>
                 {
                     if (deck != null)
@@ -610,7 +630,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 },
                 canExecute: deck => deck != null);
 
-            DeleteDeckCommand = new RelayCommand<Deck?>(
+            DeleteDeckCommand = new RelayCommand<Deck?>( 
                 execute: deck =>
                 {
                     if (deck != null)
@@ -1327,6 +1347,11 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
             _operationsHandler.DecreaseQuantity(entry, CurrentDeck, isEvolveDeck);
             RefreshDeckLists();
+
+            // If the card we decreased is a leader and its quantity reached zero (or it's no longer in the deck list),
+            // clear the leader slot(s) it occupied.
+            ClearLeaderSlotIfQuantityZero(entry.Card);
+
             NotifyDeckChanged();
         }
 
@@ -1334,6 +1359,16 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         {
             var card = CardViewer.CurrentCard;
             if (card == null || CurrentDeck == null) return;
+
+            // Allow increasing/assigning leader via the + button when viewing the card.
+            if (_validationService.IsLeaderCard(card))
+            {
+                if (TryAssignLeaderToOpenSlot(card))
+                {
+                    NotifyDeckChanged();
+                }
+                return;
+            }
 
             if (_validationService.IsEvolvedCard(card))
             {
@@ -1359,6 +1394,46 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         {
             var card = CardViewer.CurrentCard;
             if (card == null || CurrentDeck == null) return;
+
+            // Special handling for leader cards: allow decreasing (clearing the slot) even if they are non-deck.
+            if (_validationService.IsLeaderCard(card))
+            {
+                var removed = false;
+
+                if (CurrentDeck.Leader1?.CardNumber == card.CardNumber)
+                {
+                    CurrentDeck.Leader1 = null;
+                    removed = true;
+                }
+
+                if (CurrentDeck.Leader2?.CardNumber == card.CardNumber)
+                {
+                    CurrentDeck.Leader2 = null;
+                    removed = true;
+                }
+
+                // Also decrease any deck entry quantities if present
+                var existingMain = CurrentDeck.MainDeck.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
+                if (existingMain != null)
+                {
+                    _operationsHandler.DecreaseQuantity(existingMain, CurrentDeck, false);
+                    RefreshDeckLists();
+                    removed = true;
+                }
+
+                var existingEvolve = CurrentDeck.EvolveDeck.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
+                if (existingEvolve != null)
+                {
+                    _operationsHandler.DecreaseQuantity(existingEvolve, CurrentDeck, true);
+                    RefreshDeckLists();
+                    removed = true;
+                }
+
+                if (removed)
+                    NotifyDeckChanged();
+
+                return;
+            }
 
             if (_validationService.IsEvolvedCard(card))
             {
@@ -1386,6 +1461,16 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         {
             if (card == null || CurrentDeck == null) return;
 
+            // Allow increasing/assigning leader via the + button in the available cards grid.
+            if (_validationService.IsLeaderCard(card))
+            {
+                if (TryAssignLeaderToOpenSlot(card))
+                {
+                    NotifyDeckChanged();
+                }
+                return;
+            }
+
             if (_validationService.IsEvolvedCard(card))
             {
                 var existing = CurrentDeck.EvolveDeck.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
@@ -1409,6 +1494,46 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         private void ExecuteDecreaseAvailableCard(CardData? card)
         {
             if (card == null || CurrentDeck == null) return;
+
+            // allow decreasing leader cards if they are assigned
+            if (_validationService.IsLeaderCard(card))
+            {
+                var removed = false;
+
+                if (CurrentDeck.Leader1?.CardNumber == card.CardNumber)
+                {
+                    CurrentDeck.Leader1 = null;
+                    removed = true;
+                }
+
+                if (CurrentDeck.Leader2?.CardNumber == card.CardNumber)
+                {
+                    CurrentDeck.Leader2 = null;
+                    removed = true;
+                }
+
+                // Also decrease any deck entry quantities if present
+                var existingMain = CurrentDeck.MainDeck.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
+                if (existingMain != null)
+                {
+                    _operationsHandler.DecreaseQuantity(existingMain, CurrentDeck, false);
+                    RefreshDeckLists();
+                    removed = true;
+                }
+
+                var existingEvolve = CurrentDeck.EvolveDeck.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
+                if (existingEvolve != null)
+                {
+                    _operationsHandler.DecreaseQuantity(existingEvolve, CurrentDeck, true);
+                    RefreshDeckLists();
+                    removed = true;
+                }
+
+                if (removed)
+                    NotifyDeckChanged();
+
+                return;
+            }
 
             if (_validationService.IsEvolvedCard(card))
             {
@@ -1458,7 +1583,17 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         {
             if (card == null || CurrentDeck == null) return false;
 
-            if (_validationService.IsNonDeckCard(card)) return false;
+            // allow leader removal even if it's a "non-deck" card, but only when assigned to a leader slot
+            if (_validationService.IsNonDeckCard(card))
+            {
+                if (_validationService.IsLeaderCard(card))
+                {
+                    return CurrentDeck.Leader1?.CardNumber == card.CardNumber ||
+                           CurrentDeck.Leader2?.CardNumber == card.CardNumber;
+                }
+
+                return false;
+            }
 
             if (_validationService.IsEvolvedCard(card))
                 return CurrentDeck.EvolveDeck.Any(e => e.Card.CardNumber == card.CardNumber);
@@ -1470,6 +1605,12 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         {
             var card = CardViewer.CurrentCard;
             if (card == null || CurrentDeck == null) return false;
+
+            // allow increasing leader via + when there is an open/valid leader slot
+            if (_validationService.IsLeaderCard(card))
+            {
+                return _validationService.CanAddLeader(card, CurrentDeck);
+            }
 
             if (_validationService.IsNonDeckCard(card)) return false;
 
@@ -1492,7 +1633,17 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             var card = CardViewer.CurrentCard;
             if (card == null || CurrentDeck == null) return false;
 
-            if (_validationService.IsNonDeckCard(card)) return false;
+            // allow decreasing leader cards when they are assigned to a leader slot
+            if (_validationService.IsNonDeckCard(card))
+            {
+                if (_validationService.IsLeaderCard(card))
+                {
+                    return CurrentDeck.Leader1?.CardNumber == card.CardNumber ||
+                           CurrentDeck.Leader2?.CardNumber == card.CardNumber;
+                }
+
+                return false;
+            }
 
             if (_validationService.IsEvolvedCard(card))
                 return CurrentDeck.EvolveDeck.Any(e => e.Card.CardNumber == card.CardNumber && e.Quantity > 0);
@@ -1656,6 +1807,73 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         {
             if (_subscribedDeck != null)
                 _subscribedDeck.PropertyChanged -= Deck_PropertyChanged;
+        }
+
+        /// <summary>
+        /// If the provided card is assigned as a leader and the deck no longer contains any entries
+        /// for that card (quantity zero), clear the leader slot(s) it occupied.
+        /// </summary>
+        private void ClearLeaderSlotIfQuantityZero(CardData card)
+        {
+            if (CurrentDeck == null) return;
+
+            // determine remaining quantity in mains/evolves for this card
+            var mainQty = CurrentDeck.MainDeck.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber)?.Quantity ?? 0;
+            var evolveQty = CurrentDeck.EvolveDeck.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber)?.Quantity ?? 0;
+            var totalQty = mainQty + evolveQty;
+
+            if (totalQty == 0)
+            {
+                var cleared = false;
+                if (CurrentDeck.Leader1?.CardNumber == card.CardNumber)
+                {
+                    CurrentDeck.Leader1 = null;
+                    cleared = true;
+                }
+
+                if (CurrentDeck.Leader2?.CardNumber == card.CardNumber)
+                {
+                    CurrentDeck.Leader2 = null;
+                    cleared = true;
+                }
+
+                if (cleared)
+                {
+                    // ensure UI and validation reflect change
+                    RefreshLeadersAndGloryCard();
+                    EvaluateDeckValidity();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Try to assign the provided leader card into an open valid leader slot.
+        /// Returns true when assignment occurred.
+        /// </summary>
+        private bool TryAssignLeaderToOpenSlot(CardData card)
+        {
+            if (CurrentDeck == null) return false;
+
+            if (!_validationService.CanAddLeader(card, CurrentDeck)) return false;
+
+            // Assign to first available slot according to deck type.
+            if (CurrentDeck.Leader1 == null)
+            {
+                CurrentDeck.Leader1 = card;
+                RefreshLeadersAndGloryCard();
+                EvaluateDeckValidity();
+                return true;
+            }
+
+            if (CurrentDeck.DeckType == DeckType.CrossCraft && CurrentDeck.Leader2 == null)
+            {
+                CurrentDeck.Leader2 = card;
+                RefreshLeadersAndGloryCard();
+                EvaluateDeckValidity();
+                return true;
+            }
+
+            return false;
         }
 
         #endregion

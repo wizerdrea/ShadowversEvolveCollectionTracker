@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using System.Linq;
 using System.Windows.Data;
+using ShadowverseEvolveCardTracker.Constants;
 using ShadowverseEvolveCardTracker.Models;
 
 namespace ShadowverseEvolveCardTracker.Converters
@@ -26,10 +27,16 @@ namespace ShadowverseEvolveCardTracker.Converters
                 if (card == null || deck == null) return "0";
 
                 // Leaders/tokens aren't represented by deck quantities
-                if ((card.Type?.Contains("Leader", StringComparison.OrdinalIgnoreCase) ?? false) ||
-                    (card.Type?.Contains("Token", StringComparison.OrdinalIgnoreCase) ?? false))
+                if (card.Type?.Contains("Token", StringComparison.OrdinalIgnoreCase) ?? false)
                 {
                     return "0";
+                }
+
+                if (card.Type?.Contains(CardTypes.Leader, StringComparison.OrdinalIgnoreCase) ?? false)
+                {
+                    return deck.Leader1?.CardNumber == card.CardNumber ||
+                        deck.Leader2?.CardNumber == card.CardNumber ?
+                        "1" : "0";
                 }
 
                 if (card.Type?.Contains("Evolved", StringComparison.OrdinalIgnoreCase) ?? false)

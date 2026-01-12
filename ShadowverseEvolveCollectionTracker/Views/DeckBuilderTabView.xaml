@@ -501,6 +501,7 @@
                           AutoGenerateColumns="False"
                           SelectionMode="Single"
                           IsReadOnly="True"
+                          SelectionChanged="AvailableCardsGrid_SelectionChanged"
                           Margin="8,0,8,8">
 
                     <DataGrid.RowStyle>
