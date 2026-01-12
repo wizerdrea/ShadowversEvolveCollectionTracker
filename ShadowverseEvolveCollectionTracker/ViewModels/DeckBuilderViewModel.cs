@@ -11,6 +11,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
@@ -395,6 +396,9 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         // NEW: single command that either sets the viewed card as glory or moves the current glory back to main
         public ICommand SetOrMoveGloryCommand { get; private set; }
 
+        // NEW: add-missing-to-wishlist command
+        public ICommand AddMissingToWishlistCommand { get; private set; }
+
         // NEW: commands used by the Rarity header context menu
         public ICommand SelectAllRarityFiltersCommand { get; private set; }
         public ICommand ClearAllRarityFiltersCommand { get; private set; }
@@ -778,6 +782,11 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             SetOrMoveGloryCommand = new RelayCommand(
                 execute: () => { ExecuteSetOrMoveGlory(); return System.Threading.Tasks.Task.CompletedTask; },
                 canExecute: () => CanSetOrMoveGlory(CardViewer.CurrentCard));
+
+            // NEW: add-missing-to-wishlist command
+            AddMissingToWishlistCommand = new RelayCommand(
+                execute: () => { ExecuteAddMissingToWishlist(); return System.Threading.Tasks.Task.CompletedTask; },
+                canExecute: () => CurrentDeck != null);
 
             // NEW: select/clear commands for header menus
             SelectAllRarityFiltersCommand = new RelayCommand(
@@ -1755,6 +1764,65 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             NotifyDeckChanged();
         }
 
+        // NEW: Add missing cards from current deck to wishlist
+        private void ExecuteAddMissingToWishlist()
+        {
+            if (CurrentDeck == null) return;
+
+            // Build required counts from deck contents (leaders, glory, main, evolve, tokens)
+            var requiredByCard = new Dictionary<string, (CardData Card, int Required)>(StringComparer.OrdinalIgnoreCase);
+
+            void AddRequired(CardData card, int qty)
+            {
+                if (card == null) return;
+                if (requiredByCard.TryGetValue(card.CardNumber, out var entry))
+                {
+                    entry.Required += qty;
+                    requiredByCard[card.CardNumber] = entry;
+                }
+                else
+                {
+                    requiredByCard[card.CardNumber] = (card, qty);
+                }
+            }
+
+            if (CurrentDeck.Leader1 != null) AddRequired(CurrentDeck.Leader1, 1);
+            if (CurrentDeck.Leader2 != null) AddRequired(CurrentDeck.Leader2, 1);
+            if (CurrentDeck.GloryCard != null) AddRequired(CurrentDeck.GloryCard, 1);
+
+            foreach (var e in CurrentDeck.MainDeck)
+                AddRequired(e.Card, e.Quantity);
+
+            foreach (var e in CurrentDeck.EvolveDeck)
+                AddRequired(e.Card, e.Quantity);
+
+            foreach (var e in CurrentDeck.Tokens)
+                AddRequired(e.Card, e.Quantity);
+
+            int updatedCount = 0;
+            foreach (var kvp in requiredByCard.Values)
+            {
+                // Prefer the master CardData instance from _allCards if available
+                var master = _allCards.FirstOrDefault(c => c.CardNumber == kvp.Card.CardNumber) ?? kvp.Card;
+                int owned = master.QuantityOwned;
+                int desired = Math.Max(0, kvp.Required - owned);
+                if (desired <= 0) continue;
+
+                // Preserve a larger existing wishlist (don't reduce user's manual higher wishlist).
+                if (master.WishlistDesiredQuantity < desired)
+                {
+                    master.WishlistDesiredQuantity = desired;
+                    updatedCount++;
+                }
+            }
+
+            // Provide user feedback
+            if (updatedCount == 0)
+                MessageBox.Show("No missing copies were added to the wishlist — you already own enough or wishlist entries are equal/higher.", "Wishlist", MessageBoxButton.OK, MessageBoxImage.Information);
+            else
+                MessageBox.Show($"Added/updated wishlist entries for {updatedCount} card(s).", "Wishlist Updated", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
         #endregion
 
         #region Can Execute Helpers
@@ -2192,6 +2260,9 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
             // Glory command state as part of global command state refresh
             RaiseGloryCommandStates();
+
+            // New wishlist command state
+            RaiseCommand(AddMissingToWishlistCommand);
         }
 
         private void RaiseGloryCommandStates()

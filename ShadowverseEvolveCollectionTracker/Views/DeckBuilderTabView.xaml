@@ -417,9 +417,29 @@
                 </Grid.RowDefinitions>
 
                 <StackPanel Grid.Row="0" Margin="8" HorizontalAlignment="Left">
-                    <Button Content="← Back to Deck List" 
-                            Command="{Binding BackToDeckListCommand}"
-                            Margin="0,0,0,8"/>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="← Back to Deck List" 
+                                Command="{Binding BackToDeckListCommand}"
+                                Margin="0,0,0,8"/>
+                        <Button Padding="3"
+                                Margin="4,0,0,8"
+                                Command="{Binding AddMissingToWishlistCommand}"
+                                Content="Add Missing Cards to Wishlist">
+                            <Button.ToolTip>
+                                <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                    <Border Background="{DynamicResource ElevatedBrush}"
+                                            Padding="6"
+                                            CornerRadius="4"
+                                            BorderBrush="{DynamicResource AccentBrush}"
+                                            BorderThickness="1">
+                                        <TextBlock Text="Add any cards required by this deck you don't own to your wishlist"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                    </Border>
+                                </ToolTip>
+                            </Button.ToolTip>
+                        </Button>
+                    </StackPanel>
+                    
                     <TextBlock Text="Available Cards" 
                                FontWeight="SemiBold" 
                                FontSize="14"
