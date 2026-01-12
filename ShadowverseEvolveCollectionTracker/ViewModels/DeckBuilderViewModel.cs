@@ -1816,11 +1816,20 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 }
             }
 
-            // Provide user feedback
-            if (updatedCount == 0)
-                MessageBox.Show("No missing copies were added to the wishlist — you already own enough or wishlist entries are equal/higher.", "Wishlist", MessageBoxButton.OK, MessageBoxImage.Information);
-            else
-                MessageBox.Show($"Added/updated wishlist entries for {updatedCount} card(s).", "Wishlist Updated", MessageBoxButton.OK, MessageBoxImage.Information);
+            var message = updatedCount == 0
+                ? "No missing copies were added to the wishlist — you already own enough or wishlist entries are equal/higher."
+                : $"Added/updated wishlist entries for {updatedCount} card(s).";
+
+            var title = updatedCount == 0 ? "Wishlist" : "Wishlist Updated";
+
+            var dlg = new Views.InfoDialog
+            {
+                Owner = System.Windows.Application.Current?.MainWindow,
+                Message = message,
+                Title = title
+            };
+
+            dlg.ShowDialog();
         }
 
         #endregion

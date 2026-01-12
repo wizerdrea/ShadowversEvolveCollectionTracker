@@ -1,0 +1,86 @@
+﻿<Window x:Class="ShadowverseEvolveCardTracker.Views.InfoDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="{Binding Title}"
+        Height="160"
+        Width="420"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ShowInTaskbar="False">
+    <Border Background="{DynamicResource ElevatedBrush}"
+            BorderBrush="{DynamicResource AccentBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            Padding="0"
+            SnapsToDevicePixels="True">
+        <Grid>
+            <Grid.RowDefinitions>
+                <!-- Header row -->
+                <RowDefinition Height="36"/>
+                <!-- Body -->
+                <RowDefinition Height="*"/>
+                <!-- Footer (OK button) -->
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header bar -->
+            <Border Grid.Row="0"
+                    Background="{DynamicResource HeaderGradientBrush}"
+                    CornerRadius="8,8,0,0"
+                    Padding="8,4"
+                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition />
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Text="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}"
+                               VerticalAlignment="Center"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
+                               FontSize="14"/>
+
+                    <Button Grid.Column="1"
+                            Width="28"
+                            Height="24"
+                            Padding="0"
+                            Margin="8,0,0,0"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            ToolTip="Close"
+                            Click="CloseButton_Click">
+                        <TextBlock Text="✕"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" MaxHeight="220"
+                          VerticalAlignment="Center" Padding="12">
+                <TextBlock Text="{Binding Message}"
+                           TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextPrimaryBrush}"
+                           FontSize="13"/>
+            </ScrollViewer>
+
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,12,12">
+                <Button Width="92"
+                        Height="30"
+                        Margin="6,0,0,0"
+                        Padding="6,2"
+                        Content="OK"
+                        IsDefault="True"
+                        Click="OkButton_Click"
+                        Background="{DynamicResource SelectedBrush}"
+                        Foreground="{DynamicResource TextPrimaryBrush}"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>
