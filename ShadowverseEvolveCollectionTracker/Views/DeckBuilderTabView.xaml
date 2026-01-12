@@ -1230,6 +1230,18 @@
                         </StackPanel>
                     </Border>
                 </StackPanel>
+                
+                <!-- Glory Card Button -->
+                <Button Grid.Row="2"
+                        Width="76"
+                        Height="40"
+                        Padding="3"
+                        Margin="16,8,0,0"
+                        HorizontalAlignment="Right"
+                        Visibility="{Binding ShowSetGloryButton, Converter={StaticResource BoolToVisConverter}}"
+                        Command="{Binding SetOrMoveGloryCommand }">
+                    <TextBlock TextWrapping="Wrap" TextAlignment="Center" Text="{Binding SetGloryButtonLabel }"/>
+                </Button>
             </Grid>
 
             <!-- GridSplitter between Center and Right -->

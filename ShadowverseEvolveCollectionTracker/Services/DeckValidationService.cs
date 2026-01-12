@@ -323,15 +323,6 @@ namespace ShadowverseEvolveCardTracker.Services
                             errors.Add($"No more than one copy allowed of \"{sample.Name}\" ({sample.Type}). Found {copies}.");
                     }
 
-                    foreach (var entry in allEntries())
-                    {
-                        var c = entry.Card;
-                        if (!(string.Equals(c.Class, deck.Class1, StringComparison.OrdinalIgnoreCase)
-                              || string.Equals(c.Class, "Neutral", StringComparison.OrdinalIgnoreCase)))
-                        {
-                            errors.Add($"Card \"{c.Name}\" is class {c.Class} but must be {deck.Class1} or Neutral.");
-                        }
-                    }
                     break;
 
                 case DeckType.CrossCraft:

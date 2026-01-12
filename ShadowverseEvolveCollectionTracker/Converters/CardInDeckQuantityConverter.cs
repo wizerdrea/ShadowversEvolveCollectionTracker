@@ -39,6 +39,13 @@ namespace ShadowverseEvolveCardTracker.Converters
                         "1" : "0";
                 }
 
+                if (deck.DeckType is DeckType.Gloryfinder &&
+                    !string.IsNullOrWhiteSpace(deck.GloryCard?.CardNumber) &&
+                    deck.GloryCard.CardNumber == card.CardNumber)
+                {
+                    return "1";
+                }
+
                 if (card.Type?.Contains("Evolved", StringComparison.OrdinalIgnoreCase) ?? false)
                 {
                     var e = deck.EvolveDeck.FirstOrDefault(d => d.Card.CardNumber == card.CardNumber);

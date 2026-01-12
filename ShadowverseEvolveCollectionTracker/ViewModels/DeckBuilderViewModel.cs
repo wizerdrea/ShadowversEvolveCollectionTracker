@@ -1,3 +1,8 @@
+using ShadowverseEvolveCardTracker.Constants;
+using ShadowverseEvolveCardTracker.Models;
+using ShadowverseEvolveCardTracker.Services;
+using ShadowverseEvolveCardTracker.Utilities;
+using ShadowverseEvolveCardTracker.Views;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -6,13 +11,9 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
-using ShadowverseEvolveCardTracker.Constants;
-using ShadowverseEvolveCardTracker.Models;
-using ShadowverseEvolveCardTracker.Services;
-using ShadowverseEvolveCardTracker.Utilities;
-using ShadowverseEvolveCardTracker.Views;
 
 namespace ShadowverseEvolveCardTracker.ViewModels
 {
@@ -285,6 +286,33 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         public string Leader1Name => CurrentDeck?.Leader1?.Name ?? "None";
         public string Leader2Name => CurrentDeck?.Leader2?.Name ?? "None";
 
+        // NEW: Single button label & visibility for glory actions (bound in view)
+        public string SetGloryButtonLabel
+        {
+            get
+            {
+                var cur = CardViewer.CurrentCard;
+                if (CurrentDeck == null || cur == null) return string.Empty;
+                if (CurrentDeck.DeckType != DeckType.Gloryfinder) return string.Empty;
+                if (CurrentDeck.GloryCard != null && CurrentDeck.GloryCard.CardNumber == cur.CardNumber)
+                    return "Move to Main Deck";
+                return "Set as Glory Card";
+            }
+        }
+
+        public bool ShowSetGloryButton
+        {
+            get
+            {
+                var cur = CardViewer.CurrentCard;
+                if (CurrentDeck == null || cur == null) return false;
+                if (CurrentDeck.DeckType != DeckType.Gloryfinder) return false;
+
+                // show when card meets glory candidate rules OR when viewing current glory card
+                return IsValidGloryCandidate(cur) || (CurrentDeck.GloryCard != null && CurrentDeck.GloryCard.CardNumber == cur.CardNumber);
+            }
+        }
+
         public int CurrentInDeckQuantity
         {
             get
@@ -300,6 +328,12 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                     {
                         return 1;
                     }
+                }
+
+                // If card is the glory card, present as 1 "in deck"
+                if (CurrentDeck.DeckType == DeckType.Gloryfinder && CurrentDeck.GloryCard?.CardNumber == card.CardNumber)
+                {
+                    return 1;
                 }
 
                 if (_validationService.IsNonDeckCard(card)) return 0;
@@ -337,6 +371,9 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
         public ICommand IncreaseAvailableCardCommand { get; }
         public ICommand DecreaseAvailableCardCommand { get; }
+
+        // NEW: single command that either sets the viewed card as glory or moves the current glory back to main
+        public ICommand SetOrMoveGloryCommand { get; private set; }
 
         // NEW: commands used by the Rarity header context menu
         public ICommand SelectAllRarityFiltersCommand { get; private set; }
@@ -703,6 +740,11 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             DecreaseAvailableCardCommand = new RelayCommand<CardData?>(
                 execute: card => { ExecuteDecreaseAvailableCard(card); return System.Threading.Tasks.Task.CompletedTask; },
                 canExecute: CanRemoveCardFromDeck);
+
+            // NEW: glory command - set or move depending on state
+            SetOrMoveGloryCommand = new RelayCommand(
+                execute: () => { ExecuteSetOrMoveGlory(); return System.Threading.Tasks.Task.CompletedTask; },
+                canExecute: () => CanSetOrMoveGlory(CardViewer.CurrentCard));
 
             // NEW: select/clear commands for header menus
             SelectAllRarityFiltersCommand = new RelayCommand(
@@ -1395,6 +1437,15 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             var card = CardViewer.CurrentCard;
             if (card == null || CurrentDeck == null) return;
 
+            // If the viewed card is the current glory card, pressing - should clear the glory slot
+            if (CurrentDeck.DeckType == DeckType.Gloryfinder && CurrentDeck.GloryCard?.CardNumber == card.CardNumber)
+            {
+                CurrentDeck.GloryCard = null;
+                RefreshLeadersAndGloryCard();
+                NotifyDeckChanged();
+                return;
+            }
+
             // Special handling for leader cards: allow decreasing (clearing the slot) even if they are non-deck.
             if (_validationService.IsLeaderCard(card))
             {
@@ -1495,6 +1546,16 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         {
             if (card == null || CurrentDeck == null) return;
 
+            // NEW: If the card is the current glory card in a Gloryfinder deck, pressing '-' in
+            // the Available cards grid should clear the glory slot.
+            if (CurrentDeck.DeckType == DeckType.Gloryfinder && CurrentDeck.GloryCard?.CardNumber == card.CardNumber)
+            {
+                CurrentDeck.GloryCard = null;
+                RefreshLeadersAndGloryCard();
+                NotifyDeckChanged();
+                return;
+            }
+
             // allow decreasing leader cards if they are assigned
             if (_validationService.IsLeaderCard(card))
             {
@@ -1557,6 +1618,78 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             NotifyDeckChanged();
         }
 
+        // NEW: Set or Move Glory command handling
+        private bool IsValidGloryCandidate(CardData card)
+        {
+            if (card == null || CurrentDeck == null) return false;
+            if (CurrentDeck.DeckType != DeckType.Gloryfinder) return false;
+
+            // valid glory: non-leader, non-token, non-evolved, of deck's class
+            if (_validationService.IsLeaderCard(card)) return false;
+            if (_validationService.IsTokenCard(card)) return false;
+            if (_validationService.IsEvolvedCard(card)) return false;
+
+            if (!string.Equals(card.Class, CurrentDeck.Class1, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            return true;
+        }
+
+        private bool CanSetOrMoveGlory(CardData? card)
+        {
+            if (card == null || CurrentDeck == null) return false;
+            if (CurrentDeck.DeckType != DeckType.Gloryfinder) return false;
+
+            // If viewing the current glory card -> allow move if main deck can accept it
+            if (CurrentDeck.GloryCard != null && CurrentDeck.GloryCard.CardNumber == card.CardNumber)
+            {
+                // can move to main deck if there's space and no duplicate already in main deck
+                int currentCount = CurrentDeck.MainDeck.Sum(e => e.Quantity);
+                bool alreadyInMain = CurrentDeck.MainDeck.Any(e => e.Card.CardNumber == card.CardNumber);
+                return currentCount < 50 && !alreadyInMain;
+            }
+
+            // Else allow setting as glory if it meets candidate rules and there is no existing glory card
+            return IsValidGloryCandidate(card) && CurrentDeck.GloryCard == null;
+        }
+
+        private void ExecuteSetOrMoveGlory()
+        {
+            var card = CardViewer.CurrentCard;
+            if (card == null || CurrentDeck == null) return;
+
+            // If current card is the deck's glory card -> move it to main deck (if possible)
+            if (CurrentDeck.GloryCard != null && CurrentDeck.GloryCard.CardNumber == card.CardNumber)
+            {
+                // check capacity and duplicates
+                int currentCount = CurrentDeck.MainDeck.Sum(e => e.Quantity);
+                bool alreadyInMain = CurrentDeck.MainDeck.Any(e => e.Card.CardNumber == card.CardNumber);
+                if (currentCount < 50 && !alreadyInMain)
+                {
+                    CurrentDeck.MainDeck.Add(new DeckEntry { Card = card, Quantity = 1 });
+                    CurrentDeck.GloryCard = null;
+                    RefreshDeckLists();
+                    RefreshLeadersAndGloryCard();
+                    NotifyDeckChanged();
+                }
+                return;
+            }
+
+            // Setting a new glory card
+            if (!IsValidGloryCandidate(card) || CurrentDeck.GloryCard != null) return;
+
+            // If card is present in main deck remove it
+            var existing = CurrentDeck.MainDeck.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
+            if (existing != null)
+            {
+                CurrentDeck.MainDeck.Remove(existing);
+            }
+
+            CurrentDeck.GloryCard = card;
+            RefreshLeadersAndGloryCard();
+            NotifyDeckChanged();
+        }
+
         #endregion
 
         #region Can Execute Helpers
@@ -1593,6 +1726,13 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 }
 
                 return false;
+            }
+
+            if (CurrentDeck.DeckType is DeckType.Gloryfinder &&
+                !string.IsNullOrWhiteSpace(CurrentDeck.GloryCard?.CardNumber) &&
+                CurrentDeck.GloryCard.CardNumber == card.CardNumber)
+            {
+                return true;
             }
 
             if (_validationService.IsEvolvedCard(card))
@@ -1633,6 +1773,10 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             var card = CardViewer.CurrentCard;
             if (card == null || CurrentDeck == null) return false;
 
+            // If the viewed card is the current glory card -> allow '-' to clear it
+            if (CurrentDeck.DeckType == DeckType.Gloryfinder && CurrentDeck.GloryCard?.CardNumber == card.CardNumber)
+                return true;
+
             // allow decreasing leader cards when they are assigned to a leader slot
             if (_validationService.IsNonDeckCard(card))
             {
@@ -1662,6 +1806,11 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 RaiseAddCommandStates();
                 OnPropertyChanged(nameof(CurrentInDeckQuantity));
                 RaiseQuantityCommandStates();
+
+                // Update glory button state/label
+                RaiseGloryCommandStates();
+                OnPropertyChanged(nameof(SetGloryButtonLabel));
+                OnPropertyChanged(nameof(ShowSetGloryButton));
             }
         }
 
@@ -1686,6 +1835,11 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 RefreshLeadersAndGloryCard();
                 RaiseAddCommandStates();
                 EvaluateDeckValidity();
+
+                // Glory-specific UI updates
+                RaiseGloryCommandStates();
+                OnPropertyChanged(nameof(SetGloryButtonLabel));
+                OnPropertyChanged(nameof(ShowSetGloryButton));
             }
 
             if (string.IsNullOrEmpty(prop) || prop == nameof(Deck.MainDeck) || prop == nameof(Deck.EvolveDeck))
@@ -1715,6 +1869,11 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             RaiseQuantityCommandStates();
             EvaluateDeckValidity();
             BumpDeckChangeTick();
+
+            // Glory button state may have changed
+            RaiseGloryCommandStates();
+            OnPropertyChanged(nameof(SetGloryButtonLabel));
+            OnPropertyChanged(nameof(ShowSetGloryButton));
         }
 
         private void BumpDeckChangeTick()
@@ -1786,6 +1945,11 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
             // Ensure trait list reflects any card changes
             InitializeTraitsFilters();
+
+            // Glory UI state
+            RaiseGloryCommandStates();
+            OnPropertyChanged(nameof(SetGloryButtonLabel));
+            OnPropertyChanged(nameof(ShowSetGloryButton));
         }
 
         private void ClearSelections()
@@ -1924,6 +2088,14 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             RaiseAddCommandStates();
             RaiseQuantityCommandStates();
             OnPropertyChanged(nameof(CurrentInDeckQuantity));
+
+            // Glory command state as part of global command state refresh
+            RaiseGloryCommandStates();
+        }
+
+        private void RaiseGloryCommandStates()
+        {
+            RaiseCommand(SetOrMoveGloryCommand);
         }
 
         #endregion
