@@ -1260,9 +1260,11 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="3*"/>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="3*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="2*"/>
                 </Grid.RowDefinitions>
 
                 <!-- Leaders Section -->
@@ -1351,6 +1353,8 @@
                               Background="{DynamicResource AccentBrush}"
                               Margin="0,4"/>
 
+
+
                 <!-- Evolve Deck -->
                 <DockPanel Grid.Row="4">
                     <controls:DeckListControl x:Name="EvolveDeckListControl"
@@ -1360,6 +1364,25 @@
                                               SelectionChanged="EvolveDeckListBox_SelectionChanged"
                                               IncreaseCommand="{Binding IncreaseEvolveDeckQuantityCommand}"
                                               DecreaseCommand="{Binding DecreaseEvolveDeckQuantityCommand}"
+                                              ItemContainerStyle="{StaticResource DeckBuilderListBoxItemStyle}"/>
+                </DockPanel>
+
+                <GridSplitter Grid.Row="5" 
+                              Height="4"
+                              HorizontalAlignment="Stretch"
+                              Background="{DynamicResource AccentBrush}"
+                              Margin="0,4"/>
+
+                <!-- Tokens (NEW) -->
+                <DockPanel Grid.Row="6" Margin="0,0,0,8">
+
+                    <controls:DeckListControl x:Name="TokenDeckListControl"
+                                              HeaderText="Tokens"
+                                              ItemsSource="{Binding TokenList}"
+                                              SelectedItem="{Binding SelectedTokenEntry}"
+                                              SelectionChanged="TokenDeckListControl_SelectionChanged"
+                                              IncreaseCommand="{Binding IncreaseTokenQuantityCommand}"
+                                              DecreaseCommand="{Binding DecreaseTokenQuantityCommand}"
                                               ItemContainerStyle="{StaticResource DeckBuilderListBoxItemStyle}"/>
                 </DockPanel>
             </Grid>

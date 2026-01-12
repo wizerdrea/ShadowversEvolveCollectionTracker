@@ -185,6 +185,8 @@ namespace ShadowverseEvolveCardTracker.Views
                     MainDeckListControl.SelectedItem = null;
                 if (EvolveDeckListControl != null)
                     EvolveDeckListControl.SelectedItem = null;
+                if (TokenDeckListControl != null)
+                    TokenDeckListControl.SelectedItem = null;
             }
         }
 
@@ -201,6 +203,8 @@ namespace ShadowverseEvolveCardTracker.Views
                     MainDeckListControl.SelectedItem = null;
                 if (EvolveDeckListControl != null)
                     EvolveDeckListControl.SelectedItem = null;
+                if (TokenDeckListControl != null)
+                    TokenDeckListControl.SelectedItem = null;
             }
         }
 
@@ -217,6 +221,8 @@ namespace ShadowverseEvolveCardTracker.Views
                     MainDeckListControl.SelectedItem = null;
                 if (EvolveDeckListControl != null)
                     EvolveDeckListControl.SelectedItem = null;
+                if (TokenDeckListControl != null)
+                    TokenDeckListControl.SelectedItem = null;
             }
         }
 
@@ -233,6 +239,8 @@ namespace ShadowverseEvolveCardTracker.Views
                     GloryCardListBox.SelectedItem = null;
                 if (EvolveDeckListControl != null)
                     EvolveDeckListControl.SelectedItem = null;
+                if (TokenDeckListControl != null)
+                    TokenDeckListControl.SelectedItem = null;
             }
         }
 
@@ -250,6 +258,27 @@ namespace ShadowverseEvolveCardTracker.Views
                     GloryCardListBox.SelectedItem = null;
                 if (MainDeckListControl != null)
                     MainDeckListControl.SelectedItem = null;
+                if (TokenDeckListControl != null)
+                    TokenDeckListControl.SelectedItem = null;
+            }
+        }
+
+        // NEW: Token selection changed handler
+        private void TokenDeckListControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (TokenDeckListControl != null && TokenDeckListControl.SelectedItem != null)
+            {
+                // Clear selections in other lists
+                if (AvailableCardsGrid != null)
+                    AvailableCardsGrid.SelectedItem = null;
+                if (LeadersListBox != null)
+                    LeadersListBox.SelectedItem = null;
+                if (GloryCardListBox != null)
+                    GloryCardListBox.SelectedItem = null;
+                if (MainDeckListControl != null)
+                    MainDeckListControl.SelectedItem = null;
+                if (EvolveDeckListControl != null)
+                    EvolveDeckListControl.SelectedItem = null;
             }
         }
 

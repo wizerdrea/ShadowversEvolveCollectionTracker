@@ -114,6 +114,7 @@ namespace ShadowverseEvolveCardTracker.Models
 
         public List<DeckEntry> MainDeck { get; init; } = new();
         public List<DeckEntry> EvolveDeck { get; init; } = new();
+        public List<DeckEntry> Tokens { get; init; } = new();
 
         // Validation helpers
         public bool IsValid

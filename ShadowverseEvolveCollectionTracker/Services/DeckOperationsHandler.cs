@@ -31,8 +31,9 @@ namespace ShadowverseEvolveCardTracker.Services
 
             if (_validationService.IsTokenCard(card))
             {
-                // Tokens aren't added to decks
-                return false;
+                // NEW: tokens added to Tokens list (no limit)
+                onSuccess = () => AddToTokens(card, deck);
+                return true;
             }
 
             if (_validationService.IsEvolvedCard(card))
@@ -71,6 +72,27 @@ namespace ShadowverseEvolveCardTracker.Services
                     deck.EvolveDeck.Remove(entry);
                 else
                     deck.MainDeck.Remove(entry);
+            }
+            else
+            {
+                entry.Quantity--;
+            }
+        }
+
+        // NEW: Token-specific increase/decrease (tokens are unlimited)
+        public void IncreaseTokenQuantity(DeckEntry entry, Deck deck)
+        {
+            if (entry == null || deck == null) return;
+            entry.Quantity++;
+        }
+
+        public void DecreaseTokenQuantity(DeckEntry entry, Deck deck)
+        {
+            if (entry == null || deck == null) return;
+
+            if (entry.Quantity <= 1)
+            {
+                deck.Tokens.Remove(entry);
             }
             else
             {
@@ -117,6 +139,20 @@ namespace ShadowverseEvolveCardTracker.Services
             else
             {
                 deck.EvolveDeck.Add(new DeckEntry { Card = card, Quantity = 1 });
+            }
+        }
+
+        // NEW: Add token to Tokens list (unlimited)
+        private void AddToTokens(CardData card, Deck deck)
+        {
+            var existing = deck.Tokens.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
+            if (existing != null)
+            {
+                existing.Quantity++;
+            }
+            else
+            {
+                deck.Tokens.Add(new DeckEntry { Card = card, Quantity = 1 });
             }
         }
 

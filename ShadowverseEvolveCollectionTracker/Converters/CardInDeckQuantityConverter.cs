@@ -11,7 +11,7 @@ namespace ShadowverseEvolveCardTracker.Converters
     /// MultiValue converter that takes:
     ///  - values[0] = CardData (row)
     ///  - values[1] = Deck (current deck)
-    /// and returns the integer quantity of that card in the appropriate deck (main or evolve).
+    /// and returns the integer quantity of that card in the appropriate deck (main, evolve, or tokens).
     /// Returns a string so it binds cleanly to TextBlock.Text.
     /// </summary>
     public class CardInDeckQuantityConverter : IMultiValueConverter
@@ -26,10 +26,11 @@ namespace ShadowverseEvolveCardTracker.Converters
                 var deck = values[1] as Deck;
                 if (card == null || deck == null) return "0";
 
-                // Leaders/tokens aren't represented by deck quantities
+                // If token -> use Tokens list
                 if (card.Type?.Contains("Token", StringComparison.OrdinalIgnoreCase) ?? false)
                 {
-                    return "0";
+                    var t = deck.Tokens.FirstOrDefault(d => d.Card.CardNumber == card.CardNumber);
+                    return (t?.Quantity ?? 0).ToString();
                 }
 
                 if (card.Type?.Contains(CardTypes.Leader, StringComparison.OrdinalIgnoreCase) ?? false)

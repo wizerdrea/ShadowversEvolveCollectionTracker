@@ -64,6 +64,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
         public ObservableCollection<DeckEntry> MainDeckList { get; } = new();
         public ObservableCollection<DeckEntry> EvolveDeckList { get; } = new();
+        public ObservableCollection<DeckEntry> TokenList { get; } = new();
         public ObservableCollection<CardData> LeadersList { get; } = new();
         public ObservableCollection<CardData> GloryCardList { get; } = new();
 
@@ -194,6 +195,21 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                     if (value?.Card != null)
                         CardViewer.SetCard(value.Card);
                     RaiseEvolveDeckQuantityCommandStates();
+                }
+            }
+        }
+
+        private DeckEntry? _selectedTokenEntry;
+        public DeckEntry? SelectedTokenEntry
+        {
+            get => _selectedTokenEntry;
+            set
+            {
+                if (SetProperty(ref _selectedTokenEntry, value))
+                {
+                    if (value?.Card != null)
+                        CardViewer.SetCard(value.Card);
+                    RaiseTokenQuantityCommandStates();
                 }
             }
         }
@@ -371,6 +387,10 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
         public ICommand IncreaseAvailableCardCommand { get; }
         public ICommand DecreaseAvailableCardCommand { get; }
+
+        public ICommand IncreaseTokenQuantityCommand { get; }
+        public ICommand DecreaseTokenQuantityCommand { get; }
+
 
         // NEW: single command that either sets the viewed card as glory or moves the current glory back to main
         public ICommand SetOrMoveGloryCommand { get; private set; }
@@ -598,7 +618,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                         int inDeckQty = 0;
                         if (_validationService.IsNonDeckCard(card))
                         {
-                            // but if it's a leader assigned to a slot, treat as 1
+                            // leader special-case (non-deck)
                             if (_validationService.IsLeaderCard(card) &&
                                 (CurrentDeck.Leader1?.CardNumber == card.CardNumber ||
                                  CurrentDeck.Leader2?.CardNumber == card.CardNumber))
@@ -609,6 +629,11 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                             {
                                 inDeckQty = 0;
                             }
+                        }
+                        else if (_validationService.IsTokenCard(card))
+                        {
+                            var existingToken = CurrentDeck.Tokens.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
+                            inDeckQty = existingToken?.Quantity ?? 0;
                         }
                         else
                         {
@@ -740,6 +765,14 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             DecreaseAvailableCardCommand = new RelayCommand<CardData?>(
                 execute: card => { ExecuteDecreaseAvailableCard(card); return System.Threading.Tasks.Task.CompletedTask; },
                 canExecute: CanRemoveCardFromDeck);
+
+            IncreaseTokenQuantityCommand = new RelayCommand<DeckEntry?>(
+                execute: entry => { ExecuteIncreaseTokenQuantity(entry); return System.Threading.Tasks.Task.CompletedTask; },
+                canExecute: entry => entry != null);
+
+            DecreaseTokenQuantityCommand = new RelayCommand<DeckEntry?>(
+                execute: entry => { ExecuteDecreaseTokenQuantity(entry); return System.Threading.Tasks.Task.CompletedTask; },
+                canExecute: entry => entry != null);
 
             // NEW: glory command - set or move depending on state
             SetOrMoveGloryCommand = new RelayCommand(
@@ -1412,6 +1445,18 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 return;
             }
 
+            if (_validationService.IsTokenCard(card))
+            {
+                var existingToken = CurrentDeck.Tokens.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
+                if (existingToken != null)
+                    _operationsHandler.IncreaseTokenQuantity(existingToken, CurrentDeck);
+                else
+                    CurrentDeck.Tokens.Add(new DeckEntry { Card = card, Quantity = 1 });
+
+                NotifyDeckChanged();
+                return;
+            }
+
             if (_validationService.IsEvolvedCard(card))
             {
                 var existing = CurrentDeck.EvolveDeck.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
@@ -1463,26 +1508,22 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                     removed = true;
                 }
 
-                // Also decrease any deck entry quantities if present
-                var existingMain = CurrentDeck.MainDeck.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
-                if (existingMain != null)
-                {
-                    _operationsHandler.DecreaseQuantity(existingMain, CurrentDeck, false);
-                    RefreshDeckLists();
-                    removed = true;
-                }
-
-                var existingEvolve = CurrentDeck.EvolveDeck.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
-                if (existingEvolve != null)
-                {
-                    _operationsHandler.DecreaseQuantity(existingEvolve, CurrentDeck, true);
-                    RefreshDeckLists();
-                    removed = true;
-                }
-
                 if (removed)
                     NotifyDeckChanged();
 
+                return;
+            }
+
+            // If token -> decrease/remove from Tokens
+            if (_validationService.IsTokenCard(card))
+            {
+                var existingToken = CurrentDeck.Tokens.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
+                if (existingToken != null)
+                {
+                    _operationsHandler.DecreaseTokenQuantity(existingToken, CurrentDeck);
+                    RefreshDeckLists();
+                    NotifyDeckChanged();
+                }
                 return;
             }
 
@@ -1519,6 +1560,18 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 {
                     NotifyDeckChanged();
                 }
+                return;
+            }
+
+            if (_validationService.IsTokenCard(card))
+            {
+                var existingToken = CurrentDeck.Tokens.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
+                if (existingToken != null)
+                    _operationsHandler?.IncreaseTokenQuantity(existingToken, CurrentDeck);
+                else
+                    CurrentDeck.Tokens.Add(new DeckEntry { Card = card, Quantity = 1 });
+
+                NotifyDeckChanged();
                 return;
             }
 
@@ -1573,26 +1626,21 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                     removed = true;
                 }
 
-                // Also decrease any deck entry quantities if present
-                var existingMain = CurrentDeck.MainDeck.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
-                if (existingMain != null)
-                {
-                    _operationsHandler.DecreaseQuantity(existingMain, CurrentDeck, false);
-                    RefreshDeckLists();
-                    removed = true;
-                }
-
-                var existingEvolve = CurrentDeck.EvolveDeck.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
-                if (existingEvolve != null)
-                {
-                    _operationsHandler.DecreaseQuantity(existingEvolve, CurrentDeck, true);
-                    RefreshDeckLists();
-                    removed = true;
-                }
-
                 if (removed)
                     NotifyDeckChanged();
 
+                return;
+            }
+
+            if (_validationService.IsTokenCard(card))
+            {
+                var existingToken = CurrentDeck.Tokens.FirstOrDefault(e => e.Card.CardNumber == card.CardNumber);
+                if (existingToken != null)
+                {
+                    _operationsHandler.DecreaseTokenQuantity(existingToken, CurrentDeck);
+                    RefreshDeckLists();
+                    NotifyDeckChanged();
+                }
                 return;
             }
 
@@ -1615,6 +1663,23 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 }
             }
 
+            NotifyDeckChanged();
+        }
+
+        private void ExecuteIncreaseTokenQuantity(DeckEntry? entry)
+        {
+            if (entry == null || CurrentDeck == null) return;
+
+            _operationsHandler.IncreaseTokenQuantity(entry, CurrentDeck);
+            NotifyDeckChanged();
+        }
+
+        private void ExecuteDecreaseTokenQuantity(DeckEntry? entry)
+        {
+            if (entry == null || CurrentDeck == null) return;
+
+            _operationsHandler.DecreaseTokenQuantity(entry, CurrentDeck);
+            RefreshDeckLists();
             NotifyDeckChanged();
         }
 
@@ -1703,8 +1768,9 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             if (_validationService.IsLeaderCard(card))
                 return _validationService.CanAddLeader(card, CurrentDeck);
 
+            // NEW: tokens are allowed (no upper limit)
             if (_validationService.IsTokenCard(card))
-                return false;
+                return true;
 
             if (_validationService.IsEvolvedCard(card))
                 return _validationService.CanAddToEvolveDeck(card, CurrentDeck);
@@ -1727,6 +1793,10 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
                 return false;
             }
+
+            // NEW: allow removing tokens if present in Tokens
+            if (_validationService.IsTokenCard(card))
+                return CurrentDeck.Tokens.Any(e => e.Card.CardNumber == card.CardNumber);
 
             if (CurrentDeck.DeckType is DeckType.Gloryfinder &&
                 !string.IsNullOrWhiteSpace(CurrentDeck.GloryCard?.CardNumber) &&
@@ -1751,6 +1821,10 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             {
                 return _validationService.CanAddLeader(card, CurrentDeck);
             }
+
+            // NEW: tokens always can be increased
+            if (_validationService.IsTokenCard(card))
+                return true;
 
             if (_validationService.IsNonDeckCard(card)) return false;
 
@@ -1788,6 +1862,10 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
                 return false;
             }
+
+            // NEW: tokens can always be decreased if present
+            if (_validationService.IsTokenCard(card))
+                return CurrentDeck.Tokens.Any(e => e.Card.CardNumber == card.CardNumber && e.Quantity > 0);
 
             if (_validationService.IsEvolvedCard(card))
                 return CurrentDeck.EvolveDeck.Any(e => e.Card.CardNumber == card.CardNumber && e.Quantity > 0);
@@ -1840,6 +1918,19 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 RaiseGloryCommandStates();
                 OnPropertyChanged(nameof(SetGloryButtonLabel));
                 OnPropertyChanged(nameof(ShowSetGloryButton));
+
+                if (string.IsNullOrEmpty(prop) || prop == nameof(Deck.MainDeck) || prop == nameof(Deck.EvolveDeck) || prop == nameof(Deck.Tokens))
+                {
+                    RefreshDeckLists();
+                    OnPropertyChanged(nameof(MainDeckCount));
+                    OnPropertyChanged(nameof(EvolveDeckCount));
+                    OnPropertyChanged(nameof(CurrentInDeckQuantity));
+                    RaiseQuantityCommandStates();
+                    EvaluateDeckValidity();
+
+                    // Reinitialize in-deck filters when deck contents or deck type change
+                    InitializeInDeckFilters();
+                }
             }
 
             if (string.IsNullOrEmpty(prop) || prop == nameof(Deck.MainDeck) || prop == nameof(Deck.EvolveDeck))
@@ -1886,6 +1977,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         {
             MainDeckList.Clear();
             EvolveDeckList.Clear();
+            TokenList.Clear();
 
             if (CurrentDeck != null)
             {
@@ -1894,6 +1986,9 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
                 foreach (var entry in CurrentDeck.EvolveDeck.OrderBy(e => e.Card.Name))
                     EvolveDeckList.Add(entry);
+
+                foreach (var entry in CurrentDeck.Tokens.OrderBy(e => e.Card.Name))
+                    TokenList.Add(entry);
             }
         }
 
@@ -2068,6 +2163,12 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             RaiseCommand(IncreaseEvolveDeckQuantityCommand);
             RaiseCommand(DecreaseEvolveDeckQuantityCommand);
             RaiseCommand(RemoveFromEvolveDeckCommand);
+        }
+
+        private void RaiseTokenQuantityCommandStates()
+        {
+            RaiseCommand(IncreaseTokenQuantityCommand);
+            RaiseCommand(DecreaseTokenQuantityCommand);
         }
 
         private void RaiseQuantityCommandStates()
