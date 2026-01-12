@@ -31,7 +31,7 @@ namespace ShadowverseEvolveCardTracker.Services
             return deck.DeckType switch
             {
                 DeckType.Standard => IsValidForStandard(card, deck),
-                DeckType.Gloryfinder => IsValidForGloryfinder(card),
+                DeckType.Gloryfinder => IsValidForGloryfinder(card, deck),
                 DeckType.CrossCraft => IsValidForCrossCraft(card, deck),
                 _ => false
             };
@@ -129,16 +129,26 @@ namespace ShadowverseEvolveCardTracker.Services
 
         #region Private Validation Helpers
 
-        private bool IsValidForStandard(CardData card, Deck deck) =>
-            string.Equals(card.Class, deck.Class1, StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(card.Class, "Neutral", StringComparison.OrdinalIgnoreCase);
+        private bool IsValidFormat(CardData card, Deck deck)
+        {
+            if (card == null || deck == null) return false;
+            return string.IsNullOrWhiteSpace(card.Format) ||
+                   string.Equals(card.Format.Trim(), "Any", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(card.Format.Trim(), deck.DeckType.ToString(), StringComparison.OrdinalIgnoreCase);
+        }
 
-        private bool IsValidForGloryfinder(CardData card) => true;
+        private bool IsValidForStandard(CardData card, Deck deck) =>
+            IsValidFormat(card, deck) &&
+            (string.Equals(card.Class, deck.Class1, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(card.Class, "Neutral", StringComparison.OrdinalIgnoreCase));
+
+        private bool IsValidForGloryfinder(CardData card, Deck deck) => IsValidFormat(card, deck);
 
         private bool IsValidForCrossCraft(CardData card, Deck deck) =>
-            string.Equals(card.Class, deck.Class1, StringComparison.OrdinalIgnoreCase) ||
+            IsValidFormat(card, deck) &&
+            (string.Equals(card.Class, deck.Class1, StringComparison.OrdinalIgnoreCase) ||
             string.Equals(card.Class, deck.Class2, StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(card.Class, "Neutral", StringComparison.OrdinalIgnoreCase);
+            string.Equals(card.Class, "Neutral", StringComparison.OrdinalIgnoreCase));
 
         private bool CanAddLeaderCrossCraft(CardData card, Deck deck)
         {
