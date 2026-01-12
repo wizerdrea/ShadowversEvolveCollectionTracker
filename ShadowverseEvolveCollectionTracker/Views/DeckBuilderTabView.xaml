@@ -16,6 +16,104 @@
         <conv:RarityAbbreviationConverter x:Key="RarityAbbreviationConverter" />
         <conv:SetNameExtractorConverter x:Key="SetNameExtractorConverter" />
 
+        <!-- Custom Expander style: circular hollow chevron on the left, header to the right.
+             Chevron is hollow (stroke only, no base), points down when collapsed and up when expanded.
+             Circle highlights on hover. Uses application brushes. -->
+        <Style x:Key="AppExpanderStyle" TargetType="Expander">
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Expander">
+                        <Border Background="Transparent">
+                            <StackPanel>
+                                <!-- Header toggle with circular chevron -->
+                                <ToggleButton x:Name="HeaderToggle"
+                                              IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                              Cursor="Hand"
+                                              Focusable="False"
+                                              Background="Transparent"
+                                              BorderBrush="Transparent"
+                                              Padding="4"
+                                              HorizontalAlignment="Left"
+                                              HorizontalContentAlignment="Left">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Circular hollow chevron (outline, no base) -->
+                                        <Path x:Name="ArrowPath" Data="M0,0 L8,0 L4,5 Z" Fill="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" Width="8" Height="5" RenderTransformOrigin="0.5,0.5">
+                                            <Path.RenderTransform>
+                                                <RotateTransform Angle="180"/>
+                                            </Path.RenderTransform>
+                                        </Path>
+
+                                        <!-- Header content to the right of the arrow -->
+                                        <ContentPresenter Grid.Column="1"
+                                                          VerticalAlignment="Center"
+                                                          HorizontalAlignment="Left"
+                                                          ContentSource="Header"
+                                                          RecognizesAccessKey="True"
+                                                          Margin="4,0,8,0"/>
+                                    </Grid>
+                                </ToggleButton>
+
+                                <!-- Collapsible content -->
+                                <ContentPresenter x:Name="ExpandSite"
+                                                  Margin="0,6,0,0"
+                                                  Visibility="Collapsed"
+                                                  Focusable="False"
+                                                  ContentSource="Content"/>
+                            </StackPanel>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <!-- When expanded: show content and tint stroke -->
+                            <Trigger Property="IsExpanded" Value="True">
+                                <Setter TargetName="ExpandSite" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+
+                            <!-- When collapsed: show content only (do NOT set ArrowPath.Stroke here) -->
+                            <Trigger Property="IsExpanded" Value="False">
+                                <Setter TargetName="ExpandSite" Property="Visibility" Value="Collapsed"/>
+                                <!-- removed: Setter TargetName="ArrowPath" Property="Stroke" -->
+                            </Trigger>
+
+                            <!-- Use Expander events to animate the rotate angle -->
+                            <EventTrigger RoutedEvent="Expanded">
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="ArrowPath"
+                                                         Storyboard.TargetProperty="(Path.RenderTransform).(RotateTransform.Angle)"
+                                                         To="180" Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                            <EventTrigger RoutedEvent="Collapsed">
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="ArrowPath"
+                                                         Storyboard.TargetProperty="(Path.RenderTransform).(RotateTransform.Angle)"
+                                                         To="0" Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+
+                            <!-- Mouse-over stroke change (placed AFTER IsExpanded triggers so it can take precedence) -->
+                            <Trigger SourceName="HeaderToggle" Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ArrowPath" Property="Stroke" Value="{StaticResource GoldBrush}"/>
+                            </Trigger>
+
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <!-- ListBox styling to match app theme (Surface/Elevated/Accent/Selected colors) -->
         <Style TargetType="ListBox">
             <Setter Property="Background" Value="{StaticResource SurfaceBrush}"/>
@@ -328,8 +426,8 @@
                                Foreground="{DynamicResource GoldBrush}"/>
                 </StackPanel>
 
-                <!-- Filters expander -->
-                <Expander Grid.Row="1" Margin="8,0,8,4" Header="Filters" IsExpanded="True">
+                <!-- Filters expander - now using the custom AppExpanderStyle -->
+                <Expander Grid.Row="1" Margin="8,0,8,4" Header="Filters" IsExpanded="True" Style="{StaticResource AppExpanderStyle}">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock Text="Name" VerticalAlignment="Center" Margin="0,0,6,0"/>

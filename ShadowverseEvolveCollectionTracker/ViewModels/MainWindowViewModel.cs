@@ -283,10 +283,13 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                         if (!CardAlreadyPresent(c))
                             AllCards.Add(c);
                     }
-                });
 
-                Status = $"Loaded {cards.Count} card(s) from {folder}";
-                ((RelayCommand)FindCardRelationsCommand).RaiseCanExecuteChanged();
+
+                    Status = $"Loaded {cards.Count} card(s) from {folder}";
+                    ((RelayCommand)FindCardRelationsCommand).RaiseCanExecuteChanged();
+
+                    _ = FindCardRelationsAsync().ConfigureAwait(false);
+                });
             }
             catch (Exception ex)
             {
