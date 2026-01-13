@@ -1,15 +1,85 @@
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Media;
 using ShadowverseEvolveCardTracker.Models;
 
 namespace ShadowverseEvolveCardTracker.Views
 {
     public partial class AllCardsTabView : UserControl
     {
+        private readonly HashSet<ContextMenu> _subscribedContextMenus = new();
+
         public AllCardsTabView()
         {
             InitializeComponent();
+
+            Loaded += AllCardsTabView_Loaded;
+            Unloaded += AllCardsTabView_Unloaded;
+        }
+
+        private void AllCardsTabView_Loaded(object? sender, RoutedEventArgs e)
+        {
+            AttachHeaderContextMenuHandlers();
+
+            if (AllCardsDataGrid != null)
+                AllCardsDataGrid.LayoutUpdated += AllCardsDataGrid_LayoutUpdated;
+        }
+
+        private void AllCardsTabView_Unloaded(object? sender, RoutedEventArgs e)
+        {
+            if (AllCardsDataGrid != null)
+                AllCardsDataGrid.LayoutUpdated -= AllCardsDataGrid_LayoutUpdated;
+
+            DetachHeaderContextMenuHandlers();
+        }
+
+        private void AllCardsDataGrid_LayoutUpdated(object? sender, System.EventArgs e)
+        {
+            AttachHeaderContextMenuHandlers();
+        }
+
+        private void AttachHeaderContextMenuHandlers()
+        {
+            if (AllCardsDataGrid == null) return;
+
+            foreach (var header in FindVisualChildren<DataGridColumnHeader>(AllCardsDataGrid))
+            {
+                var cm = header.ContextMenu;
+                if (cm == null) continue;
+
+                if (_subscribedContextMenus.Add(cm))
+                {
+                    cm.Opened += HeaderContextMenu_Opened;
+                }
+            }
+        }
+
+        private void DetachHeaderContextMenuHandlers()
+        {
+            foreach (var cm in _subscribedContextMenus)
+            {
+                cm.Opened -= HeaderContextMenu_Opened;
+            }
+
+            _subscribedContextMenus.Clear();
+        }
+
+        private static IEnumerable<T> FindVisualChildren<T>(DependencyObject depObj) where T : DependencyObject
+        {
+            if (depObj == null) yield break;
+
+            var childCount = VisualTreeHelper.GetChildrenCount(depObj);
+            for (int i = 0; i < childCount; i++)
+            {
+                var child = VisualTreeHelper.GetChild(depObj, i);
+                if (child is T t)
+                    yield return t;
+
+                foreach (var descendant in FindVisualChildren<T>(child))
+                    yield return descendant;
+            }
         }
 
         // Ensure the star shows favorited immediately when clicked in the DataGrid column.
@@ -44,6 +114,16 @@ namespace ShadowverseEvolveCardTracker.Views
                 tb.IsChecked = newValue;
             else if (cb != null)
                 cb.IsChecked = newValue;
+        }
+
+        // Set the ContextMenu.DataContext to the viewmodel when the header context menu opens.
+        // This makes the header menu bindings (ItemsSource and Commands) resolve to the AllCardsTabViewModel.
+        private void HeaderContextMenu_Opened(object? sender, RoutedEventArgs e)
+        {
+            if (sender is ContextMenu cm)
+            {
+                cm.DataContext = this.DataContext;
+            }
         }
     }
 }

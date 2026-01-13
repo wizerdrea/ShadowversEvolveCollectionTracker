@@ -9,6 +9,54 @@
         <conv:StringToImageSourceConverter x:Key="StringToImageConverter" />
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
         <conv:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisConverter" />
+
+        <!-- Header context menu shared template/style (copied from DeckBuilder view) -->
+        <ControlTemplate x:Key="HeaderContextMenuControlTemplate" TargetType="ContextMenu">
+            <Border Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="6"
+                    Padding="{TemplateBinding Padding}">
+                <StackPanel IsItemsHost="True" />
+            </Border>
+        </ControlTemplate>
+
+        <Style x:Key="HeaderContextMenuItemStyle" TargetType="MenuItem">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="MenuItem">
+                        <Border Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter ContentSource="Header" RecognizesAccessKey="True"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Icon" Value="{x:Null}"/>
+        </Style>
+
+        <Style x:Key="HeaderContextMenuStyle" TargetType="ContextMenu">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="4" />
+            <Setter Property="HasDropShadow" Value="True" />
+            <Setter Property="Template" Value="{StaticResource HeaderContextMenuControlTemplate}" />
+            <Setter Property="ItemContainerStyle" Value="{StaticResource HeaderContextMenuItemStyle}" />
+        </Style>
+
+        <!-- CollectionViewSources for header context menus -->
+        <CollectionViewSource x:Key="RarityFilters" Source="{Binding RarityFilters}"/>
+        <CollectionViewSource x:Key="TypeFilters" Source="{Binding TypeFilters}"/>
+        <CollectionViewSource x:Key="ClassFilters" Source="{Binding ClassFilters}"/>
+        <CollectionViewSource x:Key="SetFilters" Source="{Binding SetFilters}"/>
+        <CollectionViewSource x:Key="CostFilters" Source="{Binding CostFilters}"/>
+        <CollectionViewSource x:Key="OwnedFilters" Source="{Binding OwnedFilters}"/>
+        <CollectionViewSource x:Key="TraitsFilters" Source="{Binding TraitsFilters}"/>
         <!-- ToggleButton style removed from here; now provided globally in App.xaml -->
     </UserControl.Resources>
 
@@ -179,76 +227,260 @@
                             </DataGridTextColumn.HeaderTemplate>
                         </DataGridTextColumn>
 
+                        <!-- Qty Owned column converted to header context menu like DeckBuilder -->
                         <DataGridTextColumn Header="Qty Owned" Binding="{Binding QuantityOwned, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="80">
-                            <DataGridTextColumn.HeaderTemplate>
-                                <DataTemplate>
-                                    <StackPanel>
-                                        <TextBlock Text="Qty Owned"/>
-                                        <ComboBox Width="120"
-                                                  SelectedValuePath="Content"
-                                                  SelectedValue="{Binding DataContext.QtyOwnedFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
-                                            <ComboBoxItem Content="Both" />
-                                            <ComboBoxItem Content="Owned" />
-                                            <ComboBoxItem Content="Unowned" />
-                                        </ComboBox>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </DataGridTextColumn.HeaderTemplate>
+                            <DataGridTextColumn.HeaderStyle>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="Background" Value="{DynamicResource HeaderGradientBrush}" />
+                                    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+                                    <Setter Property="Foreground" Value="{StaticResource GoldBrush}"/>
+                                    <Setter Property="Padding" Value="8,8"/>
+                                    <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                                    <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="HorizontalContentAlignment" Value="Left"/>
+
+                                    <Setter Property="ContextMenu">
+                                        <Setter.Value>
+                                            <ContextMenu Style="{StaticResource HeaderContextMenuStyle}">
+                                                <ContextMenu.ItemsSource>
+                                                    <CompositeCollection>
+                                                        <CollectionContainer Collection="{Binding Source={StaticResource OwnedFilters}}"/>
+                                                        <MenuItem Header="Select All"
+                                                                  Command="{Binding SelectAllOwnedFiltersCommand}"/>
+                                                        <MenuItem Header="Clear All"
+                                                                  Command="{Binding ClearAllOwnedFiltersCommand}"/>
+                                                    </CompositeCollection>
+                                                </ContextMenu.ItemsSource>
+
+                                                <ContextMenu.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <CheckBox VerticalAlignment="Center" HorizontalAlignment="Left" OverridesDefaultStyle="False"
+                                                                  BorderThickness="0"
+                                                                  Content="{Binding Name}"
+                                                                  IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                                                                  Padding="6,4"/>
+                                                    </DataTemplate>
+                                                </ContextMenu.ItemTemplate>
+                                            </ContextMenu>
+                                        </Setter.Value>
+                                    </Setter>
+
+                                    <Setter Property="ContentTemplate">
+                                        <Setter.Value>
+                                            <DataTemplate>
+                                                <TextBlock Text="# Owned" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </DataGridTextColumn.HeaderStyle>
                         </DataGridTextColumn>
 
+                        <!-- Rarity header context menu -->
                         <DataGridTextColumn Binding="{Binding Rarity}" IsReadOnly="True" Width="*">
-                            <DataGridTextColumn.HeaderTemplate>
-                                <DataTemplate>
-                                    <StackPanel>
-                                        <TextBlock Text="Rarity"/>
-                                        <TextBox Text="{Binding DataContext.RarityFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </DataGridTextColumn.HeaderTemplate>
+                            <DataGridTextColumn.HeaderStyle>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="Background" Value="{DynamicResource HeaderGradientBrush}" />
+                                    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+                                    <Setter Property="Foreground" Value="{StaticResource GoldBrush}"/>
+                                    <Setter Property="Padding" Value="8,8"/>
+                                    <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                                    <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="HorizontalContentAlignment" Value="Left"/>
+
+                                    <Setter Property="ContextMenu">
+                                        <Setter.Value>
+                                            <ContextMenu Style="{StaticResource HeaderContextMenuStyle}">
+                                                <ContextMenu.ItemsSource>
+                                                    <CompositeCollection>
+                                                        <CollectionContainer Collection="{Binding Source={StaticResource RarityFilters}}"/>
+                                                        <MenuItem Header="Select All"
+                                                                  Command="{Binding SelectAllRarityFiltersCommand}"/>
+                                                        <MenuItem Header="Clear All"
+                                                                  Command="{Binding ClearAllRarityFiltersCommand}"/>
+                                                    </CompositeCollection>
+                                                </ContextMenu.ItemsSource>
+
+                                                <ContextMenu.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <CheckBox VerticalAlignment="Center" HorizontalAlignment="Left" OverridesDefaultStyle="False"
+                                                                  BorderThickness="0"
+                                                                  Content="{Binding Name}"
+                                                                  IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                                                                  Padding="6,4"/>
+                                                    </DataTemplate>
+                                                </ContextMenu.ItemTemplate>
+                                            </ContextMenu>
+                                        </Setter.Value>
+                                    </Setter>
+
+                                    <Setter Property="ContentTemplate">
+                                        <Setter.Value>
+                                            <DataTemplate>
+                                                <TextBlock Text="Rarity" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </DataGridTextColumn.HeaderStyle>
                         </DataGridTextColumn>
 
-                        <DataGridTextColumn Binding="{Binding Set}" IsReadOnly="True" Width="2*">
-                            <DataGridTextColumn.HeaderTemplate>
-                                <DataTemplate>
-                                    <StackPanel>
-                                        <TextBlock Text="Set"/>
-                                        <TextBox Text="{Binding DataContext.SetFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </DataGridTextColumn.HeaderTemplate>
-                        </DataGridTextColumn>
-
-                        <DataGridTextColumn Binding="{Binding Format}" IsReadOnly="True" Width="*">
-                            <DataGridTextColumn.HeaderTemplate>
-                                <DataTemplate>
-                                    <StackPanel>
-                                        <TextBlock Text="Format"/>
-                                        <TextBox Text="{Binding DataContext.FormatFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </DataGridTextColumn.HeaderTemplate>
-                        </DataGridTextColumn>
-
-                        <DataGridTextColumn Binding="{Binding Class}" IsReadOnly="True" Width="*">
-                            <DataGridTextColumn.HeaderTemplate>
-                                <DataTemplate>
-                                    <StackPanel>
-                                        <TextBlock Text="Class"/>
-                                        <TextBox Text="{Binding DataContext.ClassFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </DataGridTextColumn.HeaderTemplate>
-                        </DataGridTextColumn>
-
+                        <!-- Type header context menu -->
                         <DataGridTextColumn Binding="{Binding Type}" IsReadOnly="True" Width="*">
-                            <DataGridTextColumn.HeaderTemplate>
+                            <DataGridTextColumn.HeaderStyle>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="Background" Value="{DynamicResource HeaderGradientBrush}" />
+                                    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+                                    <Setter Property="Foreground" Value="{StaticResource GoldBrush}"/>
+                                    <Setter Property="Padding" Value="8,8"/>
+                                    <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                                    <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="HorizontalContentAlignment" Value="Left"/>
+
+                                    <Setter Property="ContextMenu">
+                                        <Setter.Value>
+                                            <ContextMenu Style="{StaticResource HeaderContextMenuStyle}">
+                                                <ContextMenu.ItemsSource>
+                                                    <CompositeCollection>
+                                                        <CollectionContainer Collection="{Binding Source={StaticResource TypeFilters}}"/>
+                                                        <MenuItem Header="Select All"
+                                                                  Command="{Binding SelectAllTypeFiltersCommand}"/>
+                                                        <MenuItem Header="Clear All"
+                                                                  Command="{Binding ClearAllTypeFiltersCommand}"/>
+                                                    </CompositeCollection>
+                                                </ContextMenu.ItemsSource>
+
+                                                <ContextMenu.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <CheckBox VerticalAlignment="Center" HorizontalAlignment="Left" OverridesDefaultStyle="False"
+                                                                  BorderThickness="0"
+                                                                  Content="{Binding Name}"
+                                                                  IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                                                                  Padding="6,4"/>
+                                                    </DataTemplate>
+                                                </ContextMenu.ItemTemplate>
+                                            </ContextMenu>
+                                        </Setter.Value>
+                                    </Setter>
+
+                                    <Setter Property="ContentTemplate">
+                                        <Setter.Value>
+                                            <DataTemplate>
+                                                <TextBlock Text="Type" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </DataGridTextColumn.HeaderStyle>
+                        </DataGridTextColumn>
+
+                        <!-- Class column with context menu -->
+                        <DataGridTemplateColumn Header="Class" Width="*">
+                            <DataGridTemplateColumn.HeaderStyle>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="Background" Value="{DynamicResource HeaderGradientBrush}" />
+                                    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+                                    <Setter Property="Foreground" Value="{StaticResource GoldBrush}"/>
+                                    <Setter Property="Padding" Value="8,8"/>
+                                    <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                                    <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="HorizontalContentAlignment" Value="Left"/>
+
+                                    <Setter Property="ContextMenu">
+                                        <Setter.Value>
+                                            <ContextMenu Style="{StaticResource HeaderContextMenuStyle}">
+                                                <ContextMenu.ItemsSource>
+                                                    <CompositeCollection>
+                                                        <CollectionContainer Collection="{Binding Source={StaticResource ClassFilters}}"/>
+                                                        <MenuItem Header="Select All"
+                                                                  Command="{Binding SelectAllClassFiltersCommand}"/>
+                                                        <MenuItem Header="Clear All"
+                                                                  Command="{Binding ClearAllClassFiltersCommand}"/>
+                                                    </CompositeCollection>
+                                                </ContextMenu.ItemsSource>
+
+                                                <ContextMenu.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <CheckBox VerticalAlignment="Center" HorizontalAlignment="Left" OverridesDefaultStyle="False"
+                                                                  BorderThickness="0"
+                                                                  Content="{Binding Name}"
+                                                                  IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                                                                  Padding="6,4"/>
+                                                    </DataTemplate>
+                                                </ContextMenu.ItemTemplate>
+                                            </ContextMenu>
+                                        </Setter.Value>
+                                    </Setter>
+
+                                    <Setter Property="ContentTemplate">
+                                        <Setter.Value>
+                                            <DataTemplate>
+                                                <TextBlock Text="Class" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </DataGridTemplateColumn.HeaderStyle>
+
+                            <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <StackPanel>
-                                        <TextBlock Text="Type"/>
-                                        <TextBox Text="{Binding DataContext.TypeFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" Width="100"/>
-                                    </StackPanel>
+                                    <TextBlock Text="{Binding Class}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </DataTemplate>
-                            </DataGridTextColumn.HeaderTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <!-- Set column header context menu -->
+                        <DataGridTextColumn Binding="{Binding Set}" IsReadOnly="True" Width="2*">
+                            <DataGridTextColumn.HeaderStyle>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="Background" Value="{DynamicResource HeaderGradientBrush}" />
+                                    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+                                    <Setter Property="Foreground" Value="{StaticResource GoldBrush}"/>
+                                    <Setter Property="Padding" Value="8,8"/>
+                                    <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                                    <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="HorizontalContentAlignment" Value="Left"/>
+
+                                    <Setter Property="ContextMenu">
+                                        <Setter.Value>
+                                            <ContextMenu Style="{StaticResource HeaderContextMenuStyle}">
+                                                <ContextMenu.ItemsSource>
+                                                    <CompositeCollection>
+                                                        <CollectionContainer Collection="{Binding Source={StaticResource SetFilters}}"/>
+                                                        <MenuItem Header="Select All"
+                                                                  Command="{Binding SelectAllSetFiltersCommand}"/>
+                                                        <MenuItem Header="Clear All"
+                                                                  Command="{Binding ClearAllSetFiltersCommand}"/>
+                                                    </CompositeCollection>
+                                                </ContextMenu.ItemsSource>
+
+                                                <ContextMenu.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <CheckBox VerticalAlignment="Center" HorizontalAlignment="Left" OverridesDefaultStyle="False"
+                                                                  BorderThickness="0"
+                                                                  Content="{Binding Name}"
+                                                                  IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                                                                  Padding="6,4"/>
+                                                    </DataTemplate>
+                                                </ContextMenu.ItemTemplate>
+                                            </ContextMenu>
+                                        </Setter.Value>
+                                    </Setter>
+
+                                    <Setter Property="ContentTemplate">
+                                        <Setter.Value>
+                                            <DataTemplate>
+                                                <TextBlock Text="Set" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </DataGridTextColumn.HeaderStyle>
                         </DataGridTextColumn>
 
                         <DataGridTextColumn Binding="{Binding Traits}" IsReadOnly="True" Width="2*">
