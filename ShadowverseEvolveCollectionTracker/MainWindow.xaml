@@ -229,11 +229,8 @@
                         <Separator/>
                         <MenuItem Header="E_xit" Click="CloseButton_Click"/>
                     </MenuItem>
-                    <MenuItem Header="_Tools">
-                        <MenuItem Header="Find Card Relations" 
-                                  Command="{Binding FindCardRelationsCommand}"
-                                  InputGestureText="Ctrl+R"
-                                  ToolTip="Analyze all cards and find relationships between them"/>
+                    <MenuItem Header="_Collection">
+                        <MenuItem Header="Add/Remove Cards" Command="{Binding OpenAddRemoveCardsCommand}" InputGestureText="Ctrl+M" />
                     </MenuItem>
                 </Menu>
 

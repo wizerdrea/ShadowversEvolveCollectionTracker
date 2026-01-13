@@ -658,7 +658,7 @@
                         </DataGridTextColumn>
 
                         <!-- Qty Owned column converted to header context menu like DeckBuilder -->
-                        <DataGridTextColumn Header="Qty Owned" Binding="{Binding QuantityOwned, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="80">
+                        <DataGridTextColumn Header="Qty Owned" Binding="{Binding QuantityOwned}" IsReadOnly="True" Width="80">
                             <DataGridTextColumn.HeaderStyle>
                                 <Style TargetType="DataGridColumnHeader">
                                     <Setter Property="Background" Value="{DynamicResource HeaderGradientBrush}" />

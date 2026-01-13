@@ -1,19 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.IO;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 using ShadowverseEvolveCardTracker.Models;
 using ShadowverseEvolveCardTracker.Services;
+using ShadowverseEvolveCardTracker.Views;
 
 namespace ShadowverseEvolveCardTracker.ViewModels
 {
@@ -36,6 +33,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         public ICommand SaveCommand { get; }
         public ICommand LoadImagesCommand { get; }
         public ICommand FindCardRelationsCommand { get; }
+        public ICommand OpenAddRemoveCardsCommand { get; }
 
         private string _status = "Ready";
         public string Status
@@ -66,6 +64,11 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             SaveCommand = new RelayCommand(() => { SaveAllCards(); return Task.CompletedTask; }, () => true);
             LoadImagesCommand = new RelayCommand(async () => await LoadImagesAsync(), () => true);
             FindCardRelationsCommand = new RelayCommand(async () => await FindCardRelationsAsync(), () => AllCards.Count > 0);
+            OpenAddRemoveCardsCommand = new RelayCommand(() =>
+            {
+                ShowAddRemoveDialog();
+                return Task.CompletedTask;
+            }, () => AllCards.Count > 0);
 
             AllCards.CollectionChanged += AllCards_CollectionChanged;
             foreach (var c in AllCards)
@@ -436,6 +439,24 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             }
 
             Status = $"Showing {versions.Count} version(s) of '{sourceCard.Name}' ({sourceCard.Type}).";
+        }
+
+        private void ShowAddRemoveDialog()
+        {
+            try
+            {
+                var dialog = new AddRemoveCardsDialog
+                {
+                    DataContext = new AddRemoveCardsViewModel(AllCards),
+                    Owner = Application.Current?.MainWindow
+                };
+                dialog.ShowDialog();
+                // After dialog closes, combined counts/other views will update via property change subscriptions on CardData.QuantityOwned.
+            }
+            catch (Exception ex)
+            {
+                Status = $"Failed to open Add/Remove dialog: {ex.Message}";
+            }
         }
 
         private void AllCards_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
