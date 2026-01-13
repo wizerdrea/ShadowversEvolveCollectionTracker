@@ -1,9 +1,10 @@
+using ShadowverseEvolveCardTracker.Models;
+using ShadowverseEvolveCardTracker.ViewModels;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Media;
-using ShadowverseEvolveCardTracker.Models;
 
 namespace ShadowverseEvolveCardTracker.Views
 {
@@ -25,12 +26,22 @@ namespace ShadowverseEvolveCardTracker.Views
 
             if (AllCardsDataGrid != null)
                 AllCardsDataGrid.LayoutUpdated += AllCardsDataGrid_LayoutUpdated;
+
+            if (SelectAllTraitsButton != null)
+                SelectAllTraitsButton.Click += SelectAllTraitsButton_Click;
+            if (ClearAllTraitsButton != null)
+                ClearAllTraitsButton.Click += ClearAllTraitsButton_Click;
         }
 
         private void AllCardsTabView_Unloaded(object? sender, RoutedEventArgs e)
         {
             if (AllCardsDataGrid != null)
                 AllCardsDataGrid.LayoutUpdated -= AllCardsDataGrid_LayoutUpdated;
+
+            if (SelectAllTraitsButton != null)
+                SelectAllTraitsButton.Click -= SelectAllTraitsButton_Click;
+            if (ClearAllTraitsButton != null)
+                ClearAllTraitsButton.Click -= ClearAllTraitsButton_Click;
 
             DetachHeaderContextMenuHandlers();
         }
@@ -123,6 +134,66 @@ namespace ShadowverseEvolveCardTracker.Views
             if (sender is ContextMenu cm)
             {
                 cm.DataContext = this.DataContext;
+            }
+        }
+
+        private void TraitsToggle_Checked(object sender, RoutedEventArgs e)
+        {
+            if (TraitsPopup != null)
+                TraitsPopup.IsOpen = true;
+
+            if (TraitsArrowPath != null)
+                TraitsArrowPath.RenderTransform = new RotateTransform(180);
+        }
+
+        private void TraitsToggle_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (TraitsPopup != null)
+                TraitsPopup.IsOpen = false;
+
+            if (TraitsArrowPath != null)
+                TraitsArrowPath.RenderTransform = new RotateTransform(0);
+        }
+
+        private void TraitsPopup_Closed(object sender, EventArgs e)
+        {
+            if (TraitsToggle != null && TraitsToggle.IsChecked == true)
+            {
+                // set to false without re-entering Checked handler (Unchecked will run)
+                TraitsToggle.IsChecked = false;
+            }
+
+            if (TraitsArrowPath != null)
+                TraitsArrowPath.RenderTransform = new RotateTransform(0);
+        }
+
+        private void SelectAllTraitsButton_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is AllCardsTabViewModel vm && vm.SelectAllTraitFiltersCommand != null)
+            {
+                var cmd = vm.SelectAllTraitFiltersCommand;
+                if (cmd.CanExecute(null))
+                    cmd.Execute(null);
+                else
+                {
+                    foreach (var f in vm.TraitsFilters) f.IsChecked = true;
+                    vm.FilteredCards.Refresh();
+                }
+            }
+        }
+
+        private void ClearAllTraitsButton_Click(object? sender, RoutedEventArgs e)
+        {
+            if (DataContext is AllCardsTabViewModel vm && vm.ClearAllTraitFiltersCommand != null)
+            {
+                var cmd = vm.ClearAllTraitFiltersCommand;
+                if (cmd.CanExecute(null))
+                    cmd.Execute(null);
+                else
+                {
+                    foreach (var f in vm.TraitsFilters) f.IsChecked = false;
+                    vm.FilteredCards.Refresh();
+                }
             }
         }
     }

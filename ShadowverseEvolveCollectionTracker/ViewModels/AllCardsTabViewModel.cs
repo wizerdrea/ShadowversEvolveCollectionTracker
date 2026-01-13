@@ -126,6 +126,8 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         public ICommand ClearAllCostFiltersCommand { get; private set; }
         public ICommand SelectAllOwnedFiltersCommand { get; private set; }
         public ICommand ClearAllOwnedFiltersCommand { get; private set; }
+        public ICommand SelectAllTraitFiltersCommand { get; private set; }
+        public ICommand ClearAllTraitFiltersCommand { get; private set; }
 
         #endregion
 
@@ -191,6 +193,14 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             ClearAllOwnedFiltersCommand = new RelayCommand(
                 execute: () => { ClearAllOwnedFilters(); return System.Threading.Tasks.Task.CompletedTask; },
                 canExecute: () => OwnedFilters.Count > 0);
+
+            SelectAllTraitFiltersCommand = new RelayCommand(
+                execute: () => { SelectAllTraits(); return System.Threading.Tasks.Task.CompletedTask; },
+                canExecute: () => TraitsFilters.Count > 0);
+
+            ClearAllTraitFiltersCommand = new RelayCommand(
+                execute: () => { ClearAllTraits(); return System.Threading.Tasks.Task.CompletedTask; },
+                canExecute: () => TraitsFilters.Count > 0);
 
             // subscribe to collection changes and card property changes so filter updates when card properties change
             if (_allCards is INotifyCollectionChanged incc)
@@ -667,6 +677,18 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         private void ClearAllOwnedFilters()
         {
             foreach (var f in OwnedFilters) f.IsChecked = false;
+            SafeRefresh();
+        }
+
+        private void SelectAllTraits()
+        {
+            foreach (var f in TraitsFilters) f.IsChecked = true;
+            SafeRefresh();
+        }
+
+        private void ClearAllTraits()
+        {
+            foreach (var f in TraitsFilters) f.IsChecked = false;
             SafeRefresh();
         }
 
