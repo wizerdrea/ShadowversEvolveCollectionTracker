@@ -174,8 +174,20 @@
                                 Height="24"
                                 Padding="0"
                                 Margin="0,0,6,0"
-                                Command="{Binding DecreaseWishlistCommand}"
-                                ToolTip="Decrease wishlist quantity"/>
+                                Command="{Binding DecreaseWishlistCommand}">
+                            <Button.ToolTip>
+                                <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                    <Border Background="{DynamicResource ElevatedBrush}"
+                                            Padding="6"
+                                            CornerRadius="4"
+                                            BorderBrush="{DynamicResource AccentBrush}"
+                                            BorderThickness="1">
+                                        <TextBlock Text="Decrease wishlist quantity"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                    </Border>
+                                </ToolTip>
+                            </Button.ToolTip>
+                        </Button>
 
                         <!-- Center column: label "Wishlist" above the numeric quantity -->
                         <StackPanel Orientation="Vertical" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0,0">
@@ -196,8 +208,20 @@
                                 Height="24"
                                 Padding="0"
                                 Margin="6,0,0,0"
-                                Command="{Binding IncreaseWishlistCommand}"
-                                ToolTip="Increase wishlist quantity"/>
+                                Command="{Binding IncreaseWishlistCommand}">
+                            <Button.ToolTip>
+                                <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                    <Border Background="{DynamicResource ElevatedBrush}"
+                                            Padding="6"
+                                            CornerRadius="4"
+                                            BorderBrush="{DynamicResource AccentBrush}"
+                                            BorderThickness="1">
+                                        <TextBlock Text="Increase wishlist quantity"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                    </Border>
+                                </ToolTip>
+                            </Button.ToolTip>
+                        </Button>
                     </StackPanel>
                 </Border>
             </StackPanel>

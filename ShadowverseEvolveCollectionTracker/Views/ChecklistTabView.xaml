@@ -62,8 +62,7 @@
                         <DataGridTemplateColumn Width="40" IsReadOnly="False">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <ToggleButton ToolTip="Toggle favorites for this group"
-                                                  Cursor="Hand"
+                                    <ToggleButton Cursor="Hand"
                                                   Background="Transparent"
                                                   BorderThickness="0"
                                                   Focusable="False"
@@ -72,6 +71,18 @@
                                                   VerticalAlignment="Center"
                                                   Click="GroupFavoriteToggle_Click"
                                                   IsChecked="{Binding HasFavorite, Mode=OneWay}">
+                                        <ToggleButton.ToolTip>
+                                            <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                                <Border Background="{DynamicResource ElevatedBrush}"
+                                                        Padding="6"
+                                                        CornerRadius="4"
+                                                        BorderBrush="{DynamicResource AccentBrush}"
+                                                        BorderThickness="1">
+                                                    <TextBlock Text="Toggle favorites for this group"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                </Border>
+                                            </ToolTip>
+                                        </ToggleButton.ToolTip>
                                         <ToggleButton.Template>
                                             <ControlTemplate TargetType="ToggleButton">
                                                 <Border Background="{TemplateBinding Background}"
@@ -103,8 +114,7 @@
                             <DataGridTemplateColumn.HeaderTemplate>
                                 <DataTemplate>
                                     <!-- Header toggle: binds to outer DataContext.FavoritesOnly -->
-                                    <ToggleButton ToolTip="Show favorites only"
-                                                  Cursor="Hand"
+                                    <ToggleButton Cursor="Hand"
                                                   Background="Transparent"
                                                   BorderThickness="0"
                                                   Focusable="False"
@@ -112,6 +122,18 @@
                                                   HorizontalAlignment="Center"
                                                   VerticalAlignment="Center"
                                                   IsChecked="{Binding DataContext.FavoritesOnly, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                        <ToggleButton.ToolTip>
+                                            <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                                <Border Background="{DynamicResource ElevatedBrush}"
+                                                        Padding="6"
+                                                        CornerRadius="4"
+                                                        BorderBrush="{DynamicResource AccentBrush}"
+                                                        BorderThickness="1">
+                                                    <TextBlock Text="Show favorites only"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                </Border>
+                                            </ToolTip>
+                                        </ToggleButton.ToolTip>
                                         <ToggleButton.Template>
                                             <ControlTemplate TargetType="ToggleButton">
                                                 <Border Background="{TemplateBinding Background}"
@@ -146,7 +168,20 @@
                                 <DataTemplate>
                                     <StackPanel>
                                         <TextBlock Text="Card Name"/>
-                                        <TextBox Text="{Binding DataContext.ChecklistNameFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" Width="200" ToolTip="Enter a regular expression to filter card names"/>
+                                        <TextBox Text="{Binding DataContext.ChecklistNameFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" Width="200">
+                                            <TextBox.ToolTip>
+                                                <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                                    <Border Background="{DynamicResource ElevatedBrush}"
+                                                            Padding="6"
+                                                            CornerRadius="4"
+                                                            BorderBrush="{DynamicResource AccentBrush}"
+                                                            BorderThickness="1">
+                                                        <TextBlock Text="Enter a regular expression to filter card names"
+                                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                                    </Border>
+                                                </ToolTip>
+                                            </TextBox.ToolTip>
+                                        </TextBox>
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTextColumn.HeaderTemplate>

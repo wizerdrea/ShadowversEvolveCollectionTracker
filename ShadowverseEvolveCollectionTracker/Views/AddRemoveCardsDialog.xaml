@@ -148,13 +148,24 @@ MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                     <StackPanel Grid.Column="2" Orientation="Horizontal">
                         <!-- Minimize Button -->
                         <Button Width="46" Height="32"
-            Click="MinimizeButton_Click"
-            Background="Transparent"
-            BorderThickness="0"
-            Padding="0"
-            Margin="0"
-            ToolTip="Minimize"
-            WindowChrome.IsHitTestVisibleInChrome="True">
+                                Click="MinimizeButton_Click"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Padding="0"
+                                Margin="0"
+                                WindowChrome.IsHitTestVisibleInChrome="True">
+                            <Button.ToolTip>
+                                <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                    <Border Background="{DynamicResource ElevatedBrush}"
+                                            Padding="6"
+                                            CornerRadius="4"
+                                            BorderBrush="{DynamicResource AccentBrush}"
+                                            BorderThickness="1">
+                                        <TextBlock Text="Minimize"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                    </Border>
+                                </ToolTip>
+                            </Button.ToolTip>
                             <Button.Style>
                                 <Style TargetType="Button">
                                     <Setter Property="Background" Value="Transparent"/>
@@ -185,14 +196,25 @@ MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
 
                         <!-- Maximize/Restore Button -->
                         <Button x:Name="MaximizeRestoreButton"
-            Width="46" Height="32"
-            Click="MaximizeRestoreButton_Click"
-            Background="Transparent"
-            BorderThickness="0"
-            Padding="0"
-            Margin="0"
-            ToolTip="Maximize"
-            WindowChrome.IsHitTestVisibleInChrome="True">
+                                Width="46" Height="32"
+                                Click="MaximizeRestoreButton_Click"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Padding="0"
+                                Margin="0"
+                                WindowChrome.IsHitTestVisibleInChrome="True">
+                            <Button.ToolTip>
+                                <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                    <Border Background="{DynamicResource ElevatedBrush}"
+                                            Padding="6"
+                                            CornerRadius="4"
+                                            BorderBrush="{DynamicResource AccentBrush}"
+                                            BorderThickness="1">
+                                        <TextBlock Text="Maximize"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                    </Border>
+                                </ToolTip>
+                            </Button.ToolTip>
                             <Button.Style>
                                 <Style TargetType="Button">
                                     <Setter Property="Background" Value="Transparent"/>
@@ -224,13 +246,24 @@ MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
 
                         <!-- Close Button -->
                         <Button Width="46" Height="32"
-            Click="CloseButton_Click"
-            Background="Transparent"
-            BorderThickness="0"
-            Padding="0"
-            Margin="0"
-            ToolTip="Close"
-            WindowChrome.IsHitTestVisibleInChrome="True">
+                                Click="CloseButton_Click"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Padding="0"
+                                Margin="0"
+                                WindowChrome.IsHitTestVisibleInChrome="True">
+                            <Button.ToolTip>
+                                <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                    <Border Background="{DynamicResource ElevatedBrush}"
+                                            Padding="6"
+                                            CornerRadius="4"
+                                            BorderBrush="{DynamicResource AccentBrush}"
+                                            BorderThickness="1">
+                                        <TextBlock Text="Close"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                    </Border>
+                                </ToolTip>
+                            </Button.ToolTip>
                             <Button.Style>
                                 <Style TargetType="Button">
                                     <Setter Property="Background" Value="Transparent"/>
@@ -278,12 +311,38 @@ MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                 <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
                         <TextBlock Text="Card #" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBox Width="160" Text="{Binding CardNumberFilter, UpdateSourceTrigger=PropertyChanged}" ToolTip="Regex (or plain text if invalid)"/>
+                        <TextBox Width="160" Text="{Binding CardNumberFilter, UpdateSourceTrigger=PropertyChanged}">
+                            <TextBox.ToolTip>
+                                <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                    <Border Background="{DynamicResource ElevatedBrush}"
+                                            Padding="6"
+                                            CornerRadius="4"
+                                            BorderBrush="{DynamicResource AccentBrush}"
+                                            BorderThickness="1">
+                                        <TextBlock Text="Regex (or plain text if invalid)"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                    </Border>
+                                </ToolTip>
+                            </TextBox.ToolTip>
+                        </TextBox>
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
                         <TextBlock Text="Name:" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBox Width="260" Text="{Binding NameFilter, UpdateSourceTrigger=PropertyChanged}" ToolTip="Regex (or plain text if invalid)"/>
+                        <TextBox Width="260" Text="{Binding NameFilter, UpdateSourceTrigger=PropertyChanged}">
+                            <TextBox.ToolTip>
+                                <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                    <Border Background="{DynamicResource ElevatedBrush}"
+                                            Padding="6"
+                                            CornerRadius="4"
+                                            BorderBrush="{DynamicResource AccentBrush}"
+                                            BorderThickness="1">
+                                        <TextBlock Text="Regex (or plain text if invalid)"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                    </Border>
+                                </ToolTip>
+                            </TextBox.ToolTip>
+                        </TextBox>
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">

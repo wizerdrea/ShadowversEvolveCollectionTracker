@@ -211,23 +211,59 @@
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="Name" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBox Width="220" 
-                     Text="{Binding NameFilter, UpdateSourceTrigger=PropertyChanged}"
-                     ToolTip="Filter cards by name using a regex (or plain text if regex invalid)"/>
+                        <TextBox Width="220"
+                                 Text="{Binding NameFilter, UpdateSourceTrigger=PropertyChanged}">
+                            <TextBox.ToolTip>
+                                <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                    <Border Background="{DynamicResource ElevatedBrush}"
+                                            Padding="6"
+                                            CornerRadius="4"
+                                            BorderBrush="{DynamicResource AccentBrush}"
+                                            BorderThickness="1">
+                                        <TextBlock Text="Filter cards by name using a regex (or plain text if regex invalid)"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                    </Border>
+                                </ToolTip>
+                            </TextBox.ToolTip>
+                        </TextBox>
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="Card #" VerticalAlignment="Center" Margin="12,0,6,0"/>
                         <TextBox Width="80"
-                                 Text="{Binding CardNumberFilter, UpdateSourceTrigger=PropertyChanged}"
-                                 ToolTip="Filter card text using a regex (or plain text if regex invalid)"/>
+                                 Text="{Binding CardNumberFilter, UpdateSourceTrigger=PropertyChanged}">
+                            <TextBox.ToolTip>
+                                <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                    <Border Background="{DynamicResource ElevatedBrush}"
+                                            Padding="6"
+                                            CornerRadius="4"
+                                            BorderBrush="{DynamicResource AccentBrush}"
+                                            BorderThickness="1">
+                                        <TextBlock Text="Filter cards by text by using a regex (or plain text if regex invalid)"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                    </Border>
+                                </ToolTip>
+                            </TextBox.ToolTip>
+                        </TextBox>
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="Text" VerticalAlignment="Center" Margin="12,0,6,0"/>
                         <TextBox Width="220" 
-                     Text="{Binding TextFilter, UpdateSourceTrigger=PropertyChanged}"
-                     ToolTip="Filter card text using a regex (or plain text if regex invalid)"/>
+                     Text="{Binding TextFilter, UpdateSourceTrigger=PropertyChanged}">
+                            <TextBox.ToolTip>
+                                <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                    <Border Background="{DynamicResource ElevatedBrush}"
+                                            Padding="6"
+                                            CornerRadius="4"
+                                            BorderBrush="{DynamicResource AccentBrush}"
+                                            BorderThickness="1">
+                                        <TextBlock Text="Filter cards by number by using a regex (or plain text if regex invalid)"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                    </Border>
+                                </ToolTip>
+                            </TextBox.ToolTip>
+                        </TextBox>
                     </StackPanel>
 
                     <!-- Traits dropdown (toggle + popup) -->

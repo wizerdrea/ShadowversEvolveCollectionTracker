@@ -95,8 +95,19 @@
                                 BorderThickness="0"
                                 Padding="0"
                                 Margin="0"
-                                ToolTip="Minimize"
                                 WindowChrome.IsHitTestVisibleInChrome="True">
+                            <Button.ToolTip>
+                                <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                    <Border Background="{DynamicResource ElevatedBrush}"
+                                            Padding="6"
+                                            CornerRadius="4"
+                                            BorderBrush="{DynamicResource AccentBrush}"
+                                            BorderThickness="1">
+                                        <TextBlock Text="Minimize"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                    </Border>
+                                </ToolTip>
+                            </Button.ToolTip>
                             <Button.Style>
                                 <Style TargetType="Button">
                                     <Setter Property="Background" Value="Transparent"/>
@@ -133,8 +144,19 @@
                                 BorderThickness="0"
                                 Padding="0"
                                 Margin="0"
-                                ToolTip="Maximize"
                                 WindowChrome.IsHitTestVisibleInChrome="True">
+                            <Button.ToolTip>
+                                <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                    <Border Background="{DynamicResource ElevatedBrush}"
+                                            Padding="6"
+                                            CornerRadius="4"
+                                            BorderBrush="{DynamicResource AccentBrush}"
+                                            BorderThickness="1">
+                                        <TextBlock Text="Maximize"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                    </Border>
+                                </ToolTip>
+                            </Button.ToolTip>
                             <Button.Style>
                                 <Style TargetType="Button">
                                     <Setter Property="Background" Value="Transparent"/>
@@ -171,8 +193,19 @@
                                 BorderThickness="0"
                                 Padding="0"
                                 Margin="0"
-                                ToolTip="Close"
                                 WindowChrome.IsHitTestVisibleInChrome="True">
+                            <Button.ToolTip>
+                                <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                    <Border Background="{DynamicResource ElevatedBrush}"
+                                            Padding="6"
+                                            CornerRadius="4"
+                                            BorderBrush="{DynamicResource AccentBrush}"
+                                            BorderThickness="1">
+                                        <TextBlock Text="Close"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                    </Border>
+                                </ToolTip>
+                            </Button.ToolTip>
                             <Button.Style>
                                 <Style TargetType="Button">
                                     <Setter Property="Background" Value="Transparent"/>

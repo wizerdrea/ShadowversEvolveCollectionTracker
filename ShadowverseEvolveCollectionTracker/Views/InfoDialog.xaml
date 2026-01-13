@@ -51,8 +51,19 @@
                             Margin="8,0,0,0"
                             Background="Transparent"
                             BorderBrush="Transparent"
-                            ToolTip="Close"
                             Click="CloseButton_Click">
+                        <Button.ToolTip>
+                            <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                <Border Background="{DynamicResource ElevatedBrush}"
+                                        Padding="6"
+                                        CornerRadius="4"
+                                        BorderBrush="{DynamicResource AccentBrush}"
+                                        BorderThickness="1">
+                                    <TextBlock Text="Close"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                </Border>
+                            </ToolTip>
+                        </Button.ToolTip>
                         <TextBlock Text="✕"
                                    FontSize="12"
                                    Foreground="{DynamicResource TextPrimaryBrush}"
