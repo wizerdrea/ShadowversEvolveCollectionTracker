@@ -24,13 +24,11 @@
         <!-- Wrap the DataGrid in a Grid so we can overlay a "calculating" message -->
         <Grid Grid.Column="0">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <!-- removed top checkbox (Favorites filter moved to star column header) -->
-
-            <Grid Grid.Row="1">
+            <Grid Grid.Row="0">
                 <DataGrid ItemsSource="{Binding ChecklistView}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
@@ -246,6 +244,42 @@
                         </Style>
                     </TextBlock.Style>
                 </TextBlock>
+            </Grid>
+            <Grid Grid.Row="1" HorizontalAlignment="Right" Margin="6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="Unique Cards: "/>
+                <TextBlock Grid.Column="1" Text="{Binding UniqueCardCount}"/>
+                <GridSplitter Grid.Column="2"
+                              Width="3"
+                              Margin="3, 0, 3, 0"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Stretch"
+                              ShowsPreview="True"
+                              ResizeDirection="Columns"
+                              Cursor="SizeWE"/>
+                
+                <TextBlock Grid.Column="3" Text="1+ Copy Owned: "/>
+                <TextBlock Grid.Column="4" Text="{Binding OwnedUniqueCountString}"/>
+                <GridSplitter Grid.Column="5"
+                              Width="3"
+                              Margin="3, 0, 3, 0"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Stretch"
+                              ShowsPreview="True"
+                              ResizeDirection="Columns"
+                              Cursor="SizeWE"/>
+
+                <TextBlock Grid.Column="6" Text="Full Sets Owned: "/>
+                <TextBlock Grid.Column="7" Text="{Binding OwnedUniqueFullSetCountString}"/>
             </Grid>
         </Grid>
 

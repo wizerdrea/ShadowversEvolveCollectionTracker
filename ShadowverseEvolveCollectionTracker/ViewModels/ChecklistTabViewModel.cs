@@ -14,6 +14,28 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         private readonly ICollectionView _checklistView;
 
         public ICollectionView ChecklistView => _checklistView;
+
+        private int _uniqueCardCount;
+        public int UniqueCardCount
+        {
+            get => _uniqueCardCount;
+            private set => SetProperty(ref _uniqueCardCount, value);
+        }
+
+        private string _ownedUniqueCountString;
+        public string OwnedUniqueCountString
+        {
+            get => _ownedUniqueCountString;
+            private set => SetProperty(ref _ownedUniqueCountString, value);
+        }
+
+        private string _ownedUniqueFullSetCountString;
+        public string OwnedUniqueFullSetCountString
+        {
+            get => _ownedUniqueFullSetCountString;
+            private set => SetProperty(ref _ownedUniqueFullSetCountString, value);
+        }
+
         public CardViewerViewModel CardViewer { get; } = new CardViewerViewModel();
 
         private string? _checklistNameFilter;
@@ -88,6 +110,9 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
             foreach (var g in _combinedCardCounts)
                 SubscribeToGroup(g);
+
+            // initialize counts so they are immediately available for bindings
+            RecalculateCounts();
         }
 
         private void CombinedGroups_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -103,6 +128,9 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 foreach (var nw in e.NewItems.OfType<CombinedCardCount>())
                     SubscribeToGroup(nw);
             }
+
+            // Recalculate counts whenever groups are added/removed
+            RecalculateCounts();
         }
 
         private void SubscribeToGroup(CombinedCardCount group)
@@ -127,10 +155,17 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         {
             // If favorites or quantity change, the checklist visibility may need refresh
             if (e.PropertyName == nameof(CardData.IsFavorite) ||
-                e.PropertyName == nameof(CardData.QuantityOwned) ||
                 e.PropertyName == nameof(CardData.Name) ||
                 e.PropertyName == nameof(CardData.Type))
             {
+                SafeRefresh();
+                return;
+            }
+
+            // When quantity changes (or a full refresh signaled) update counts and view
+            if (string.IsNullOrEmpty(e?.PropertyName) || e.PropertyName == nameof(CardData.QuantityOwned))
+            {
+                RecalculateCounts();
                 SafeRefresh();
             }
         }
@@ -166,6 +201,35 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 default:
                     return true;
             }
+        }
+
+        private void RecalculateCounts()
+        {
+            try
+            {
+                UniqueCardCount = _combinedCardCounts.Count;
+
+                int ownedUniqueCount = _combinedCardCounts.Count(g => g.TotalQuantityOwned > 0);
+                int ownedUniqueFullSetCount = _combinedCardCounts.Count(g => g.TotalQuantityOwned > g.AllCards.First().CopiesNeededForPlayset);
+
+
+                OwnedUniqueCountString = GeneratePercentString(ownedUniqueCount, UniqueCardCount);
+                OwnedUniqueFullSetCountString = GeneratePercentString(ownedUniqueFullSetCount, UniqueCardCount);
+            }
+            catch
+            {
+                // defensive: if something unexpected happens, fall back to zeroes
+                UniqueCardCount = 0;
+                OwnedUniqueCountString = "Error";
+                OwnedUniqueFullSetCountString = "Error";
+            }
+        }
+
+        private string GeneratePercentString(int of, int from)
+        {
+            if (from == 0) return "Error";
+
+            return $"{of}/{from} ({((double)of)/from:P0})";
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
