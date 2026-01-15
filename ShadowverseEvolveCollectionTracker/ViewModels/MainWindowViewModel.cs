@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
+using ShadowverseEvolveCardTracker.Collections;
 using ShadowverseEvolveCardTracker.Models;
 using ShadowverseEvolveCardTracker.Services;
 using ShadowverseEvolveCardTracker.Views;
@@ -20,9 +21,9 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         private readonly IFolderDialogService _folderDialogService;
         private readonly CardRelationsService _relationsService;
 
-        public ObservableCollection<CardData> AllCards { get; } = new ObservableCollection<CardData>();
-        public ObservableCollection<CombinedCardCount> CombinedCardCounts { get; } = new ObservableCollection<CombinedCardCount>();
-        public ObservableCollection<Deck> Decks { get; } = new ObservableCollection<Deck>();
+        public BulkObservableCollection<CardData> AllCards { get; } = new BulkObservableCollection<CardData>();
+        public BulkObservableCollection<CombinedCardCount> CombinedCardCounts { get; } = new BulkObservableCollection<CombinedCardCount>();
+        public BulkObservableCollection<Deck> Decks { get; } = new BulkObservableCollection<Deck>();
 
         public AllCardsTabViewModel AllCardsTab { get; }
         public ChecklistTabViewModel ChecklistTab { get; }
@@ -113,16 +114,18 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 await dispatcher.InvokeAsync(() =>
                 {
                     AllCards.Clear();
-                    foreach (var c in list)
-                    {
-                        AllCards.Add(c);
-                    }
+                    AllCards.AddRange(list);
+
+                    foreach (var c in AllCards)
+                        SubscribeToCard(c);
 
                     Status = $"Loaded {list.Count} saved card(s).";
                     ((RelayCommand)FindCardRelationsCommand).RaiseCanExecuteChanged();
+
+                    RecalculateCombinedCounts();
                 });
-                
-                
+
+
                 // Load decks
                 await LoadDecksAsync().ConfigureAwait(false);
             }
@@ -149,13 +152,16 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 var dispatcher = Application.Current?.Dispatcher ?? Dispatcher.CurrentDispatcher;
                 await dispatcher.InvokeAsync(() =>
                 {
-                    Decks.Clear();
+                    var rehydratedDecks = new List<Deck>();
                     foreach (var deck in decksList)
                     {
                         // Rehydrate CardData references from AllCards
                         RehydrateDeck(deck);
-                        Decks.Add(deck);
+                        rehydratedDecks.Add(deck);
                     }
+                    
+                    Decks.Clear();
+                    Decks.AddRange(rehydratedDecks);
                 });
                 
                 Status += $" Loaded {decksList.Count} deck(s).";
@@ -512,8 +518,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 .ToList();
 
             CombinedCardCounts.Clear();
-            foreach (var item in groups)
-                CombinedCardCounts.Add(item);
+            CombinedCardCounts.AddRange(groups);
         }
 
         private bool CardAlreadyPresent(CardData card)
