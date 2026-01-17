@@ -210,7 +210,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 UniqueCardCount = _combinedCardCounts.Count;
 
                 int ownedUniqueCount = _combinedCardCounts.Count(g => g.TotalQuantityOwned > 0);
-                int ownedUniqueFullSetCount = _combinedCardCounts.Count(g => g.TotalQuantityOwned > g.AllCards.First().CopiesNeededForPlayset);
+                int ownedUniqueFullSetCount = _combinedCardCounts.Count(g => g.TotalQuantityOwned >= g.AllCards.First().CopiesNeededForPlayset);
 
 
                 OwnedUniqueCountString = GeneratePercentString(ownedUniqueCount, UniqueCardCount);
