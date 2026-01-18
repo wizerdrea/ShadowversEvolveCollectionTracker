@@ -51,12 +51,6 @@
                                         Background="{Binding PlaysetPercent, Converter={StaticResource PercentToGoldConverter}}"
                                         BorderBrush="Transparent"
                                         BorderThickness="1">
-                                    <Border.Effect>
-                                        <DropShadowEffect Color="#FFD4AF37"
-                                                          BlurRadius="4"
-                                                          Opacity="0.0"
-                                                          ShadowDepth="0"/>
-                                    </Border.Effect>
 
                                     <TextBlock Text="{Binding PlaysetPercent, StringFormat={}{0}%}"
                                                HorizontalAlignment="Center"
@@ -65,37 +59,52 @@
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
                                 </Border>
                             </Grid>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
 
-                            <DataTemplate.Triggers>
-                                <DataTrigger Binding="{Binding PlaysetPercent}" Value="100">
-                                    <Setter TargetName="PlaysetBorder" Property="BorderBrush" Value="{DynamicResource GoldBrush}" />
-                                    <Setter TargetName="PlaysetBorder" Property="BorderThickness" Value="2" />
+                <!-- Unique 1 Card Set % templated similarly -->
+                <DataGridTemplateColumn Header="Unique 1 Card Set %" Width="*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Border x:Name="PlaysetBorder"
+                        CornerRadius="4"
+                        Padding="4,2"
+                        Background="{Binding UniqueOneCardPercent, Converter={StaticResource PercentToGoldConverter}}"
+                        BorderBrush="Transparent"
+                        BorderThickness="1">
 
-                                    <DataTrigger.EnterActions>
-                                        <BeginStoryboard x:Name="PlaysetGlow">
-                                            <Storyboard RepeatBehavior="Forever" AutoReverse="True">
-                                                <DoubleAnimation Storyboard.TargetName="PlaysetBorder"
-                                                                 Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.BlurRadius)"
-                                                                 From="6" To="18" Duration="0:0:0.9" />
-                                                <DoubleAnimation Storyboard.TargetName="PlaysetBorder"
-                                                                 Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.Opacity)"
-                                                                 From="0.45" To="1.0" Duration="0:0:0.9" />
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </DataTrigger.EnterActions>
+                                    <TextBlock Text="{Binding UniqueOneCardPercent, StringFormat={}{0}%}"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                </Border>
+                            </Grid>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
 
-                                    <DataTrigger.ExitActions>
-                                        <StopStoryboard BeginStoryboardName="PlaysetGlow" />
-                                        <BeginStoryboard>
-                                            <Storyboard>
-                                                <DoubleAnimation Storyboard.TargetName="PlaysetBorder"
-                                                                 Storyboard.TargetProperty="(UIElement.Effect).(DropShadowEffect.Opacity)"
-                                                                 To="0.0" Duration="0:0:0.15" />
-                                            </Storyboard>
-                                        </BeginStoryboard>
-                                    </DataTrigger.ExitActions>
-                                </DataTrigger>
-                            </DataTemplate.Triggers>
+                <!-- Unique Playset % templated similarly -->
+                <DataGridTemplateColumn Header="Unique Playset % " Width="*">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Border x:Name="PlaysetBorder"
+                         CornerRadius="4"
+                         Padding="4,2"
+                         Background="{Binding UniquePlaysetPercent, Converter={StaticResource PercentToGoldConverter}}"
+                         BorderBrush="Transparent"
+                         BorderThickness="1">
+
+                                    <TextBlock Text="{Binding UniquePlaysetPercent, StringFormat={}{0}%}"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center"
+                                FontWeight="SemiBold"
+                                Foreground="{DynamicResource TextPrimaryBrush}" />
+                                </Border>
+                            </Grid>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>

@@ -58,7 +58,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
 
             AllCardsTab = new AllCardsTabViewModel(AllCards);
             ChecklistTab = new ChecklistTabViewModel(CombinedCardCounts);
-            SetCompletionTab = new SetCompletionTabViewModel(AllCards);
+            SetCompletionTab = new SetCompletionTabViewModel(AllCards, CombinedCardCounts);
             DeckBuilderTab = new DeckBuilderViewModel(AllCards, Decks);
 
             LoadFolderCommand = new RelayCommand(async () => await LoadFolderAsync(), () => true);
