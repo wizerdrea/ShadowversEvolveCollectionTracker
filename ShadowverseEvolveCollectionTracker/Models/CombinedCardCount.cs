@@ -46,5 +46,14 @@ namespace ShadowverseEvolveCardTracker.Models
 
         // Convenience helper for favorites filtering
         public bool HasFavorite => _cards.Any(c => c.IsFavorite);
+
+        // Convenience helper for favorites filtering
+        public bool HasWishlist => _cards.Any(c => c.IsWishlisted);
+
+        public List<string> Sets => _cards
+            .Select(c => (c.Set ?? string.Empty).Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(s => s, StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 }

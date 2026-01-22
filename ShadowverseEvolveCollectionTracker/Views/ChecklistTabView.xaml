@@ -11,6 +11,179 @@
         <conv:CombinedCountToCategoryConverter x:Key="CombinedCountToCategoryConverter" />
         <BooleanToVisibilityConverter x:Key="BoolToVisConverter" />
         <conv:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisConverter" />
+
+        <ControlTemplate x:Key="HeaderContextMenuControlTemplate" TargetType="ContextMenu">
+            <Border Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}"
+                    CornerRadius="6"
+                    Padding="{TemplateBinding Padding}">
+                <StackPanel IsItemsHost="True" />
+            </Border>
+        </ControlTemplate>
+
+        <Style x:Key="HeaderContextMenuItemStyle" TargetType="MenuItem">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="MenuItem">
+                        <Border Background="{TemplateBinding Background}"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter ContentSource="Header" RecognizesAccessKey="True"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Icon" Value="{x:Null}"/>
+        </Style>
+
+        <Style x:Key="HeaderContextMenuStyle" TargetType="ContextMenu">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="4" />
+            <Setter Property="HasDropShadow" Value="True" />
+            <Setter Property="Template" Value="{StaticResource HeaderContextMenuControlTemplate}" />
+            <Setter Property="ItemContainerStyle" Value="{StaticResource HeaderContextMenuItemStyle}" />
+        </Style>
+
+        <Style x:Key="AppExpanderStyle" TargetType="Expander">
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Expander">
+                        <Border Background="Transparent">
+                            <StackPanel>
+                                <!-- Header toggle with circular chevron -->
+                                <ToggleButton x:Name="HeaderToggle"
+                                      IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                      Cursor="Hand"
+                                      Focusable="False"
+                                      Background="Transparent"
+                                      BorderBrush="Transparent"
+                                      Padding="4"
+                                      HorizontalAlignment="Left"
+                                      HorizontalContentAlignment="Left">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <!-- Circular hollow chevron (outline, no base) -->
+                                        <Path x:Name="ArrowPath" Data="M0,0 L8,0 L4,5 Z" Fill="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" Width="8" Height="5" RenderTransformOrigin="0.5,0.5">
+                                            <Path.RenderTransform>
+                                                <RotateTransform Angle="180"/>
+                                            </Path.RenderTransform>
+                                        </Path>
+
+                                        <!-- Header content to the right of the arrow -->
+                                        <ContentPresenter Grid.Column="1"
+                                                  VerticalAlignment="Center"
+                                                  HorizontalAlignment="Left"
+                                                  ContentSource="Header"
+                                                  RecognizesAccessKey="True"
+                                                  Margin="4,0,8,0"/>
+                                    </Grid>
+                                </ToggleButton>
+
+                                <!-- Collapsible content -->
+                                <ContentPresenter x:Name="ExpandSite"
+                                          Margin="0,6,0,0"
+                                          Visibility="Collapsed"
+                                          Focusable="False"
+                                          ContentSource="Content"/>
+                            </StackPanel>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <!-- When expanded: show content and tint stroke -->
+                            <Trigger Property="IsExpanded" Value="True">
+                                <Setter TargetName="ExpandSite" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+
+                            <!-- When collapsed: show content only (do NOT set ArrowPath.Stroke here) -->
+                            <Trigger Property="IsExpanded" Value="False">
+                                <Setter TargetName="ExpandSite" Property="Visibility" Value="Collapsed"/>
+                                <!-- removed: Setter TargetName="ArrowPath" Property="Stroke" -->
+                            </Trigger>
+
+                            <!-- Use Expander events to animate the rotate angle -->
+                            <EventTrigger RoutedEvent="Expanded">
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="ArrowPath"
+                                                 Storyboard.TargetProperty="(Path.RenderTransform).(RotateTransform.Angle)"
+                                                 To="180" Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                            <EventTrigger RoutedEvent="Collapsed">
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="ArrowPath"
+                                                 Storyboard.TargetProperty="(Path.RenderTransform).(RotateTransform.Angle)"
+                                                 To="0" Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+
+                            <!-- Mouse-over stroke change (placed AFTER IsExpanded triggers so it can take precedence) -->
+                            <Trigger SourceName="HeaderToggle" Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ArrowPath" Property="Stroke" Value="{StaticResource GoldBrush}"/>
+                            </Trigger>
+
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="FilterDropdownToggleButtonStyle" TargetType="ToggleButton">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="Bd"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="6"
+                        Padding="{TemplateBinding Padding}">
+                            <Grid>
+                                <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource ElevatedBrush}"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{StaticResource SelectedBrush}"/>
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.6"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <CollectionViewSource x:Key="SetFilters" Source="{Binding SetFilters}"/>
+        <CollectionViewSource x:Key="OwnedFilters" Source="{Binding OwnedFilters}"/>
     </UserControl.Resources>
 
     <Grid Margin="8">
@@ -24,12 +197,86 @@
         <!-- Wrap the DataGrid in a Grid so we can overlay a "calculating" message -->
         <Grid Grid.Column="0">
             <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <Grid Grid.Row="0">
-                <DataGrid ItemsSource="{Binding ChecklistView}"
+            <Expander Grid.Row="0" Margin="8,0,8,4" Header="Filters" IsExpanded="True" Style="{StaticResource AppExpanderStyle}">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Name" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox Width="220"
+                                 Text="{Binding ChecklistNameFilter, UpdateSourceTrigger=PropertyChanged}">
+                            <TextBox.ToolTip>
+                                <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                    <Border Background="{DynamicResource ElevatedBrush}"
+                                            Padding="6"
+                                            CornerRadius="4"
+                                            BorderBrush="{DynamicResource AccentBrush}"
+                                            BorderThickness="1">
+                                        <TextBlock Text="Filter cards by name using a regex (or plain text if regex invalid)"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                    </Border>
+                                </ToolTip>
+                            </TextBox.ToolTip>
+                        </TextBox>
+                    </StackPanel>
+
+                    <!-- Sets dropdown (toggle + popup) -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+                        <ToggleButton x:Name="SetsToggle"
+                                      Style="{StaticResource FilterDropdownToggleButtonStyle}"
+                                      Width="120"
+                                      HorizontalAlignment="Left"
+                                      Checked="SetsToggle_Checked"
+                                      Unchecked="SetsToggle_Unchecked">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <TextBlock Text="Sets" Margin="0,0,6,0" VerticalAlignment="Center" Foreground="{StaticResource TextPrimaryBrush}" />
+                                <!-- arrow path; we'll rotate it in code-behind when popup opens/closes -->
+                                <Path x:Name="SetsArrowPath" Data="M0,0 L8,0 L4,5 Z" Fill="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" Width="8" Height="5" RenderTransformOrigin="0.5,0.5">
+                                    <Path.RenderTransform>
+                                        <RotateTransform Angle="0"/>
+                                    </Path.RenderTransform>
+                                </Path>
+                            </StackPanel>
+                        </ToggleButton>
+
+                        <Popup x:Name="SetsPopup"
+                               Placement="Bottom"
+                               PlacementTarget="{Binding ElementName=SetsToggle}"
+                               StaysOpen="False"
+                               AllowsTransparency="True"
+                               PopupAnimation="Fade"
+                               Closed="SetsPopup_Closed">
+                            <Border Background="{DynamicResource SurfaceBrush}" Padding="6" CornerRadius="6" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" Width="280">
+                                <StackPanel>
+                                    <TextBlock Text="Select Sets (multi-select)" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                                    <ScrollViewer Height="180" VerticalScrollBarVisibility="Auto">
+                                        <ItemsControl ItemsSource="{Binding SetFilters}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <CheckBox Content="{Binding Name}" IsChecked="{Binding IsChecked, Mode=TwoWay}" Padding="4,2"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,8,0,0">
+                                        <!-- Buttons keep their names; code-behind wires click handlers -->
+                                        <Button x:Name="SelectAllSetsButton" Content="Select All" Margin="0,0,6,0"/>
+                                        <Button x:Name="ClearAllSetsButton" Content="Clear All"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </Popup>
+                    </StackPanel>
+                </StackPanel>
+            </Expander>
+
+            <Grid Grid.Row="1">
+                <DataGrid x:Name="ChecklistDataGrid"
+                          ItemsSource="{Binding ChecklistView}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
                           CanUserAddRows="False"
@@ -161,45 +408,63 @@
                             </DataGridTemplateColumn.HeaderTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTextColumn Binding="{Binding Name}" Width="3*">
+                        <DataGridTextColumn Binding="{Binding Name}" IsReadOnly="True" Width="2*">
                             <DataGridTextColumn.HeaderTemplate>
                                 <DataTemplate>
                                     <StackPanel>
-                                        <TextBlock Text="Card Name"/>
-                                        <TextBox Text="{Binding DataContext.ChecklistNameFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" Width="200">
-                                            <TextBox.ToolTip>
-                                                <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
-                                                    <Border Background="{DynamicResource ElevatedBrush}"
-                                                            Padding="6"
-                                                            CornerRadius="4"
-                                                            BorderBrush="{DynamicResource AccentBrush}"
-                                                            BorderThickness="1">
-                                                        <TextBlock Text="Enter a regular expression to filter card names"
-                                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
-                                                    </Border>
-                                                </ToolTip>
-                                            </TextBox.ToolTip>
-                                        </TextBox>
+                                        <TextBlock Text="Name"/>
                                     </StackPanel>
                                 </DataTemplate>
                             </DataGridTextColumn.HeaderTemplate>
                         </DataGridTextColumn>
 
-                        <DataGridTextColumn Binding="{Binding TotalQuantityOwned}" Width="*">
-                            <DataGridTextColumn.HeaderTemplate>
-                                <DataTemplate>
-                                    <StackPanel>
-                                        <TextBlock Text="Total Qty"/>
-                                        <ComboBox Width="120"
-                                                  SelectedValuePath="Content"
-                                                  SelectedValue="{Binding DataContext.ChecklistQtyFilter, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
-                                            <ComboBoxItem Content="Both" />
-                                            <ComboBoxItem Content="Owned" />
-                                            <ComboBoxItem Content="Unowned" />
-                                        </ComboBox>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </DataGridTextColumn.HeaderTemplate>
+                        <DataGridTextColumn Header="Total Qty" Binding="{Binding TotalQuantityOwned}" IsReadOnly="True" Width="80">
+                            <DataGridTextColumn.HeaderStyle>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="Background" Value="{DynamicResource HeaderGradientBrush}" />
+                                    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+                                    <Setter Property="Foreground" Value="{StaticResource GoldBrush}"/>
+                                    <Setter Property="Padding" Value="8,8"/>
+                                    <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                                    <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                                    <Setter Property="FontWeight" Value="SemiBold"/>
+                                    <Setter Property="HorizontalContentAlignment" Value="Left"/>
+
+                                    <Setter Property="ContextMenu">
+                                        <Setter.Value>
+                                            <ContextMenu Style="{StaticResource HeaderContextMenuStyle}">
+                                                <ContextMenu.ItemsSource>
+                                                    <CompositeCollection>
+                                                        <CollectionContainer Collection="{Binding Source={StaticResource OwnedFilters}}"/>
+                                                        <MenuItem Header="Select All"
+                                                                  Command="{Binding SelectAllOwnedFiltersCommand}"/>
+                                                        <MenuItem Header="Clear All"
+                                                                  Command="{Binding ClearAllOwnedFiltersCommand}"/>
+                                                    </CompositeCollection>
+                                                </ContextMenu.ItemsSource>
+
+                                                <ContextMenu.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <CheckBox VerticalAlignment="Center" HorizontalAlignment="Left" OverridesDefaultStyle="False"
+                                                                  BorderThickness="0"
+                                                                  Content="{Binding Name}"
+                                                                  IsChecked="{Binding IsChecked, Mode=TwoWay}"
+                                                                  Padding="6,4"/>
+                                                    </DataTemplate>
+                                                </ContextMenu.ItemTemplate>
+                                            </ContextMenu>
+                                        </Setter.Value>
+                                    </Setter>
+
+                                    <Setter Property="ContentTemplate">
+                                        <Setter.Value>
+                                            <DataTemplate>
+                                                <TextBlock Text="Total Qty" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </DataTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </DataGridTextColumn.HeaderStyle>
 
                             <DataGridTextColumn.CellStyle>
                                 <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}">
@@ -245,7 +510,7 @@
                     </TextBlock.Style>
                 </TextBlock>
             </Grid>
-            <Grid Grid.Row="1" HorizontalAlignment="Right" Margin="6">
+            <Grid Grid.Row="2" HorizontalAlignment="Right" Margin="6">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
