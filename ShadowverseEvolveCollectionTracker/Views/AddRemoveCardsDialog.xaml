@@ -388,7 +388,7 @@ MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTemplateColumn Header="Class" Width="60">
+                        <DataGridTemplateColumn Header="Class" Width="60" SortMemberPath="Card.Class">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
                                     <Image Source="{Binding Card.Class, Converter={StaticResource ClassIconConverter}}" Height="20" Width="20" HorizontalAlignment="Center"/>

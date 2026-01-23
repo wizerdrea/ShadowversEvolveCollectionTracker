@@ -828,7 +828,7 @@
                         </DataGridTextColumn>
 
                         <!-- New: Class icon column (between Rarity and Set) -->
-                        <DataGridTemplateColumn Header="Class" Width="45">
+                        <DataGridTemplateColumn Header="Class" Width="45" SortMemberPath="Class">
                             <DataGridTemplateColumn.HeaderStyle>
                                 <Style TargetType="DataGridColumnHeader">
                                     <Setter Property="Background" Value="{DynamicResource HeaderGradientBrush}" />
