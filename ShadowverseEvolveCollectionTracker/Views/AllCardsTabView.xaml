@@ -205,6 +205,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <Expander Grid.Row="0" Margin="8,0,8,4" Header="Filters" IsExpanded="True" Style="{StaticResource AppExpanderStyle}">
@@ -865,6 +866,11 @@
                     </TextBlock.Style>
                 </TextBlock>
             </Grid>
+
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0 2 6 0">
+                <TextBlock Text="Matching Cards: "/>
+                <TextBlock Text="{Binding FilteredCardCount}"/>
+            </StackPanel>
         </Grid>
 
         <GridSplitter Grid.Column="1"

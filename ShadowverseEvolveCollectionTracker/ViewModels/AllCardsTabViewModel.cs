@@ -23,6 +23,17 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         public ICollectionView FilteredCards => _filteredCards;
         public CardViewerViewModel CardViewer { get; } = new CardViewerViewModel();
 
+        private int _filteredCardCount;
+        public int FilteredCardCount
+        {
+            get => _filteredCardCount;
+            set
+            {
+                if (SetProperty(ref _filteredCardCount, value))
+                    SafeRefresh();
+            }
+        }
+
         private string? _nameFilter;
         public string? NameFilter
         {
@@ -45,18 +56,6 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             }
         }
 
-        // keep QtyOwnedFilter for compatibility with existing UI binding (combo in original view)
-        private string _qtyOwnedFilter = "Both";
-        public string QtyOwnedFilter
-        {
-            get => _qtyOwnedFilter;
-            set
-            {
-                if (SetProperty(ref _qtyOwnedFilter, value))
-                    _filteredCards.Refresh();
-            }
-        }
-
         private string? _textFilter;
         public string? TextFilter
         {
@@ -75,7 +74,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             set
             {
                 if (SetProperty(ref _favoritesOnly, value))
-                    _filteredCards.Refresh();
+                    SafeRefresh();
             }
         }
 
@@ -86,7 +85,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             set
             {
                 if (SetProperty(ref _wishlistedOnly, value))
-                    _filteredCards.Refresh();
+                    SafeRefresh();
             }
         }
 
@@ -289,6 +288,8 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             {
                 _filteredCards.Refresh();
             }
+
+            FilteredCardCount = _filteredCards.Cast<object>().Count();
         }
 
         private bool FilterCard(object? obj)
@@ -331,17 +332,6 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                         if (!card.CardNumber?.Contains(CardNumberFilter!, StringComparison.OrdinalIgnoreCase) ?? true)
                             return false;
                     }
-                }
-
-                // legacy combo - still supported but prefer OwnedFilters collection if present & partially unchecked
-                switch (QtyOwnedFilter)
-                {
-                    case "Owned":
-                        if (card.QuantityOwned <= 0) return false;
-                        break;
-                    case "Unowned":
-                        if (card.QuantityOwned > 0) return false;
-                        break;
                 }
 
                 if (!string.IsNullOrWhiteSpace(TextFilter))
