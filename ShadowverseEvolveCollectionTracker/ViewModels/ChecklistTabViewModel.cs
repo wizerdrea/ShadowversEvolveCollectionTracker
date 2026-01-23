@@ -1,3 +1,4 @@
+using ShadowverseEvolveCardTracker.Collections;
 using ShadowverseEvolveCardTracker.Models;
 using ShadowverseEvolveCardTracker.Utilities;
 using System.Collections.ObjectModel;
@@ -13,6 +14,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
     public class ChecklistTabViewModel : INotifyPropertyChanged
     {
         private readonly ObservableCollection<CombinedCardCount> _combinedCardCounts;
+        private readonly BulkObservableCollection<CombinedCardCount> _filiteredCombinedCards = new();
         private readonly ICollectionView _checklistView;
 
         public ICollectionView ChecklistView => _checklistView;
@@ -51,17 +53,6 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             }
         }
 
-        private string _checklistQtyFilter = "Both";
-        public string ChecklistQtyFilter
-        {
-            get => _checklistQtyFilter;
-            set
-            {
-                if (SetProperty(ref _checklistQtyFilter, value))
-                    SafeRefresh();
-            }
-        }
-
         private bool _favoritesOnly;
         public bool FavoritesOnly
         {
@@ -69,6 +60,18 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             set
             {
                 if (SetProperty(ref _favoritesOnly, value))
+                    SafeRefresh();
+            }
+        }
+
+
+        private bool _useOnlyCardsFromSelectedSets;
+        public bool UseOnlyCardsFromSelectedSets
+        {
+            get => _useOnlyCardsFromSelectedSets;
+            set
+            {
+                if (SetProperty(ref _useOnlyCardsFromSelectedSets, value))
                     SafeRefresh();
             }
         }
@@ -112,7 +115,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         public ChecklistTabViewModel(ObservableCollection<CombinedCardCount> combinedCardCounts)
         {
             _combinedCardCounts = combinedCardCounts ?? throw new ArgumentNullException(nameof(combinedCardCounts));
-            _checklistView = CollectionViewSource.GetDefaultView(_combinedCardCounts);
+            _checklistView = CollectionViewSource.GetDefaultView(_filiteredCombinedCards);
             _checklistView.Filter = ChecklistFilter;
 
             InitializeSetFilters();
@@ -160,6 +163,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             }
 
             // Recalculate counts whenever groups are added/removed
+            RecomputeFilteredCombinedCards();
             RecalculateCounts();
             InitializeSetFilters();
         }
@@ -196,7 +200,6 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             // When quantity changes (or a full refresh signaled) update counts and view
             if (string.IsNullOrEmpty(e?.PropertyName) || e.PropertyName == nameof(CardData.QuantityOwned))
             {
-                RecalculateCounts();
                 SafeRefresh();
             }
         }
@@ -207,6 +210,24 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             {
                 SafeRefresh();
             }
+        }
+
+        private void RecomputeFilteredCombinedCards()
+        {
+
+            IEnumerable<CombinedCardCount> newCombinedCards = new List<CombinedCardCount>(); 
+
+            if (UseOnlyCardsFromSelectedSets)
+            {
+                newCombinedCards = GetCombinedCountsForCurrentSets();
+            }
+            else
+            {
+                newCombinedCards = _combinedCardCounts;
+            }
+
+            _filiteredCombinedCards.Clear();
+            _filiteredCombinedCards.AddRange(newCombinedCards);
         }
 
         private bool ChecklistFilter(object? obj)
@@ -332,10 +353,12 @@ namespace ShadowverseEvolveCardTracker.ViewModels
         {
             try
             {
-                UniqueCardCount = _combinedCardCounts.Count;
+                var filteredCards = _checklistView.Cast<CombinedCardCount>();
 
-                int ownedUniqueCount = _combinedCardCounts.Count(g => g.TotalQuantityOwned > 0);
-                int ownedUniqueFullSetCount = _combinedCardCounts.Count(g => g.TotalQuantityOwned >= g.AllCards.First().CopiesNeededForPlayset);
+                UniqueCardCount = filteredCards.Count();
+
+                int ownedUniqueCount = filteredCards.Count(g => g.TotalQuantityOwned > 0);
+                int ownedUniqueFullSetCount = filteredCards.Count(g => g.TotalQuantityOwned >= g.AllCards.First().CopiesNeededForPlayset);
 
 
                 OwnedUniqueCountString = GeneratePercentString(ownedUniqueCount, UniqueCardCount);
@@ -348,6 +371,26 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 OwnedUniqueCountString = "Error";
                 OwnedUniqueFullSetCountString = "Error";
             }
+        }
+
+        private List<CombinedCardCount> GetCombinedCountsForCurrentSets()
+        {
+            var selectedSets = SetFilters.Where(f => f.IsChecked).Select(f => f.Name);
+
+            return _combinedCardCounts.Where(c => c.Sets.Any(s => contains(selectedSets, s)))
+                                      .Select(c => NewCountForSelectedSets(c, selectedSets)).ToList();
+        }
+
+        private CombinedCardCount NewCountForSelectedSets(CombinedCardCount origonal, IEnumerable<string> selectedSets)
+        {
+            var cardsInSelectedSets = origonal.AllCards.Where(c => contains(selectedSets, c.Set.Trim()));
+
+            return new CombinedCardCount(cardsInSelectedSets);
+        }
+
+        private bool contains(IEnumerable<string> collection, string item)
+        {
+            return collection.Any(c => item.Contains(c, StringComparison.OrdinalIgnoreCase));
         }
 
         private string GeneratePercentString(int of, int from)
@@ -380,7 +423,10 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             if (_checklistView is IEditableCollectionView iecv &&
                 (iecv.IsAddingNew || iecv.IsEditingItem))
                 return;
+
+            RecomputeFilteredCombinedCards();
             _checklistView.Refresh();
+            RecalculateCounts();
         }
     }
 }

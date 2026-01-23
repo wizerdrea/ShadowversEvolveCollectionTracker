@@ -271,6 +271,25 @@
                             </Border>
                         </Popup>
                     </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+                        <CheckBox VerticalAlignment="Center" Margin="0,0,6,0"
+                                  Content="Count Only Cards in Selected Sets" 
+                                  IsChecked="{Binding UseOnlyCardsFromSelectedSets}">
+                            <CheckBox.ToolTip>
+                                <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                    <Border Background="{DynamicResource ElevatedBrush}"
+                                                Padding="6"
+                                                CornerRadius="4"
+                                                BorderBrush="{DynamicResource AccentBrush}"
+                                                BorderThickness="1">
+                                        <TextBlock Text="Have quantities of cards only count cards in selected sets"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                    </Border>
+                                </ToolTip>
+                            </CheckBox.ToolTip>
+                        </CheckBox>
+                    </StackPanel>
                 </StackPanel>
             </Expander>
 
