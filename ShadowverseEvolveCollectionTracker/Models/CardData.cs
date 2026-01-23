@@ -1,3 +1,4 @@
+using ShadowverseEvolveCardTracker.Constants;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -34,6 +35,20 @@ namespace ShadowverseEvolveCardTracker.Models
         public string Class { get; init; } = string.Empty;
 
         public string Type { get; init; } = string.Empty;
+
+        /// <summary>
+        /// Display name used for sorting/display where evolved versions should show " (Evolved)".
+        /// </summary>
+        public string DisplayName
+        {
+            get
+            {
+                var baseName = Name ?? string.Empty;
+                if (!string.IsNullOrWhiteSpace(Type) && Type.IndexOf(CardTypes.Evolved, StringComparison.OrdinalIgnoreCase) >= 0)
+                    return $"{baseName} ({CardTypes.Evolved})";
+                return baseName;
+            }
+        }
 
         // Traits may contain slashes and multiple values.
         public string Traits { get; init; } = string.Empty;

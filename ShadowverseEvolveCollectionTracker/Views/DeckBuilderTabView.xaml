@@ -668,7 +668,7 @@
                             </DataGridTemplateColumn.HeaderTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>
+                        <DataGridTextColumn Header="Name" Binding="{Binding DisplayName}" Width="*"/>
                         <DataGridTextColumn Header="Cost" Binding="{Binding Cost}" Width="45">
                             <DataGridTextColumn.HeaderStyle>
                                 <Style TargetType="DataGridColumnHeader">

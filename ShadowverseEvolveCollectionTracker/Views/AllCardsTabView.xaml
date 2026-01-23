@@ -446,7 +446,7 @@
                             </DataGridTemplateColumn.HeaderTemplate>
                         </DataGridTemplateColumn>
 
-                        <DataGridTextColumn Binding="{Binding Name}" IsReadOnly="True" Width="2*">
+                        <DataGridTextColumn Binding="{Binding DisplayName}" IsReadOnly="True" Width="2*">
                             <DataGridTextColumn.HeaderTemplate>
                                 <DataTemplate>
                                     <StackPanel>

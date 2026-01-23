@@ -194,7 +194,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             else
             {
                 _cards = new List<CardData> { card };
-                CardName = card.Name;
+                CardName = card.DisplayName;
             }
 
             CurrentIndex = 0;
@@ -224,7 +224,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             {
                 _cards = cards.ToList();
                 // show name of the currently displayed card if available, otherwise first card name
-                CardName = CurrentCard?.Name ?? _cards.FirstOrDefault()?.Name;
+                CardName = CurrentCard?.DisplayName ?? _cards.FirstOrDefault()?.DisplayName;
             }
 
             CurrentIndex = 0;
