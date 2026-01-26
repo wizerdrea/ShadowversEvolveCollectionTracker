@@ -1,9 +1,11 @@
+using Microsoft.VisualBasic;
+using ShadowverseEvolveCardTracker.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Threading;
-using ShadowverseEvolveCardTracker.Models;
 
 namespace ShadowverseEvolveCardTracker.Services
 {
@@ -142,6 +144,37 @@ namespace ShadowverseEvolveCardTracker.Services
                 text2.Contains(card1.Name, StringComparison.OrdinalIgnoreCase))
             {
                 return true;
+            }
+
+            // Rule 3: Part of card's name appears in "" in the other's text
+            if (!string.IsNullOrWhiteSpace(text1) &&
+                HasPartialReference(text1, card2.Name))
+            {
+                return true;
+            }
+
+            if (!string.IsNullOrWhiteSpace(text2) &&
+                HasPartialReference(text2, card1.Name))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private const string quoteRegexPattern = @"\""([^""]*?)\""";
+        private bool HasPartialReference(string text, string name)
+        {
+            MatchCollection matches = Regex.Matches(text, quoteRegexPattern);
+
+            if (matches.Count == 0)
+                return false;
+
+            foreach (Match match in matches)
+            {
+                if (match.Success &&
+                    name.Contains(match.Groups[1].Value, StringComparison.OrdinalIgnoreCase))
+                    return true;
             }
 
             return false;
