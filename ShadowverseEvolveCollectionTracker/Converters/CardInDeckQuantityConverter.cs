@@ -47,7 +47,13 @@ namespace ShadowverseEvolveCardTracker.Converters
                     return "1";
                 }
 
-                if (card.Type?.Contains("Evolved", StringComparison.OrdinalIgnoreCase) ?? false)
+                if (card.Type?.Contains(CardTypes.Evolved, StringComparison.OrdinalIgnoreCase) ?? false)
+                {
+                    var e = deck.EvolveDeck.FirstOrDefault(d => d.Card.CardNumber == card.CardNumber);
+                    return (e?.Quantity ?? 0).ToString();
+                }
+
+                if (card.Type?.Contains(CardTypes.Advanced, StringComparison.OrdinalIgnoreCase) ?? false)
                 {
                     var e = deck.EvolveDeck.FirstOrDefault(d => d.Card.CardNumber == card.CardNumber);
                     return (e?.Quantity ?? 0).ToString();

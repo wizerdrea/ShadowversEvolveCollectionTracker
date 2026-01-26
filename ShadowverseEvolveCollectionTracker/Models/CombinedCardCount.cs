@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ShadowverseEvolveCardTracker.Constants;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -19,13 +20,18 @@ namespace ShadowverseEvolveCardTracker.Models
             get
             {
                 var baseName = _cards.FirstOrDefault()?.Name ?? string.Empty;
-                return IsEvolved ? $"{baseName} (Evolved)" : baseName;
+                return IsEvolved ? $"{baseName} (Evolved)" :
+                       IsAdvanced ? $"{baseName} (Advanced)" : 
+                       baseName;
             }
         }
 
         // True when any card in the group has "Evolved" in its Type (case-insensitive)
         public bool IsEvolved =>
-            _cards.Any(c => !string.IsNullOrEmpty(c.Type) && c.Type.IndexOf("Evolved", StringComparison.OrdinalIgnoreCase) >= 0);
+            _cards.Any(c => !string.IsNullOrEmpty(c.Type) && c.Type.IndexOf(CardTypes.Evolved, StringComparison.OrdinalIgnoreCase) >= 0);
+
+        public bool IsAdvanced =>
+            _cards.Any(c => !string.IsNullOrEmpty(c.Type) && c.Type.IndexOf(CardTypes.Advanced, StringComparison.OrdinalIgnoreCase) >= 0);
 
         public List<string> Images => _cards
             .Where(c => c.QuantityOwned > 0)

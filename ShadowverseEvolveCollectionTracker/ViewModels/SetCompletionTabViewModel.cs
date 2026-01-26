@@ -128,7 +128,8 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             var uniqueCards = _allCards.GroupBy(c => new
             {
                 Name = c.Name?.Trim() ?? string.Empty,
-                IsEvolved = !string.IsNullOrEmpty(c.Type) && c.Type.IndexOf("Evolved", StringComparison.OrdinalIgnoreCase) >= 0
+                IsEvolved = !string.IsNullOrEmpty(c.Type) && (c.Type.IndexOf("Evolved", StringComparison.OrdinalIgnoreCase) >= 0 || 
+                                                              c.Type.IndexOf("Advanced", StringComparison.OrdinalIgnoreCase) >= 0)
             }).ToList();
 
             _rows.Clear();
@@ -155,7 +156,8 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 var uniqueCardsInSet = g.GroupBy(c => new
                 {
                     Name = c.Name?.Trim() ?? string.Empty,
-                    IsEvolved = !string.IsNullOrEmpty(c.Type) && c.Type.IndexOf("Evolved", StringComparison.OrdinalIgnoreCase) >= 0
+                    IsEvolved = !string.IsNullOrEmpty(c.Type) && (c.Type.IndexOf("Evolved", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                                                  c.Type.IndexOf("Advanced", StringComparison.OrdinalIgnoreCase) >= 0)
                 }).Where(g => (!g.First().Type?.Contains(CardTypes.Leader, StringComparison.OrdinalIgnoreCase)) ?? true)
                 .Select(a => a.Key).OrderBy(g => g.Name, StringComparer.OrdinalIgnoreCase).ToList();
 

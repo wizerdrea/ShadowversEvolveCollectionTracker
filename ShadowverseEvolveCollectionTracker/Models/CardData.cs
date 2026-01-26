@@ -46,6 +46,8 @@ namespace ShadowverseEvolveCardTracker.Models
                 var baseName = Name ?? string.Empty;
                 if (!string.IsNullOrWhiteSpace(Type) && Type.IndexOf(CardTypes.Evolved, StringComparison.OrdinalIgnoreCase) >= 0)
                     return $"{baseName} ({CardTypes.Evolved})";
+                if (!string.IsNullOrWhiteSpace(Type) && Type.IndexOf(CardTypes.Advanced, StringComparison.OrdinalIgnoreCase) >= 0)
+                    return $"{baseName} ({CardTypes.Advanced})";
                 return baseName;
             }
         }

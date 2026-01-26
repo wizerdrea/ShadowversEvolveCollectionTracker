@@ -115,13 +115,14 @@ namespace ShadowverseEvolveCardTracker.Services
         #region Card Type Checks
 
         public bool IsLeaderCard(CardData card) =>
-            card?.Type?.Contains("Leader", StringComparison.OrdinalIgnoreCase) ?? false;
+            card?.Type?.Contains(CardTypes.Leader, StringComparison.OrdinalIgnoreCase) ?? false;
 
         public bool IsTokenCard(CardData card) =>
-            card?.Type?.Contains("Token", StringComparison.OrdinalIgnoreCase) ?? false;
+            card?.Type?.Contains(CardTypes.Token, StringComparison.OrdinalIgnoreCase) ?? false;
 
         public bool IsEvolvedCard(CardData card) =>
-            card?.Type?.Contains("Evolved", StringComparison.OrdinalIgnoreCase) ?? false;
+            (card?.Type?.Contains(CardTypes.Evolved, StringComparison.OrdinalIgnoreCase) ?? false) ||
+            (card?.Type?.Contains(CardTypes.Advanced, StringComparison.OrdinalIgnoreCase) ?? false);
 
         // UPDATED: tokens are now deck entries (not "non-deck" like leaders)
         public bool IsNonDeckCard(CardData card) =>

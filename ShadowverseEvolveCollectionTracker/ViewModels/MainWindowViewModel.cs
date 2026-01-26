@@ -511,7 +511,8 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                 .GroupBy(c => new
                 {
                     Name = c.Name ?? string.Empty,
-                    IsEvolved = !string.IsNullOrEmpty(c.Type) && c.Type.IndexOf("Evolved", StringComparison.OrdinalIgnoreCase) >= 0
+                    IsEvolved = !string.IsNullOrEmpty(c.Type) && (c.Type.IndexOf("Evolved", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                                                                  c.Type.IndexOf("Advanced", StringComparison.OrdinalIgnoreCase) >= 0)
                 })
                 .Select(g => new CombinedCardCount(g))
                 .OrderBy(g => g.Name, StringComparer.OrdinalIgnoreCase)
