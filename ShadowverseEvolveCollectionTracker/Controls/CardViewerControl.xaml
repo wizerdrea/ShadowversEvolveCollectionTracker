@@ -144,15 +144,17 @@
                 </Grid>
             </Border>
 
-            <TextBlock x:Name="CardNameTextBlock"
+            <TextBox x:Name="CardNameTextBlock"
                        Grid.Row="1"
-                       Text="{Binding CardName}"
+                       Text="{Binding CardName, Mode=OneWay}"
                        FontWeight="SemiBold"
                        FontSize="18"
                        TextWrapping="NoWrap"
-                       TextTrimming="CharacterEllipsis"
                        HorizontalAlignment="Center"
                        Margin="0,8,0,0"
+                       IsReadOnly="True" 
+                       BorderThickness="0" 
+                       Background="Transparent" 
                        Foreground="{DynamicResource GoldBrush}" />
 
             <!-- Wishlist controls placed under the name -->
