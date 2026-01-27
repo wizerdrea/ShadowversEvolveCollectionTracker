@@ -341,7 +341,7 @@
                 </TabItem>
 
                 <!-- Cross Play Decks -->
-                <TabItem Header="Cross Play">
+                <TabItem Header="Cross Craft">
                     <DataGrid ItemsSource="{Binding CrossCraftDecks}"
                               AutoGenerateColumns="False"
                               SelectionMode="Single"
