@@ -17,7 +17,7 @@
                 <DataGridTextColumn Header="Set Name" Binding="{Binding SetName}" Width="2*" />
 
                 <!-- 1 Card Set % as templated cell so we can overlay gradient + glow animation -->
-                <DataGridTemplateColumn Header="1 Card Set %" Width="*">
+                <DataGridTemplateColumn Header="1 Card Set %" Width="*" SortMemberPath="OneCardPercent">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Grid>
@@ -41,7 +41,7 @@
                 </DataGridTemplateColumn>
 
                 <!-- Playset % templated similarly -->
-                <DataGridTemplateColumn Header="Playset %" Width="*">
+                <DataGridTemplateColumn Header="Playset %" Width="*" SortMemberPath="PlaysetPercent">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Grid>
@@ -64,7 +64,7 @@
                 </DataGridTemplateColumn>
 
                 <!-- Unique 1 Card Set % templated similarly -->
-                <DataGridTemplateColumn Header="Unique 1 Card Set %" Width="*">
+                <DataGridTemplateColumn Header="Unique 1 Card Set %" Width="*" SortMemberPath="UniqueOneCardPercent">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Grid>
@@ -87,7 +87,7 @@
                 </DataGridTemplateColumn>
 
                 <!-- Unique Playset % templated similarly -->
-                <DataGridTemplateColumn Header="Unique Playset % " Width="*">
+                <DataGridTemplateColumn Header="Unique Playset % " Width="*" SortMemberPath="UniquePlaysetPercent">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Grid>
