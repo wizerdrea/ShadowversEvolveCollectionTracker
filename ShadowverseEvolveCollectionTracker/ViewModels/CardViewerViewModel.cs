@@ -134,6 +134,7 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                     OnPropertyChanged(nameof(CurrentCard));
                     OnPropertyChanged(nameof(CurrentImage));
                     OnPropertyChanged(nameof(CurrentIndexDisplay));
+                    CardName = CurrentCard?.DisplayName; // Update card name when index changes
                     ((RelayCommand)PrevImageCommand).RaiseCanExecuteChanged();
                     ((RelayCommand)NextImageCommand).RaiseCanExecuteChanged();
                     UpdateCurrentCardSubscription(CurrentCard);
