@@ -290,6 +290,24 @@
                             </CheckBox.ToolTip>
                         </CheckBox>
                     </StackPanel>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0,0,0">
+                        <CheckBox VerticalAlignment="Center" Margin="0,0,6,0"
+                                  Content="Show Only Cards 'Exlusive' to Selected Sets" 
+                                  IsChecked="{Binding ShowOnlyCardsExclusiveToSelectedSets}">
+                            <CheckBox.ToolTip>
+                                <ToolTip Placement="Mouse" Background="Transparent" BorderThickness="0" Padding="0" HasDropShadow="False">
+                                    <Border Background="{DynamicResource ElevatedBrush}"
+                                            Padding="6"
+                                            CornerRadius="4"
+                                            BorderBrush="{DynamicResource AccentBrush}"
+                                            BorderThickness="1">
+                                        <TextBlock Text="Only display cards that are only in selected sets"
+                                                   Foreground="{DynamicResource TextSecondaryBrush}"/>
+                                    </Border>
+                                </ToolTip>
+                            </CheckBox.ToolTip>
+                        </CheckBox>
+                    </StackPanel>
                 </StackPanel>
             </Expander>
 

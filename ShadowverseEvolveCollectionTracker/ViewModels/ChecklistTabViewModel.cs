@@ -76,6 +76,18 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             }
         }
 
+        private bool _showOnlyCardsExclusiveToSelectedSets;
+        public bool ShowOnlyCardsExclusiveToSelectedSets
+        {
+            get => _showOnlyCardsExclusiveToSelectedSets;
+            set
+            {
+                if (SetProperty(ref _showOnlyCardsExclusiveToSelectedSets, value))
+                    SafeRefresh();
+            }
+        }
+
+
         private CombinedCardCount? _selectedCombinedCard;
         public CombinedCardCount? SelectedCombinedCard
         {
@@ -266,6 +278,11 @@ namespace ShadowverseEvolveCardTracker.ViewModels
                             cp.Contains(f.Name, StringComparison.OrdinalIgnoreCase)));
 
                     if (!anyMatch) return false;
+
+                    if (ShowOnlyCardsExclusiveToSelectedSets)
+                    {
+                        if (!IsCardExlusiveToSelectedSets(group)) return false;
+                    }
                 }
             }
 
@@ -285,6 +302,19 @@ namespace ShadowverseEvolveCardTracker.ViewModels
             }
 
             return true;
+        }
+
+        private bool IsCardExlusiveToSelectedSets(CombinedCardCount card)
+        {
+            var fullCombinedCardCount = _combinedCardCounts.FirstOrDefault(c => c.Name.Equals(card.Name, StringComparison.OrdinalIgnoreCase));
+
+            var cardSets = fullCombinedCardCount?.Sets ?? new List<string>();
+
+            bool allSetsSelected = cardSets.All(s =>
+                                SetFilters.Any(f => f.IsChecked &&
+                                    s.Contains(f.Name, StringComparison.OrdinalIgnoreCase)));
+
+            return allSetsSelected;
         }
 
         private void InitializeSetFilters()
